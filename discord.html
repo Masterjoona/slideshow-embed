@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ .authorName }}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="{{ .caption }}" />
+        <meta property="og:image" content="{{ .imageUrl }} " />
+        <meta name="twitter:card" content="summary_large_image" />
+    </head>
+
+    <body>
+        <p>what ya doing here?</p>
+    </body>
+    <script>
+        window.location = window.location.search.replace("?v=", "");
+    </script>
+</html>

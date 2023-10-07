@@ -1,0 +1,156 @@
+package handling
+
+import (
+	"meow/collaging"
+	"meow/extracting"
+	"meow/files"
+	"meow/flags"
+	"meow/httputil"
+	"net/http"
+	"os"
+	"strings"
+	"text/template"
+	"time"
+
+	"github.com/gin-gonic/gin"
+)
+
+func renderTemplate(c *gin.Context, filename string, data gin.H) {
+	tmpl, err := template.ParseFiles(filename)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = tmpl.Execute(c.Writer, data)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+}
+func handleError(c *gin.Context, errorMsg, errorImageUrl string) {
+	renderTemplate(c, "error.html", gin.H{
+		"error":           errorMsg,
+		"error_image_url": errorImageUrl,
+	})
+}
+
+func handleDiscordEmbed(c *gin.Context, authorName, caption, filename string) {
+	renderTemplate(c, "discord.html", gin.H{
+		"authorName": authorName,
+		"caption":    caption,
+		"imageUrl":   *flags.Domain + filename,
+	})
+}
+
+var errorImages = []string{
+	"https://media.discordapp.net/attachments/961445186280509451/980132677338423316/fuckmedaddyharderohyeailovecokcimsocissyfemboy.gif",
+	"https://media.discordapp.net/attachments/901959319719936041/996927812927750264/chrome_2WOKI6Jm3v.gif",
+	"https://cdn.discordapp.com/attachments/749030987530502197/980338691706880051/79587A35-FD36-41D3-8232-7A29B46D2543.gif",
+}
+var errorImagesIndex = 0
+
+func HandleIndex(c *gin.Context) {
+	// if flag public is false, serve garbage
+	if !*flags.Public {
+		renderTemplate(c, "index.html", gin.H{
+			"FileLinks": nil,
+			"count":     "0",
+			"size":      "0",
+		})
+		return
+	}
+	collageFiles, err := os.ReadDir("collages")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	filePaths := make([]string, len(collageFiles))
+	count := 0
+	for index, file := range collageFiles {
+		filePaths[index] = *flags.Domain + file.Name()
+		count++
+	}
+	bytes, err := files.GetDirectorySize("collages")
+	size := files.FormatSize(bytes)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	renderTemplate(c, "index.html", gin.H{
+		"FileLinks": filePaths,
+		"count":     count,
+		"size":      size,
+	})
+}
+
+func HandleTikTokRequest(c *gin.Context) {
+	startTime := time.Now()
+	tiktokURL := c.Query("v")
+	width := c.Query("w")
+	initHeight := c.Query("h")
+	debug := c.Query("d")
+	if width == "" {
+		width = "1024"
+	}
+	if initHeight == "" {
+		initHeight = "320"
+	}
+
+	randomErrorImage := errorImages[errorImagesIndex]
+	if errorImagesIndex == 2 {
+		errorImagesIndex = 0
+	} else {
+		errorImagesIndex++
+	}
+
+	if tiktokURL == "" {
+		handleError(c, "No url provided", randomErrorImage)
+		return
+	}
+	if !strings.Contains(tiktokURL, "vm.tiktxk.com") && !strings.Contains(tiktokURL, "vm.tiktok.com") {
+		handleError(c, "Invalid url", randomErrorImage)
+		return
+	}
+	videoID, err := extracting.ExtractVideoID(tiktokURL)
+	if err != nil {
+		handleError(c, "Invalid url", randomErrorImage)
+		return
+	}
+	filename := "collage-" + videoID + ".jpg"
+	authorName, caption, responseBody, err := extracting.GetVideoAuthorAndCaption(tiktokURL, videoID)
+	if err != nil {
+		handleError(c, "Couldn't get video author and caption", randomErrorImage)
+		return
+	}
+
+	if _, err := os.Stat("collages/" + filename); err == nil {
+		if debug == "true" {
+			elapsed := time.Since(startTime)
+			caption = caption + " | Took " + elapsed.String()
+		}
+		handleDiscordEmbed(c, authorName, caption, filename)
+		return
+	}
+	links, err := extracting.ExtractImageLinks(responseBody)
+	if err != nil {
+		handleError(c, "Couldn't get image links", randomErrorImage)
+		return
+	}
+	err = httputil.DownloadImages(links, videoID)
+	if err != nil {
+		handleError(c, "Couldn't download images", randomErrorImage)
+		return
+	}
+	err = collaging.MakeCollage(videoID, filename, width, initHeight)
+	if err != nil {
+		handleError(c, "Couldn't make collage", randomErrorImage)
+		return
+	}
+	if debug == "true" {
+		elapsed := time.Since(startTime)
+		caption = caption + " | Took " + elapsed.String()
+	}
+	handleDiscordEmbed(c, authorName, caption, filename)
+	os.RemoveAll(videoID)
+
+}
