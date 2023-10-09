@@ -39,7 +39,7 @@ func handleDiscordEmbed(c *gin.Context, authorName, caption, filename string) {
 	renderTemplate(c, "discord.html", gin.H{
 		"authorName": authorName,
 		"caption":    caption,
-		"imageUrl":   config.Domain + filename,
+		"imageUrl":   config.Domain + "/" + filename,
 	})
 }
 
