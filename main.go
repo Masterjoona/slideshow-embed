@@ -1,20 +1,21 @@
 package main
 
 import (
-	"meow/flags"
+	"meow/config"
 	"meow/handling"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	domain := flags.Domain
-	if *domain == "" || *domain == "YOUR_DOMAIN_HERE" {
+	domain := config.Domain
+	if domain == "" || domain == "YOUR_DOMAIN_HERE" {
 		panic("You have not specified a domain!")
 	}
 	r := gin.Default()
 	r.GET("/t", handling.HandleTikTokRequest)
 	r.GET("/", handling.HandleIndex)
+	r.GET("/collage-:id", handling.HandleCollage)
 
 	r.Run(":4232")
 }

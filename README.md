@@ -5,16 +5,26 @@ Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Brit
 ## How to setup
 
 ### Dockerfile
-Clone this repo and `cd` into it change `YOUR_DOMAIN_HERE` in Dockerfile to some domain. You can also change `false` to `true` if you want to have links on the index page.
+Clone this repo and `cd` into it. 
 
 ```bash
-docker build -t <your_image_name> .
-docker run -d -p 4232:4232 -v <path>:/app/collages/ <container_name>
+docker build -t <container_name> .
+docker run -d -e DOMAIN='YOUR_DOMAIN_HERE' -e PUBLIC='false' -p 4232:4232 -v /path/to/your/collages/:/app/collages/ <container_name>
 ```
-Where path can be accessed by the domain you specified.
 
+Basic reverse proxy config for nginx
+```nginx
+server {
+    server_name tt.example.com;
+
+    location / {
+        proxy_pass http://localhost:4232;
+        root /path/to/your/collages;
+    }
+}
+```
 ### cli
-You'll figure it out. just use docker
+You'll figure it out. or just use docker
 
 ## notes
 this is a beginner project so there might some insane design choices ![trolley](https://cdn.discordapp.com/emojis/1068825486265942056.webp?size=48&name=trolley&quality=lossless) 

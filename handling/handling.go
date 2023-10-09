@@ -2,9 +2,9 @@ package handling
 
 import (
 	"meow/collaging"
+	"meow/config"
 	"meow/extracting"
 	"meow/files"
-	"meow/flags"
 	"meow/httputil"
 	"net/http"
 	"os"
@@ -39,7 +39,7 @@ func handleDiscordEmbed(c *gin.Context, authorName, caption, filename string) {
 	renderTemplate(c, "discord.html", gin.H{
 		"authorName": authorName,
 		"caption":    caption,
-		"imageUrl":   *flags.Domain + filename,
+		"imageUrl":   config.Domain + filename,
 	})
 }
 
@@ -56,7 +56,7 @@ func isInvalidIntStr(str string, min, max int) bool {
 }
 
 func HandleIndex(c *gin.Context) {
-	if !*flags.Public {
+	if !config.Public {
 		renderTemplate(c, "index.html", gin.H{
 			"FileLinks": nil,
 			"count":     "0",
@@ -72,7 +72,7 @@ func HandleIndex(c *gin.Context) {
 	filePaths := make([]string, len(collageFiles))
 	count := 0
 	for index, file := range collageFiles {
-		filePaths[index] = *flags.Domain + file.Name()
+		filePaths[index] = config.Domain + file.Name()
 		count++
 	}
 	bytes, err := files.GetDirectorySize("collages")
@@ -159,5 +159,19 @@ func HandleTikTokRequest(c *gin.Context) {
 	}
 	handleDiscordEmbed(c, authorName, caption, filename)
 	os.RemoveAll(videoID)
+
+}
+func HandleCollage(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		handleError(c, "No id provided", errorImages[errorImagesIndex])
+		return
+	}
+	filename := "collage-" + id
+	if _, err := os.Stat("collages/" + filename); err != nil {
+		handleError(c, "Collage not found", errorImages[errorImagesIndex])
+		return
+	}
+	c.File("collages/" + filename)
 
 }

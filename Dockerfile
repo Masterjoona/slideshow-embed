@@ -16,4 +16,4 @@ RUN go build main.go
 ENV GIN_MODE=release
 
 EXPOSE 4232
-CMD ["./main", "-domain", "YOUR_DOMAIN_HERE", "-public", "false"]
+CMD ["./main"]
