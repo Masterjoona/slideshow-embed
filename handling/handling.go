@@ -50,9 +50,9 @@ var errorImages = []string{
 }
 var errorImagesIndex = 0
 
-func isSafe(str string, limit int) bool {
+func isInvalidIntStr(str string, min, max int) bool {
 	intValue, err := strconv.Atoi(str)
-	return err == nil && intValue <= limit
+	return err != nil || intValue < min || intValue > max
 }
 
 func HandleIndex(c *gin.Context) {
@@ -94,10 +94,12 @@ func HandleTikTokRequest(c *gin.Context) {
 	width := c.Query("w")
 	initHeight := c.Query("h")
 	debug := c.Query("d")
-	if width == "" && isSafe(width, 4096) {
+
+	if width == "" || isInvalidIntStr(width, 1, 4096) {
 		width = "1024"
 	}
-	if initHeight == "" && isSafe(initHeight, 1024) {
+
+	if initHeight == "" || isInvalidIntStr(initHeight, 1, 1024) {
 		initHeight = "320"
 	}
 

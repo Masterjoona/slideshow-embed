@@ -12,6 +12,6 @@
         <p>what ya doing here?</p>
     </body>
     <script>
-        window.location = window.location.search.replace("?v=", "");
+        window.location = window.location.search.split("&")[0].replace("?v=","");
     </script>
 </html>
