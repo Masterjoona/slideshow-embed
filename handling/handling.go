@@ -8,6 +8,7 @@ import (
 	"meow/httputil"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -49,8 +50,12 @@ var errorImages = []string{
 }
 var errorImagesIndex = 0
 
+func isSafe(str string, limit int) bool {
+	intValue, err := strconv.Atoi(str)
+	return err == nil && intValue <= limit
+}
+
 func HandleIndex(c *gin.Context) {
-	// if flag public is false, serve garbage
 	if !*flags.Public {
 		renderTemplate(c, "index.html", gin.H{
 			"FileLinks": nil,
@@ -89,10 +94,10 @@ func HandleTikTokRequest(c *gin.Context) {
 	width := c.Query("w")
 	initHeight := c.Query("h")
 	debug := c.Query("d")
-	if width == "" {
+	if width == "" && isSafe(width, 4096) {
 		width = "1024"
 	}
-	if initHeight == "" {
+	if initHeight == "" && isSafe(initHeight, 1024) {
 		initHeight = "320"
 	}
 
