@@ -15,7 +15,7 @@ func main() {
 	r := gin.Default()
 	r.GET("/t", handling.HandleTikTokRequest)
 	r.GET("/", handling.HandleIndex)
-	r.GET("/collage-:id", handling.HandleCollage)
+	r.GET("/collage-:id", handling.HandleDirectCollage)
 
 	r.Run(":4232")
 }

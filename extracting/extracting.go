@@ -15,12 +15,14 @@ func ExtractImageLinks(input string) ([]string, error) {
 	if len(imagePostMatch) == 0 {
 		return nil, fmt.Errorf("no image links found in input")
 	}
+
 	escapedUrls := strings.ReplaceAll(imagePostMatch[1], "\\u002F", "/")
 	imageLinksMatches := directUrlRegex.FindAllStringSubmatch(escapedUrls, -1)
 	if len(imageLinksMatches) == 0 {
 		fmt.Println(escapedUrls)
 		return nil, fmt.Errorf("no image links found in input")
 	}
+
 	imageLinks := make([]string, len(imageLinksMatches))
 	for index, link := range imageLinksMatches {
 		imageLinks[index] = link[1]
@@ -66,6 +68,7 @@ func GetVideoAuthorAndCaption(url string, videoID string) (string, string, strin
 	} else {
 		possibleTitleText = ""
 	}
+
 	captionText = possibleTitleText + " " + captionText
 	return authorName, captionText, responseBody, nil
 }
