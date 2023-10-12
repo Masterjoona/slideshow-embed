@@ -7,6 +7,7 @@ import (
 	"meow/files"
 	"meow/httputil"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -70,6 +71,14 @@ func HandleIndex(c *gin.Context) {
 	}
 	filePaths := make([]string, len(collageFiles))
 	count := 0
+	sort.Slice(collageFiles, func(i, j int) bool {
+		fileI, err1 := collageFiles[i].Info()
+		fileJ, err2 := collageFiles[j].Info()
+		if err1 != nil || err2 != nil {
+			return collageFiles[i].Name() < collageFiles[j].Name()
+		}
+		return fileI.ModTime().After(fileJ.ModTime())
+	})
 	for index, file := range collageFiles {
 		filePaths[index] = config.Domain + "/" + file.Name()
 		count++
