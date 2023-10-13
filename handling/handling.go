@@ -146,7 +146,7 @@ func HandleTikTokRequest(c *gin.Context) {
 	filename := "collage-" + videoID + ".jpg"
 	authorName, caption, responseBody, err := extracting.GetVideoAuthorAndCaption(tiktokURL, videoID)
 	if err != nil {
-		handleError(c, "Couldn't get video author and caption", randomErrorImage)
+		handleError(c, "Couldn't get video author and caption. Is the video available?", randomErrorImage)
 		return
 	}
 

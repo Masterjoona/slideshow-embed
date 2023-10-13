@@ -50,7 +50,12 @@ func GetVideoAuthorAndCaption(url string, videoID string) (string, string, strin
 	captionRegex := regexp.MustCompile(`"contents":\[{"desc":"(.*?)",`)
 	possibleTitleRegex := regexp.MustCompile(`},"title":"(.*?)"},"locationCreated":`)
 
-	authorName := authorNameRegex.FindStringSubmatch(responseBody)[1]
+	authorName := authorNameRegex.FindStringSubmatch(responseBody)
+	if len(authorName) == 0 {
+		return "", "", "", fmt.Errorf("no author name found in response")
+	}
+	authorNameText := authorName[1]
+
 	caption := captionRegex.FindStringSubmatch(responseBody)
 	possibleTitle := possibleTitleRegex.FindStringSubmatch(responseBody)
 
@@ -70,5 +75,5 @@ func GetVideoAuthorAndCaption(url string, videoID string) (string, string, strin
 	}
 
 	captionText = possibleTitleText + " " + captionText
-	return authorName, captionText, responseBody, nil
+	return authorNameText, captionText, responseBody, nil
 }
