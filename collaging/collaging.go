@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-// funny file for funny function
-
 func MakeCollage(inputDir string, outputPath string, width string, initHeight string) error {
 	// kek because im an idiot we will call a python script to do this
 	// you're welcome of course to rewrite this in go if you feel

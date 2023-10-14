@@ -7,6 +7,7 @@ import (
 var Domain string
 var Public bool
 var Port string
+var IsffmpegInstalled bool
 
 func init() {
 	Domain = os.Getenv("DOMAIN")
@@ -16,5 +17,12 @@ func init() {
 	}
 	if Port[0] != ':' {
 		Port = ":" + Port
+	}
+
+	_, err := os.Stat("/usr/bin/ffmpeg")
+	if err == nil {
+		IsffmpegInstalled = true
+	} else {
+		IsffmpegInstalled = false
 	}
 }

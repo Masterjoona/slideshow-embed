@@ -4,12 +4,13 @@ Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Brit
 
 ## How to setup
 > [!NOTE]
-> Domain, public and port are all configurable via environment variables. Only domain is required. Public will show link on the index page. Port is 4232 by default.
+> Domain, public and port are all configurable via environment variables. Only domain is required. Public will show link on the index page, by default is false. Port is 4232 by default.
 ### Dockerfile
 Clone this repo and `cd` into it. 
+Changing the false to true will install ffmpeg and allow you to use the video collages. (will make your container bigger)
 
 ```bash
-docker build -t <container_name> .
+docker build --build-arg INSTALL_FFMPEG=false -t <container_name> .
 docker run -d -e DOMAIN='YOUR_DOMAIN_HERE' -p 4232:4232 -v /path/to/your/collages/:/app/collages/ <container_name>
 ```
 

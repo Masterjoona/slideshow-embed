@@ -18,11 +18,15 @@ func main() {
 	println("Public?: " + strconv.FormatBool(config.Public))
 
 	r := gin.Default()
-	r.GET("/t", handling.HandleRequest)
-	r.GET("/s", handling.HandleSoundCollageRequest)
 	r.GET("/", handling.HandleIndex)
+
+	r.GET("/t", handling.HandleRequest)
 	r.GET("/collage-:id", handling.HandleDirectCollage)
-	r.GET("/video-:id", handling.HandleDirectVideo)
+
+	if config.IsffmpegInstalled {
+		r.GET("/s", handling.HandleSoundCollageRequest)
+		r.GET("/video-:id", handling.HandleDirectVideo)
+	}
 
 	r.Run(config.Port)
 }
