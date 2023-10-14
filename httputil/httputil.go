@@ -75,11 +75,9 @@ func DownloadImages(links []string, outputDir string) error {
 }
 
 func DownloadAudio(link string, filename string, outputDir string) error {
-	// "range": "bytes=0-"
-	//"referer": "https://www.tiktok.com/", 403 forbidden
 	headers := map[string]string{
 		"range":   "bytes=0-",
-		"referer": "https://www.tiktok.com/",
+		"referer": "https://www.tiktok.com/", // 403 without this
 	}
 	req, err := http.NewRequest("GET", link, nil)
 	if err != nil {
@@ -111,7 +109,7 @@ func DownloadAudio(link string, filename string, outputDir string) error {
 			fmt.Println("Error writing the file:", err)
 			return err
 		}
-		fmt.Println("Audio file downloaded successfully as 'audio.mp3'")
+		//fmt.Println("Audio file downloaded successfully as 'audio.mp3'")
 	} else {
 		fmt.Printf("Failed to download the audio file")
 	}

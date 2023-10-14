@@ -16,6 +16,7 @@ func main() {
 	println("Starting server on port " + config.Port)
 	println("Domain: " + domain)
 	println("Public?: " + strconv.FormatBool(config.Public))
+
 	r := gin.Default()
 	r.GET("/t", handling.HandleRequest)
 	r.GET("/s", handling.HandleSoundCollageRequest)

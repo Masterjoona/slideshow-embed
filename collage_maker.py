@@ -161,9 +161,7 @@ def main():
         for fn in files
         if os.path.splitext(fn)[1].lower() in (".jpg", ".jpeg", ".png")
     ]
-    images = sorted(
-        images, key=lambda x: int(x.split("/")[1].split(".")[0])
-    )  # This line is the only change I made to the original code, to sort the images by their number
+    images = sorted(images, key=lambda x: int(x.split("/")[1].split(".")[0]))
     if not images:
         print(
             "No images for making collage! Please select other directory with images!"

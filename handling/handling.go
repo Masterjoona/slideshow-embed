@@ -17,16 +17,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var domain = config.Domain
+
 func renderTemplate(c *gin.Context, filename string, data gin.H) {
 	tmpl, err := template.ParseFiles(filename)
 	if err != nil {
-		handleError(c, err.Error(), errorImages[errorImagesIndex])
+		handleError(c, err.Error(), errorImages[errorImagesIndexInt()])
 		return
 	}
 
 	err = tmpl.Execute(c.Writer, data)
 	if err != nil {
-		handleError(c, err.Error(), errorImages[errorImagesIndex])
+		handleError(c, err.Error(), errorImages[errorImagesIndexInt()])
 	}
 }
 func handleError(c *gin.Context, errorMsg string, errorImageUrl string) {
@@ -40,7 +42,7 @@ func handleDiscordEmbed(c *gin.Context, authorName string, caption string, filen
 	renderTemplate(c, "discord.html", gin.H{
 		"authorName": authorName,
 		"caption":    caption,
-		"imageUrl":   config.Domain + "/" + filename,
+		"imageUrl":   domain + "/" + filename,
 	})
 }
 
@@ -48,7 +50,7 @@ func handleVideoDiscordEmbed(c *gin.Context, authorName string, caption string, 
 	renderTemplate(c, "video.html", gin.H{
 		"authorName": authorName,
 		"caption":    caption,
-		"videoUrl":   config.Domain + "/" + filename,
+		"videoUrl":   domain + "/" + filename,
 		"width":      width,
 		"height":     height,
 	})
@@ -77,7 +79,7 @@ func HandleIndex(c *gin.Context) {
 	}
 	collageFiles, err := os.ReadDir("collages")
 	if err != nil {
-		handleError(c, err.Error(), errorImages[errorImagesIndex])
+		handleError(c, err.Error(), errorImages[errorImagesIndexInt()])
 		return
 	}
 	filePaths := make([]string, len(collageFiles))
@@ -90,14 +92,16 @@ func HandleIndex(c *gin.Context) {
 		}
 		return fileI.ModTime().After(fileJ.ModTime())
 	})
+
 	for index, file := range collageFiles {
-		filePaths[index] = config.Domain + "/" + file.Name()
+		filePaths[index] = domain + "/" + file.Name()
 		count++
 	}
+
 	bytes, err := files.GetDirectorySize("collages")
 	size := files.FormatSize(bytes)
 	if err != nil {
-		handleError(c, err.Error(), errorImages[errorImagesIndex])
+		handleError(c, err.Error(), errorImages[errorImagesIndexInt()])
 		return
 	}
 	renderTemplate(c, "index.html", gin.H{
@@ -117,6 +121,15 @@ func validateURL(url string) bool {
 	return true
 }
 
+func errorImagesIndexInt() int {
+	if errorImagesIndex == 2 {
+		errorImagesIndex = 0
+	} else {
+		errorImagesIndex++
+	}
+	return errorImagesIndex
+}
+
 func checkValues(width string, initHeight string) (string, string) {
 	if width == "" || isInvalidIntStr(width, 256, 4096) {
 		width = "1024"
@@ -130,17 +143,13 @@ func checkValues(width string, initHeight string) (string, string) {
 func HandleSoundCollageRequest(c *gin.Context) {
 	tiktokURL := c.Query("v")
 
-	randomErrorImage := errorImages[errorImagesIndex]
-	if errorImagesIndex == 2 {
-		errorImagesIndex = 0
-	} else {
-		errorImagesIndex++
-	}
+	randomErrorImage := errorImages[errorImagesIndexInt()]
 
 	if !validateURL(tiktokURL) {
 		handleError(c, "Invalid url", randomErrorImage)
 		return
 	}
+
 	width, height := "1024", "320"
 
 	videoID, err := extracting.ExtractVideoID(tiktokURL)
@@ -202,6 +211,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		handleError(c, "Couldn't make video", randomErrorImage)
 		return
 	}
+
 	videoWidth, videoHeight, err := collaging.GetVideoDimensions("collages/video-" + videoID + ".mp4")
 	if err != nil {
 		handleError(c, "Couldn't get video dimensions", randomErrorImage)
@@ -210,6 +220,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 	handleVideoDiscordEmbed(c, authorName, caption, "video-"+videoID+".mp4", videoWidth, videoHeight)
 	os.RemoveAll(videoID)
 }
+
 func HandleRequest(c *gin.Context) {
 	startTime := time.Now()
 	tiktokURL := c.Query("v")
@@ -217,12 +228,7 @@ func HandleRequest(c *gin.Context) {
 	initHeight := c.Query("h")
 	debug := c.Query("d")
 
-	randomErrorImage := errorImages[errorImagesIndex]
-	if errorImagesIndex == 2 {
-		errorImagesIndex = 0
-	} else {
-		errorImagesIndex++
-	}
+	randomErrorImage := errorImages[errorImagesIndexInt()]
 
 	if !validateURL(tiktokURL) {
 		handleError(c, "Invalid url", randomErrorImage)
@@ -288,13 +294,13 @@ func HandleRequest(c *gin.Context) {
 func HandleDirectCollage(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		handleError(c, "No id provided", errorImages[errorImagesIndex])
+		handleError(c, "No id provided", errorImages[errorImagesIndexInt()])
 		return
 	}
 
 	filename := "collage-" + id
 	if _, err := os.Stat("collages/" + filename); err != nil {
-		handleError(c, "Collage not found", errorImages[errorImagesIndex])
+		handleError(c, "Collage not found", errorImages[errorImagesIndexInt()])
 		return
 	}
 
@@ -304,13 +310,13 @@ func HandleDirectCollage(c *gin.Context) {
 func HandleDirectVideo(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		handleError(c, "No id provided", errorImages[errorImagesIndex])
+		handleError(c, "No id provided", errorImages[errorImagesIndexInt()])
 		return
 	}
 
 	filename := "video-" + id
 	if _, err := os.Stat("collages/" + filename); err != nil {
-		handleError(c, "Collage not found", errorImages[errorImagesIndex])
+		handleError(c, "Collage not found", errorImages[errorImagesIndexInt()])
 		return
 	}
 
