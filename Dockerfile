@@ -8,6 +8,7 @@ RUN apt -y update
 RUN apt -y upgrade
 RUN apt install -y python3-pip
 RUN apt install -y python3-dev
+RUN apt install -y ffmpeg
 RUN pip install pillow --break-system-packages
 
 

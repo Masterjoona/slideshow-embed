@@ -83,6 +83,11 @@ def make_collage(images, filename, width, init_height):
         print("Height of collage could not be 0!")
         return False
 
+    if out_height % 2 != 0:
+        out_height += (
+            1  # [libx264 @ 0xaaaacde2afc0] height not divisible by 2 (1024x341) moment
+        )
+
     collage_image = Image.new("RGB", (width, int(out_height)), (35, 35, 35))
     # put images to the collage
     y = 0

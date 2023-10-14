@@ -31,6 +31,16 @@ func ExtractImageLinks(input string) ([]string, error) {
 	return imageLinks, nil
 }
 
+func ExtractAudioLink(input string) (string, error) {
+	soundRegex := regexp.MustCompile(`playUrl":"(.*?)"`)
+	soundMatch := soundRegex.FindStringSubmatch(input)
+	if len(soundMatch) == 0 {
+		return "", fmt.Errorf("no audio link found in input")
+	}
+	escapedUrl := strings.ReplaceAll(soundMatch[1], "\\u002F", "/")
+	return escapedUrl, nil
+}
+
 func ExtractVideoID(url string) (string, error) {
 	parts := strings.Split(url, "/")
 	if len(parts) < 4 {

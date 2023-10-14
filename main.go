@@ -17,9 +17,11 @@ func main() {
 	println("Domain: " + domain)
 	println("Public?: " + strconv.FormatBool(config.Public))
 	r := gin.Default()
-	r.GET("/t", handling.HandleTikTokRequest)
+	r.GET("/t", handling.HandleRequest)
+	r.GET("/s", handling.HandleSoundCollageRequest)
 	r.GET("/", handling.HandleIndex)
 	r.GET("/collage-:id", handling.HandleDirectCollage)
+	r.GET("/video-:id", handling.HandleDirectVideo)
 
 	r.Run(config.Port)
 }

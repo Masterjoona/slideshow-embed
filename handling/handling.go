@@ -1,6 +1,7 @@
 package handling
 
 import (
+	"fmt"
 	"meow/collaging"
 	"meow/config"
 	"meow/extracting"
@@ -35,11 +36,21 @@ func handleError(c *gin.Context, errorMsg string, errorImageUrl string) {
 	})
 }
 
-func handleDiscordEmbed(c *gin.Context, authorName, caption, filename string) {
+func handleDiscordEmbed(c *gin.Context, authorName string, caption string, filename string) {
 	renderTemplate(c, "discord.html", gin.H{
 		"authorName": authorName,
 		"caption":    caption,
 		"imageUrl":   config.Domain + "/" + filename,
+	})
+}
+
+func handleVideoDiscordEmbed(c *gin.Context, authorName string, caption string, filename string, width string, height string) {
+	renderTemplate(c, "video.html", gin.H{
+		"authorName": authorName,
+		"caption":    caption,
+		"videoUrl":   config.Domain + "/" + filename,
+		"width":      width,
+		"height":     height,
 	})
 }
 
@@ -116,8 +127,90 @@ func checkValues(width string, initHeight string) (string, string) {
 	}
 	return width, initHeight
 }
+func HandleSoundCollageRequest(c *gin.Context) {
+	tiktokURL := c.Query("v")
 
-func HandleTikTokRequest(c *gin.Context) {
+	randomErrorImage := errorImages[errorImagesIndex]
+	if errorImagesIndex == 2 {
+		errorImagesIndex = 0
+	} else {
+		errorImagesIndex++
+	}
+
+	if !validateURL(tiktokURL) {
+		handleError(c, "Invalid url", randomErrorImage)
+		return
+	}
+	width, height := "1024", "320"
+
+	videoID, err := extracting.ExtractVideoID(tiktokURL)
+	if err != nil {
+		handleError(c, "Invalid url", randomErrorImage)
+		return
+	}
+
+	filename := "video-" + videoID + ".mp4"
+	authorName, caption, responseBody, err := extracting.GetVideoAuthorAndCaption(tiktokURL, videoID)
+	if err != nil {
+		handleError(c, "Couldn't get video author and caption. Is the video available?", randomErrorImage)
+		return
+	}
+
+	if _, err := os.Stat("collages/" + filename); err == nil {
+		videoWidth, videoHeight, err := collaging.GetVideoDimensions("collages/video-" + videoID + ".mp4")
+		if err != nil {
+			handleError(c, "Couldn't get video dimensions", randomErrorImage)
+			return
+		}
+		handleVideoDiscordEmbed(c, authorName, caption, "video-"+videoID+".mp4", videoWidth, videoHeight)
+		return
+	}
+
+	links, err := extracting.ExtractImageLinks(responseBody)
+	if err != nil {
+		handleError(c, "Couldn't get image links", randomErrorImage)
+		return
+	}
+
+	err = httputil.DownloadImages(links, videoID)
+	if err != nil {
+		handleError(c, "Couldn't download images", randomErrorImage)
+		return
+	}
+
+	audioLink, err := extracting.ExtractAudioLink(responseBody)
+	if err != nil {
+		handleError(c, "Couldn't get audio link", randomErrorImage)
+		return
+	}
+
+	err = httputil.DownloadAudio(audioLink, "audio.mp3", videoID)
+	if err != nil {
+		handleError(c, "Couldn't download audio", randomErrorImage)
+		return
+	}
+
+	err = collaging.MakeCollage(videoID, "collage-"+videoID+".jpg", width, height)
+	if err != nil {
+		handleError(c, "Couldn't make collage", randomErrorImage)
+		return
+	}
+
+	err = collaging.MakeVideo("collages/collage-"+videoID+".jpg", videoID, filename)
+	if err != nil {
+		fmt.Println(err)
+		handleError(c, "Couldn't make video", randomErrorImage)
+		return
+	}
+	videoWidth, videoHeight, err := collaging.GetVideoDimensions("collages/video-" + videoID + ".mp4")
+	if err != nil {
+		handleError(c, "Couldn't get video dimensions", randomErrorImage)
+		return
+	}
+	handleVideoDiscordEmbed(c, authorName, caption, "video-"+videoID+".mp4", videoWidth, videoHeight)
+	os.RemoveAll(videoID)
+}
+func HandleRequest(c *gin.Context) {
 	startTime := time.Now()
 	tiktokURL := c.Query("v")
 	width := c.Query("w")
@@ -207,4 +300,19 @@ func HandleDirectCollage(c *gin.Context) {
 
 	c.File("collages/" + filename)
 
+}
+func HandleDirectVideo(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		handleError(c, "No id provided", errorImages[errorImagesIndex])
+		return
+	}
+
+	filename := "video-" + id
+	if _, err := os.Stat("collages/" + filename); err != nil {
+		handleError(c, "Collage not found", errorImages[errorImagesIndex])
+		return
+	}
+
+	c.File("collages/" + filename)
 }
