@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>@{{ .authorName }}</title>
+        <title>{{ .details }}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="og:site_name" content="{{ .authorName }}" />
+        <meta name="author" content="ojafnasd" />
+        <meta name="twitter:site" content="{{ .authorName }}" />
         <meta name="description" content="{{ .caption }}" />
         <meta property="og:image" content="{{ .imageUrl }} " />
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="theme-color" content="#ee1d51" />
     </head>
 
     <body>

@@ -38,18 +38,22 @@ func handleError(c *gin.Context, errorMsg string, errorImageUrl string) {
 	})
 }
 
-func handleDiscordEmbed(c *gin.Context, authorName string, caption string, filename string) {
+func handleDiscordEmbed(c *gin.Context, authorName string, caption string, details extracting.Counts, filename string) {
+	detailsString := "❤️" + details.Likes + " | 💬" + details.Comments + " | 🔁" + details.Shares + " | ⭐" + details.Favorited
 	renderTemplate(c, "discord.html", gin.H{
 		"authorName": authorName,
 		"caption":    caption,
+		"details":    detailsString,
 		"imageUrl":   domain + "/" + filename,
 	})
 }
 
-func handleVideoDiscordEmbed(c *gin.Context, authorName string, caption string, filename string, width string, height string) {
+func handleVideoDiscordEmbed(c *gin.Context, authorName string, caption string, details extracting.Counts, filename string, width string, height string) {
+	detailsString := "❤️" + details.Likes + " | 💬" + details.Comments + " | 🔁" + details.Shares + " | ⭐" + details.Favorited
 	renderTemplate(c, "video.html", gin.H{
 		"authorName": authorName,
 		"caption":    caption,
+		"details":    detailsString,
 		"videoUrl":   domain + "/" + filename,
 		"width":      width,
 		"height":     height,
@@ -165,13 +169,15 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
+	details := extracting.GetVideoDetails(responseBody)
+
 	if _, err := os.Stat("collages/" + filename); err == nil {
 		videoWidth, videoHeight, err := collaging.GetVideoDimensions("collages/video-" + videoID + ".mp4")
 		if err != nil {
 			handleError(c, "Couldn't get video dimensions", randomErrorImage)
 			return
 		}
-		handleVideoDiscordEmbed(c, authorName, caption, "video-"+videoID+".mp4", videoWidth, videoHeight)
+		handleVideoDiscordEmbed(c, authorName, caption, details, "video-"+videoID+".mp4", videoWidth, videoHeight)
 		return
 	}
 
@@ -217,7 +223,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		handleError(c, "Couldn't get video dimensions", randomErrorImage)
 		return
 	}
-	handleVideoDiscordEmbed(c, authorName, caption, "video-"+videoID+".mp4", videoWidth, videoHeight)
+	handleVideoDiscordEmbed(c, authorName, caption, details, "video-"+videoID+".mp4", videoWidth, videoHeight)
 	os.RemoveAll(videoID)
 }
 
@@ -249,12 +255,14 @@ func HandleRequest(c *gin.Context) {
 		return
 	}
 
+	details := extracting.GetVideoDetails(responseBody)
+
 	if _, err := os.Stat("collages/" + filename); err == nil {
 		if debug == "true" {
 			elapsed := time.Since(startTime)
 			caption = caption + " | Took " + elapsed.String()
 		}
-		handleDiscordEmbed(c, authorName, caption, filename)
+		handleDiscordEmbed(c, authorName, caption, details, filename)
 		return
 	}
 
@@ -287,7 +295,7 @@ func HandleRequest(c *gin.Context) {
 		caption = caption + " | Took " + elapsed.String() + " | " + filesize
 	}
 
-	handleDiscordEmbed(c, authorName, caption, filename)
+	handleDiscordEmbed(c, authorName, caption, details, filename)
 	os.RemoveAll(videoID)
 
 }

@@ -15,7 +15,8 @@ func main() {
 	}
 	println("Starting server on port " + config.Port)
 	println("Domain: " + domain)
-	println("Public?: " + strconv.FormatBool(config.Public))
+	println("Public: " + strconv.FormatBool(config.Public))
+	println("Sound route: " + strconv.FormatBool(config.IsffmpegInstalled))
 
 	r := gin.Default()
 	r.GET("/", handling.HandleIndex)

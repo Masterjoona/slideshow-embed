@@ -87,3 +87,34 @@ func GetVideoAuthorAndCaption(url string, videoID string) (string, string, strin
 	captionText = possibleTitleText + " " + captionText
 	return authorNameText, captionText, responseBody, nil
 }
+
+func extractCount(responseBody, dataE2E string) string {
+	regexPattern := fmt.Sprintf(`<strong data-e2e="%s" class="(?:.*?)">([^<]+)<\/strong>`, dataE2E)
+	regex := regexp.MustCompile(regexPattern)
+	matches := regex.FindStringSubmatch(responseBody)
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	return "0"
+}
+
+type Counts struct {
+	Likes     string
+	Comments  string
+	Favorited string
+	Shares    string
+}
+
+func GetVideoDetails(responseBody string) Counts {
+	likesCount := extractCount(responseBody, "like-count")
+	commentsCount := extractCount(responseBody, "comment-count")
+	favoritedCount := extractCount(responseBody, "undefined-count") // undefined-count lmao
+	sharesCount := extractCount(responseBody, "share-count")
+
+	return Counts{
+		Likes:     likesCount,
+		Comments:  commentsCount,
+		Favorited: favoritedCount,
+		Shares:    sharesCount,
+	}
+}

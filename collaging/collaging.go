@@ -11,14 +11,14 @@ func MakeCollage(inputDir string, outputPath string, width string, initHeight st
 	// you're welcome of course to rewrite this in go if you feel
 	// like helping an idiot out
 	output := "collages/" + outputPath
-	fmt.Println("python3", "collage_maker.py", "-f", inputDir, "-o", output, "-w", width, "-i", initHeight)
+	//fmt.Println("python3", "collage_maker.py", "-f", inputDir, "-o", output, "-w", width, "-i", initHeight)
 	out, err := exec.Command("python3", "collage_maker.py", "-f", inputDir, "-o", output, "-w", width, "-i", initHeight).Output()
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println(string(out))
 		return err
 	}
-	fmt.Println(string(out))
+	//fmt.Println(string(out))
 	return nil
 }
 
@@ -31,7 +31,7 @@ func MakeVideo(collagePath string, inputDir string, outputPath string) error {
 		fmt.Println(string(out))
 		return err
 	}
-	fmt.Println(string(out))
+	//fmt.Println(string(out))
 	return nil
 }
 

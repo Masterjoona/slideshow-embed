@@ -111,7 +111,7 @@ func DownloadAudio(link string, filename string, outputDir string) error {
 		}
 		//fmt.Println("Audio file downloaded successfully as 'audio.mp3'")
 	} else {
-		fmt.Printf("Failed to download the audio file")
+		fmt.Println("Failed to download the audio file")
 	}
 	return nil
 }

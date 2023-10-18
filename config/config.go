@@ -25,4 +25,10 @@ func init() {
 	} else {
 		IsffmpegInstalled = false
 	}
+
+	if os.Getenv("FFMPEG") == "true" {
+		IsffmpegInstalled = true
+	} else if os.Getenv("FFMPEG") == "false" {
+		IsffmpegInstalled = false
+	}
 }
