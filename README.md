@@ -3,8 +3,16 @@
 Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Britmoji/tiktxk) exists but it has just one problem: it cannot embed slideshows well, it only shows first image. So what does this program do? It downloads the images and collages them into a nice single image!
 
 ## How to setup
+
+| Env var | Default Value | Description                                   |
+|---------------------|---------------|-----------------------------------------------|
+| `DOMAIN`            | YOUR DOMAIN   | The domain where it will serve  |
+| `PORT`              | 4232          | What port it is on |
+| `PUBLIC`            | false         | If the index page is public  |
+
 > [!NOTE]
-> Domain, public and port are all configurable via environment variables. Only domain is required. Public will show link on the index page, by default is false. Port is 4232 by default. Sound is defaulted to false, (checking `/usr/bin/ffmpeg` for existence), but you can override it with the `FFMPEG` environment variable.
+> This program will check if `/usr/bin/ffmpeg` exists, if it does, it will enable the sound route. You can override this behaviour by using `FFMPEG` environment var.
+
 ### Dockerfile
 Clone this repo and `cd` into it. 
 Changing the false to true will install ffmpeg and allow you to use the video collages. (will make your container bigger)
@@ -27,8 +35,17 @@ server {
 ```
 ### cli
 ```bash
-DOMAIN='YOUR_DOMAIN_HERE' go run main.go
+go build
+DOMAIN='YOUR_DOMAIN_HERE' GIN_MODE=release ./meow
 ```
+*it's meow because :3*
+
+## What does it look like?
+
+
+https://github.com/Masterjoona/slideshow-embed/assets/69722179/4e089e52-217b-4eda-b053-967d1522d6de
+
+*Yes it is kinda slow but I really cannot affect that*
 
 ## notes
 this is a beginner project so there might some insane design choices ![trolley](https://cdn.discordapp.com/emojis/1068825486265942056.webp?size=48&name=trolley&quality=lossless) 
