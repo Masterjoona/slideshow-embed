@@ -1,23 +1,16 @@
 <html>
     <head>
-        <title>{{ .details }}</title>
+        <title>{{ .authorName }}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="og:site_name" content="{{ .authorName }}" />
-        <meta name="twitter:site" content="{{ .authorName }}" />
-        <meta name="description" content="{{ .caption }}" />
+        <meta name="og:site_name" content="Slideshow embedder" />
+        <meta name="twitter:site_name" content="Slideshow embedder" />
+        <meta name="description" content="{{ .details }}
+        
+        {{ .caption }}" />
         <meta name="theme-color" content="#ee1d51" />
-        <meta
-            property="twitter:player"
-            content="{{ .videoUrl }}"
-        />
-        <meta
-            property="og:video"
-            content="{{ .videoUrl }}"
-        />
-        <meta
-            property="og:video:secure_url"
-            content="{{ .videoUrl }}"
-        />
+        <meta property="twitter:player" content="{{ .videoUrl }}" />
+        <meta property="og:video" content="{{ .videoUrl }}" />
+        <meta property="og:video:secure_url" content="{{ .videoUrl }}" />
         <meta property="og:video:type" content="video/mp4" />
         <meta property="og:video:width" content="{{ .width }}" />
         <meta property="og:video:height" content="{{ .height }}" />

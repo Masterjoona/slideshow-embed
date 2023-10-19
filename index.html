@@ -18,9 +18,14 @@
         p {
             text-align: center;
         }
+        .source {
+            text-align: center;
+            display: block;
+        }
     </style>
     <h1>explod</h1>
     <p>currently storing {{ .count }} collages. taking up {{ .size }} bytes</p>
+    <a class="source" href="https://github.com/Masterjoona/slideshow-embed" target="_blank">source code</a>
     {{ if not .FileLinks }}
     <ul>
         <li>No links to display.</li>

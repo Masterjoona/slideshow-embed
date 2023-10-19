@@ -11,7 +11,7 @@ Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Brit
 | `PUBLIC`            | false         | If the index page is public  |
 
 > [!NOTE]
-> This program will check if `/usr/bin/ffmpeg` exists, if it does, it will enable the sound route. You can override this behaviour by using `FFMPEG` environment var.
+> This program will check if `/usr/bin/ffmpeg` exists, if it does, it will enable the sound route. You can override this behaviour by using `FFMPEG` environment var. (You can also set this to true, if ffmpeg is not in `/usr/bin`)
 
 ### Dockerfile
 Clone this repo and `cd` into it. 

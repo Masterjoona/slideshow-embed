@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>{{ .details }}</title>
+        <title>{{ .authorName }}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="og:site_name" content="{{ .authorName }}" />
-        <meta name="author" content="ojafnasd" />
-        <meta name="twitter:site" content="{{ .authorName }}" />
-        <meta name="description" content="{{ .caption }}" />
+        <meta name="og:site_name" content="Slideshow embedder" />
+        <meta name="twitter:site_name" content="Slideshow embedder" />
+        <meta name="description" content="{{ .details }}
+        
+        {{ .caption }}" />
         <meta property="og:image" content="{{ .imageUrl }} " />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="theme-color" content="#ee1d51" />
@@ -16,6 +17,8 @@
         <p>what ya doing here?</p>
     </body>
     <script>
-        window.location = window.location.search.split("&")[0].replace("?v=","");
+        window.location = window.location.search
+            .split("&")[0]
+            .replace("?v=", "");
     </script>
 </html>

@@ -56,7 +56,7 @@ func GetVideoAuthorAndCaption(url string, videoID string) (string, string, strin
 		return "", "", "", err
 	}
 
-	authorNameRegex := regexp.MustCompile(`"nickname":"(.*?)"`)
+	authorNameRegex := regexp.MustCompile(`{"@type":"Thing","@id":"https:\/\/www\.tiktok\.com\/@(?:.*?)","name":"(.*?) \| TikTok"}},{"@type":`)
 	captionRegex := regexp.MustCompile(`"contents":\[{"desc":"(.*?)",`)
 	possibleTitleRegex := regexp.MustCompile(`},"title":"(.*?)"},"locationCreated":`)
 
