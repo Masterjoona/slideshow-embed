@@ -1,12 +1,9 @@
 <html>
     <head>
-        <title>{{ .authorName }}</title>
+        <title>{{ .authorName }} | {{ . details }} </title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="og:site_name" content="Slideshow embedder" />
         <meta name="twitter:site_name" content="Slideshow embedder" />
-        <meta name="description" content="{{ .details }}
-        
-{{ .caption }}" />
         <meta name="theme-color" content="#ee1d51" />
         <meta property="twitter:player" content="{{ .videoUrl }}" />
         <meta property="og:video" content="{{ .videoUrl }}" />

@@ -19,6 +19,13 @@ import (
 
 var domain = config.Domain
 
+var errorImages = []string{
+	"https://media.discordapp.net/attachments/961445186280509451/980132677338423316/fuckmedaddyharderohyeailovecokcimsocissyfemboy.gif",
+	"https://media.discordapp.net/attachments/901959319719936041/996927812927750264/chrome_2WOKI6Jm3v.gif",
+	"https://cdn.discordapp.com/attachments/749030987530502197/980338691706880051/79587A35-FD36-41D3-8232-7A29B46D2543.gif",
+}
+var errorImagesIndex = 0
+
 func renderTemplate(c *gin.Context, filename string, data gin.H) {
 	tmpl, err := template.ParseFiles(filename)
 	if err != nil {
@@ -39,7 +46,7 @@ func handleError(c *gin.Context, errorMsg string, errorImageUrl string) {
 }
 
 func handleDiscordEmbed(c *gin.Context, authorName string, caption string, details extracting.Counts, filename string) {
-	detailsString := "❤️" + details.Likes + " | 💬" + details.Comments + " | 🔁" + details.Shares + " | ⭐" + details.Favorited
+	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorited
 	renderTemplate(c, "discord.html", gin.H{
 		"authorName": authorName,
 		"caption":    caption,
@@ -49,23 +56,15 @@ func handleDiscordEmbed(c *gin.Context, authorName string, caption string, detai
 }
 
 func handleVideoDiscordEmbed(c *gin.Context, authorName string, caption string, details extracting.Counts, filename string, width string, height string) {
-	detailsString := "❤️" + details.Likes + " | 💬" + details.Comments + " | 🔁" + details.Shares + " | ⭐" + details.Favorited
+	detailsString := "❤️" + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorited
 	renderTemplate(c, "video.html", gin.H{
 		"authorName": authorName,
-		"caption":    caption,
 		"details":    detailsString,
 		"videoUrl":   domain + "/" + filename,
 		"width":      width,
 		"height":     height,
 	})
 }
-
-var errorImages = []string{
-	"https://media.discordapp.net/attachments/961445186280509451/980132677338423316/fuckmedaddyharderohyeailovecokcimsocissyfemboy.gif",
-	"https://media.discordapp.net/attachments/901959319719936041/996927812927750264/chrome_2WOKI6Jm3v.gif",
-	"https://cdn.discordapp.com/attachments/749030987530502197/980338691706880051/79587A35-FD36-41D3-8232-7A29B46D2543.gif",
-}
-var errorImagesIndex = 0
 
 func isInvalidIntStr(str string, min, max int) bool {
 	intValue, err := strconv.Atoi(str)
