@@ -3,7 +3,6 @@ package collaging
 import (
 	"fmt"
 	"os/exec"
-	"strings"
 )
 
 func MakeCollage(inputDir string, outputPath string, width string, initHeight string) error {
@@ -33,16 +32,4 @@ func MakeVideo(collagePath string, inputDir string, outputPath string) error {
 	}
 	//fmt.Println(string(out))
 	return nil
-}
-
-func GetVideoDimensions(filename string) (string, string, error) {
-	out, err := exec.Command("ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=s=x:p=0", filename).Output()
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println(string(out))
-		return "", "", err
-	}
-	// e.g  1024x348 so we split on x and take the first element
-	dimensions := strings.Split(string(out), "x")
-	return dimensions[0], dimensions[1], nil
 }

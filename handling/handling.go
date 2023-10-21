@@ -38,6 +38,42 @@ func renderTemplate(c *gin.Context, filename string, data gin.H) {
 		handleError(c, err.Error(), errorImages[errorImagesIndexInt()])
 	}
 }
+
+func isInvalidIntStr(str string, min, max int) bool {
+	intValue, err := strconv.Atoi(str)
+	return err != nil || intValue < min || intValue > max
+}
+
+func validateURL(url string) bool {
+	if url == "" {
+		return false
+	}
+	if !strings.Contains(url, "vm.tiktxk.com") && !strings.Contains(url, "vm.tiktok.com") {
+		return false
+	}
+	return true
+}
+
+func errorImagesIndexInt() int {
+	if errorImagesIndex == 2 {
+		errorImagesIndex = 0
+	} else {
+		errorImagesIndex++
+	}
+	return errorImagesIndex
+}
+
+func checkValues(width string, initHeight string) (string, string) {
+	if width == "" || isInvalidIntStr(width, 256, 4096) {
+		width = "2048"
+	}
+
+	if initHeight == "" || isInvalidIntStr(initHeight, 128, 1024) {
+		initHeight = "128"
+	}
+	return width, initHeight
+}
+
 func handleError(c *gin.Context, errorMsg string, errorImageUrl string) {
 	renderTemplate(c, "error.html", gin.H{
 		"error":           errorMsg,
@@ -64,11 +100,6 @@ func handleVideoDiscordEmbed(c *gin.Context, authorName string, caption string, 
 		"width":      width,
 		"height":     height,
 	})
-}
-
-func isInvalidIntStr(str string, min, max int) bool {
-	intValue, err := strconv.Atoi(str)
-	return err != nil || intValue < min || intValue > max
 }
 
 func HandleIndex(c *gin.Context) {
@@ -114,35 +145,6 @@ func HandleIndex(c *gin.Context) {
 	})
 }
 
-func validateURL(url string) bool {
-	if url == "" {
-		return false
-	}
-	if !strings.Contains(url, "vm.tiktxk.com") && !strings.Contains(url, "vm.tiktok.com") {
-		return false
-	}
-	return true
-}
-
-func errorImagesIndexInt() int {
-	if errorImagesIndex == 2 {
-		errorImagesIndex = 0
-	} else {
-		errorImagesIndex++
-	}
-	return errorImagesIndex
-}
-
-func checkValues(width string, initHeight string) (string, string) {
-	if width == "" || isInvalidIntStr(width, 256, 4096) {
-		width = "2048"
-	}
-
-	if initHeight == "" || isInvalidIntStr(initHeight, 128, 1024) {
-		initHeight = "128"
-	}
-	return width, initHeight
-}
 func HandleSoundCollageRequest(c *gin.Context) {
 	tiktokURL := c.Query("v")
 
@@ -171,7 +173,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 	details := extracting.GetVideoDetails(responseBody)
 
 	if _, err := os.Stat("collages/" + filename); err == nil {
-		videoWidth, videoHeight, err := collaging.GetVideoDimensions("collages/video-" + videoID + ".mp4")
+		videoWidth, videoHeight, err := files.GetVideoDimensions("collages/video-" + videoID + ".mp4")
 		if err != nil {
 			handleError(c, "Couldn't get video dimensions", randomErrorImage)
 			return
@@ -217,7 +219,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
-	videoWidth, videoHeight, err := collaging.GetVideoDimensions("collages/video-" + videoID + ".mp4")
+	videoWidth, videoHeight, err := files.GetVideoDimensions("collages/video-" + videoID + ".mp4")
 	if err != nil {
 		handleError(c, "Couldn't get video dimensions", randomErrorImage)
 		return
@@ -298,6 +300,7 @@ func HandleRequest(c *gin.Context) {
 	os.RemoveAll(videoID)
 
 }
+
 func HandleDirectCollage(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
@@ -314,6 +317,7 @@ func HandleDirectCollage(c *gin.Context) {
 	c.File("collages/" + filename)
 
 }
+
 func HandleDirectVideo(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {

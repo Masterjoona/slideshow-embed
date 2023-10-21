@@ -3,7 +3,9 @@ package files
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 func CreateDirectory(directory string) error {
@@ -59,4 +61,16 @@ func FormatSize(size int64) string {
 	default:
 		return fmt.Sprintf("%d bytes", size)
 	}
+}
+
+func GetVideoDimensions(filename string) (string, string, error) {
+	out, err := exec.Command("ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=s=x:p=0", filename).Output()
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println(string(out))
+		return "", "", err
+	}
+	// e.g  1024x348 so we split on x and take the first element
+	dimensions := strings.Split(string(out), "x")
+	return dimensions[0], dimensions[1], nil
 }

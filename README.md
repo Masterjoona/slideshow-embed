@@ -46,6 +46,7 @@ DOMAIN='YOUR_DOMAIN_HERE' GIN_MODE=release ./meow
 https://github.com/Masterjoona/slideshow-embed/assets/69722179/4e089e52-217b-4eda-b053-967d1522d6de
 
 *Yes it is kinda slow but I really cannot affect that*
+You can use `w` or `h` query params to change the width and height of the image. *The algorithm might still change the size a bit*
 
 ## notes
 this is a beginner project so there might some insane design choices ![trolley](https://cdn.discordapp.com/emojis/1068825486265942056.webp?size=48&name=trolley&quality=lossless) 
