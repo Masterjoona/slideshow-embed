@@ -93,6 +93,7 @@ func handleDiscordEmbed(c *gin.Context, authorName string, caption string, detai
 
 func handleVideoDiscordEmbed(c *gin.Context, authorName string, caption string, details extracting.Counts, filename string, width string, height string) {
 	detailsString := "❤️" + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorited
+	authorName = strings.Split(authorName, "(@")[0]
 	renderTemplate(c, "video.html", gin.H{
 		"authorName": authorName,
 		"details":    detailsString,
