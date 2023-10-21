@@ -135,11 +135,11 @@ func errorImagesIndexInt() int {
 
 func checkValues(width string, initHeight string) (string, string) {
 	if width == "" || isInvalidIntStr(width, 256, 4096) {
-		width = "1024"
+		width = "2048"
 	}
 
 	if initHeight == "" || isInvalidIntStr(initHeight, 128, 1024) {
-		initHeight = "320"
+		initHeight = "128"
 	}
 	return width, initHeight
 }
@@ -153,7 +153,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
-	width, height := "1024", "320"
+	width, height := "2048", "128"
 
 	videoID, err := extracting.ExtractVideoID(tiktokURL)
 	if err != nil {
