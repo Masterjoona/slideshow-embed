@@ -65,7 +65,7 @@ func DownloadImages(links []string, outputDir string) error {
 		wg.Add(1)
 		go func(i int, url string) {
 			defer wg.Done()
-			if err := downloadImage(url, fmt.Sprintf("%s/%d.jpg", outputDir, i+1)); err != nil {
+			if err := downloadImage(url, fmt.Sprintf("%s/%d.png", outputDir, i+1)); err != nil {
 				log.Printf("error downloading image %s: %v\n", url, err)
 			}
 		}(index, link)

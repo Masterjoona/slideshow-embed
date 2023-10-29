@@ -175,6 +175,9 @@ def makeCollage(
     minRowWidth = min(rowWidths)
     w, h = (minRowWidth, sum(rowHeights) + spacing * (numRows - 1))
 
+    w += w % 2
+    h += h % 2
+
     if background == (0, 0, 0):
         background += tuple([0])
     else:
@@ -192,22 +195,6 @@ def makeCollage(
         continue
 
     return outImg
-
-
-def small_collage(imgList):
-    """
-    Simpler version that takes less than 3 images and returns a collage
-    """
-    images = [Image.open(x) for x in imgList]
-    widths, heights = zip(*(i.size for i in images))
-    total_width = sum(widths)
-    max_height = max(heights)
-    new_im = Image.new("RGB", (total_width, max_height))
-    x_offset = 0
-    for im in images:
-        new_im.paste(im, (x_offset, 0))
-        x_offset += im.size[0]
-    return new_im
 
 
 # modified (significantly) from https://github.com/delimitry/collage_maker
@@ -346,12 +333,12 @@ def main():
                     fname = os.path.join(root, name)
                     images.append(fname)
 
+    """
+    Doesn't seem to matter?
     if len(images) < 3:
-        # print("Need to use 3 or more images. Try again")
-        # return
-        collage = small_collage(images)
-        collage.save("test.png")
-
+        print("Need to use 3 or more images. Try again")
+        return
+    """
     # shuffle images if needed
     if args.shuffle:
         random.shuffle(images)
