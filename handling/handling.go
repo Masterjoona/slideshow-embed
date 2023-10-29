@@ -9,7 +9,6 @@ import (
 	"meow/httputil"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -39,11 +38,6 @@ func renderTemplate(c *gin.Context, filename string, data gin.H) {
 	}
 }
 
-func isInvalidIntStr(str string, min, max int) bool {
-	intValue, err := strconv.Atoi(str)
-	return err != nil || intValue < min || intValue > max
-}
-
 func validateURL(url string) bool {
 	if url == "" {
 		return false
@@ -61,17 +55,6 @@ func errorImagesIndexInt() int {
 		errorImagesIndex++
 	}
 	return errorImagesIndex
-}
-
-func checkValues(width string, initHeight string) (string, string) {
-	if width == "" || isInvalidIntStr(width, 256, 4096) {
-		width = "2048"
-	}
-
-	if initHeight == "" || isInvalidIntStr(initHeight, 128, 1024) {
-		initHeight = "128"
-	}
-	return width, initHeight
 }
 
 func handleError(c *gin.Context, errorMsg string, errorImageUrl string) {
@@ -156,8 +139,6 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
-	width, height := "2048", "128"
-
 	videoID, err := extracting.ExtractVideoID(tiktokURL)
 	if err != nil {
 		handleError(c, "Invalid url", randomErrorImage)
@@ -207,13 +188,13 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
-	err = collaging.MakeCollage(videoID, "collage-"+videoID+".jpg", width, height)
+	err = collaging.MakeCollage(videoID, "collage-"+videoID+".png")
 	if err != nil {
 		handleError(c, "Couldn't make collage", randomErrorImage)
 		return
 	}
 
-	err = collaging.MakeVideo("collages/collage-"+videoID+".jpg", videoID, filename)
+	err = collaging.MakeVideo("collages/collage-"+videoID+".png", videoID, filename)
 	if err != nil {
 		fmt.Println(err)
 		handleError(c, "Couldn't make video", randomErrorImage)
@@ -232,8 +213,6 @@ func HandleSoundCollageRequest(c *gin.Context) {
 func HandleRequest(c *gin.Context) {
 	startTime := time.Now()
 	tiktokURL := c.Query("v")
-	width := c.Query("w")
-	initHeight := c.Query("h")
 	debug := c.Query("d")
 
 	randomErrorImage := errorImages[errorImagesIndexInt()]
@@ -242,7 +221,6 @@ func HandleRequest(c *gin.Context) {
 		handleError(c, "Invalid url", randomErrorImage)
 		return
 	}
-	width, initHeight = checkValues(width, initHeight)
 
 	videoID, err := extracting.ExtractVideoID(tiktokURL)
 	if err != nil {
@@ -250,7 +228,7 @@ func HandleRequest(c *gin.Context) {
 		return
 	}
 
-	filename := "collage-" + videoID + ".jpg"
+	filename := "collage-" + videoID + ".png"
 	authorName, caption, responseBody, err := extracting.GetVideoAuthorAndCaption(tiktokURL, videoID)
 	if err != nil {
 		handleError(c, "Couldn't get video author and caption. Is the video available?", randomErrorImage)
@@ -280,7 +258,7 @@ func HandleRequest(c *gin.Context) {
 		return
 	}
 
-	err = collaging.MakeCollage(videoID, filename, width, initHeight)
+	err = collaging.MakeCollage(videoID, filename)
 	if err != nil {
 		handleError(c, "Couldn't make collage", randomErrorImage)
 		return

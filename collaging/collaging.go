@@ -5,13 +5,13 @@ import (
 	"os/exec"
 )
 
-func MakeCollage(inputDir string, outputPath string, width string, initHeight string) error {
+func MakeCollage(inputDir string, outputPath string) error {
 	// kek because im an idiot we will call a python script to do this
 	// you're welcome of course to rewrite this in go if you feel
 	// like helping an idiot out
 	output := "collages/" + outputPath
-	//fmt.Println("python3", "collage_maker.py", "-f", inputDir, "-o", output, "-w", width, "-i", initHeight)
-	out, err := exec.Command("python3", "collage_maker.py", "-f", inputDir, "-o", output, "-w", width, "-i", initHeight).Output()
+
+	out, err := exec.Command("python3", "collage_maker.py", "-f", inputDir, "-o", output).Output()
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println(string(out))
