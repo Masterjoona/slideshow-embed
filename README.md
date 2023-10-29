@@ -21,6 +21,7 @@ Changing the false to true will install ffmpeg and allow you to use the video co
 docker build --build-arg INSTALL_FFMPEG=false -t <container_name> .
 docker run -d -e DOMAIN='YOUR_DOMAIN_HERE' -p 4232:4232 -v /path/to/your/collages/:/app/collages/ <container_name>
 ```
+*It will error if you don't add a domain*
 
 Basic reverse proxy config for nginx
 ```nginx
@@ -43,14 +44,17 @@ DOMAIN='YOUR_DOMAIN_HERE' GIN_MODE=release ./meow
 ## What does it look like?
 
 
-https://github.com/Masterjoona/slideshow-embed/assets/69722179/4e089e52-217b-4eda-b053-967d1522d6de
+https://github.com/Masterjoona/slideshow-embed/assets/69722179/cb07845d-851d-4cc1-97ed-badf80c37faa
 
 *Yes it is kinda slow but I really cannot affect that*
-You can use `w` or `h` query params to change the width and height of the image. *The algorithm might still change the size a bit*
+
 
 ## notes
 this is a beginner project so there might some insane design choices ![trolley](https://cdn.discordapp.com/emojis/1068825486265942056.webp?size=48&name=trolley&quality=lossless) 
-One such example is calling [this](https://github.com/delimitry/collage_maker) python script to make the collages
+
+One such example is calling [this](https://github.com/twilsonco/PyPhotoCollage) python script to make the collages
+
+Massive thanks to [Dmitry Alimov](https://github.com/delimitry) and [Tim Wilson](https://github.com/twilsonco) for making the insane maths for the collaging script!!!
 
 ## contributing
 
