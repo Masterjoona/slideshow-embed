@@ -1,21 +1,18 @@
-FROM golang:1.20
+FROM arm64v8/alpine
+
+RUN apk --no-cache add ca-certificates curl bash xz-libs git gcompat python3 py3-pip
+
+WORKDIR /tmp
+RUN curl -L -O https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz
+RUN tar -xf ffmpeg-release-arm64-static.tar.xz && cd ff* && mv ff* /usr/local/bin
 
 WORKDIR /app
 
-COPY . /app
-ARG INSTALL_FFMPEG
-
-RUN apt -y update
-RUN apt -y upgrade
-RUN apt install -y python3-pip
-RUN apt install -y python3-dev
-RUN if [ "$INSTALL_FFMPEG" = "true" ] ; then apt install -y ffmpeg ; fi
+COPY ./meow /app
+COPY templates /app/templates
+COPY collage_maker.py /app/collage_maker.py
 RUN pip install pillow --break-system-packages
 
-
-RUN go mod download
-RUN go build main.go
 ENV GIN_MODE=release
-
 EXPOSE 4232
-CMD ["./main"]
+CMD ["./meow"]

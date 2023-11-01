@@ -2,12 +2,18 @@ package config
 
 import (
 	"os"
+	"os/exec"
 )
 
 var Domain string
 var Public bool
 var Port string
 var IsffmpegInstalled bool
+
+func checkBinary(bin string) bool {
+	_, err := exec.LookPath(bin)
+	return err == nil
+}
 
 func init() {
 	Domain = os.Getenv("DOMAIN")
@@ -19,12 +25,7 @@ func init() {
 		Port = ":" + Port
 	}
 
-	_, err := os.Stat("/usr/bin/ffmpeg")
-	if err == nil {
-		IsffmpegInstalled = true
-	} else {
-		IsffmpegInstalled = false
-	}
+	IsffmpegInstalled = checkBinary("/usr/bin/ffmpeg") || checkBinary("/usr/local/bin/ffmpeg")
 
 	if os.Getenv("FFMPEG") == "true" {
 		IsffmpegInstalled = true
