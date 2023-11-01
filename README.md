@@ -10,8 +10,9 @@ Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Brit
 | `PORT`              | 4232          | What port it is on |
 | `PUBLIC`            | false         | If the index page is public  |
 
-> [!NOTE]
-> This program will check if `/usr/bin/ffmpeg` exists, if it does, it will enable the sound route. You can override this behaviour by using `FFMPEG` environment var. (You can also set this to true, if ffmpeg is not in `/usr/bin`)
+> [!IMPORTANT] 
+> This program will check if `/usr/bin/ffmpeg` or `/usr/local/bin/ffmpeg` exists, if it does, it will enable the sound route. You can override this behaviour by using `FFMPEG` environment var. (You can also set this to true, if ffmpeg is not in those paths)
+> Since my vps is an arm machine I use an arm build of ffmpeg, you will have to change the files in `Dockerfile` to something from [here](https://johnvansickle.com/ffmpeg/)
 
 ### Dockerfile
 Clone this repo and `cd` into it. 
