@@ -175,13 +175,16 @@ def makeCollage(
     minRowWidth = min(rowWidths)
     w, h = (minRowWidth, sum(rowHeights) + spacing * (numRows - 1))
 
-    w += w % 2
-    h += h % 2
+    if w % 2 != 0:
+        w += 1
+    if h % 2 != 0:
+        h += 1
 
     if background == (0, 0, 0):
         background += tuple([0])
     else:
         background += tuple([255])
+
     outImg = Image.new("RGBA", (w, h), background)
     xPos, yPos = (0, 0)
 
@@ -343,8 +346,7 @@ def main():
     if args.shuffle:
         random.shuffle(images)
     else:
-        images.sort()  # by filename
-
+        images = sorted(images, key=lambda x: int(x.split("/")[1].split(".")[0]))
     if args.count > 2:
         images = images[: args.count]
 

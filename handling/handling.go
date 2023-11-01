@@ -26,7 +26,7 @@ var errorImages = []string{
 var errorImagesIndex = 0
 
 func renderTemplate(c *gin.Context, filename string, data gin.H) {
-	tmpl, err := template.ParseFiles(filename)
+	tmpl, err := template.ParseFiles("templates/" + filename)
 	if err != nil {
 		handleError(c, err.Error(), errorImages[errorImagesIndexInt()])
 		return
