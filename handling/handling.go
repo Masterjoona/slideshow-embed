@@ -188,13 +188,13 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
-	err = collaging.MakeCollage(videoID, "collage-"+videoID+".png")
+	err = collaging.MakeCollage(videoID, "collage-"+videoID+".jpg")
 	if err != nil {
 		handleError(c, "Couldn't make collage", randomErrorImage)
 		return
 	}
 
-	err = collaging.MakeVideo("collages/collage-"+videoID+".png", videoID, filename)
+	err = collaging.MakeVideo("collages/collage-"+videoID+".jpg", videoID, filename)
 	if err != nil {
 		fmt.Println(err)
 		handleError(c, "Couldn't make video", randomErrorImage)
@@ -228,7 +228,7 @@ func HandleRequest(c *gin.Context) {
 		return
 	}
 
-	filename := "collage-" + videoID + ".png"
+	filename := "collage-" + videoID + ".jpg"
 	authorName, caption, responseBody, err := extracting.GetVideoAuthorAndCaption(tiktokURL, videoID)
 	if err != nil {
 		handleError(c, "Couldn't get video author and caption. Is the video available?", randomErrorImage)
@@ -277,7 +277,6 @@ func HandleRequest(c *gin.Context) {
 
 	handleDiscordEmbed(c, authorName, caption, details, filename)
 	os.RemoveAll(videoID)
-
 }
 
 func HandleDirectCollage(c *gin.Context) {

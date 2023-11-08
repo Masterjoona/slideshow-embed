@@ -75,7 +75,7 @@ func GetVideoAuthorAndCaption(url string, videoID string) (string, string, strin
 	if len(caption) != 0 {
 		captionText = caption[1]
 	} else {
-		captionText = "No caption"
+		captionText = ""
 	}
 
 	if len(possibleTitle) != 0 {
