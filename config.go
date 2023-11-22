@@ -1,4 +1,4 @@
-package config
+package main
 
 import (
 	"os"
@@ -9,15 +9,18 @@ var Domain string
 var Public bool
 var Port string
 var IsffmpegInstalled bool
+var FancySlideshow bool
 
 func checkBinary(bin string) bool {
 	_, err := exec.LookPath(bin)
 	return err == nil
 }
 
-func init() {
+func InitEnvs() {
 	Domain = os.Getenv("DOMAIN")
 	Public = os.Getenv("PUBLIC") == "true"
+	FancySlideshow = os.Getenv("FANCY_SLIDESHOW") == "true"
+
 	if Port = os.Getenv("PORT"); Port == "" {
 		Port = "4232"
 	}
@@ -32,4 +35,5 @@ func init() {
 	} else if os.Getenv("FFMPEG") == "false" {
 		IsffmpegInstalled = false
 	}
+
 }

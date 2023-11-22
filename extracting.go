@@ -1,9 +1,9 @@
-package extracting
+package main
 
 import (
 	"fmt"
-	"meow/httputil"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -50,7 +50,7 @@ func ExtractVideoID(url string) (string, error) {
 }
 
 func GetVideoAuthorAndCaption(url string, videoID string) (string, string, string, error) {
-	responseBody, err := httputil.FetchResponseBody(url)
+	responseBody, err := FetchResponseBody(url)
 
 	if err != nil {
 		return "", "", "", err
@@ -103,6 +103,23 @@ type Counts struct {
 	Comments  string
 	Favorited string
 	Shares    string
+	Views     string
+}
+
+func formatViews(views int) string {
+	const (
+		million  = 1000000
+		thousand = 1000
+	)
+
+	switch {
+	case views >= million:
+		return fmt.Sprintf("%.1fM", float64(views)/million)
+	case views >= thousand:
+		return fmt.Sprintf("%.1fK", float64(views)/thousand)
+	default:
+		return fmt.Sprintf("%d", views)
+	}
 }
 
 func GetVideoDetails(responseBody string) Counts {
@@ -110,11 +127,28 @@ func GetVideoDetails(responseBody string) Counts {
 	commentsCount := extractCount(responseBody, "comment-count")
 	favoritedCount := extractCount(responseBody, "undefined-count") // undefined-count lmao
 	sharesCount := extractCount(responseBody, "share-count")
+	playCountRegex := regexp.MustCompile(`,"commentCount":(?:[0-9]*),"playCount":([0-9]*),"collectCount":`)
 
+	views := playCountRegex.FindStringSubmatch(responseBody)
+	viewsGroup := views[1]
+	actualViews, err := strconv.Atoi(viewsGroup)
+
+	if err != nil {
+		return Counts{
+			Likes:     likesCount,
+			Comments:  commentsCount,
+			Favorited: favoritedCount,
+			Shares:    sharesCount,
+			Views:     "nuh uh",
+		}
+	}
+
+	viewsFormatted := formatViews(actualViews)
 	return Counts{
 		Likes:     likesCount,
 		Comments:  commentsCount,
 		Favorited: favoritedCount,
 		Shares:    sharesCount,
+		Views:     viewsFormatted,
 	}
 }

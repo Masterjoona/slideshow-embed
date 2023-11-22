@@ -36,6 +36,8 @@ import random
 import math
 from PIL import ImageOps
 from PIL import Image
+from typing import List, Optional
+import io
 
 # got idea from https://medium.com/@jtreitz/the-algorithm-for-a-perfectly-balanced-photo-gallery-914c94a5d8af
 
@@ -306,9 +308,21 @@ def main():
         action="store_false",
         help="disable antialiasing on intermediate resizing of images (runs faster but output image looks worse; final resize is always antialiased)",
     )
+    parse.add_argument(
+        "-resize",
+        "--resize-images",
+        dest="resize",
+        action="store_true",
+        help="resize images to the same size",
+    )
     parse.add_argument("files", nargs="*")
 
     args = parse.parse_args()
+
+    if args.resize:
+        resize_images(args.folder)
+        return
+
     if not args.file and not args.folder and not args.files:
         parse.print_help()
         exit(1)
@@ -346,7 +360,7 @@ def main():
     if args.shuffle:
         random.shuffle(images)
     else:
-        images = sorted(images, key=lambda x: int(x.split("/")[1].split(".")[0]))
+        images = sorted(images, key=lambda x: int(x.split("/")[1].split(".jpg")[0]))
     if args.count > 2:
         images = images[: args.count]
 
@@ -413,11 +427,117 @@ def main():
         pass
 
     output = args.output
-    if output == "collage.png":
-        output = images[0] + ".collage.png"
-    collage.save(output)
+    level = 0
+    collage.save(
+        output, compression_level=level
+    )  # https://stackoverflow.com/a/74468352
 
-    print(f"Collage is ready at {output}!")
+    print(f"Collage is ready at {output}! comp level: {level}")
+
+
+class SlideshowImageDimensions:
+    def __init__(self):
+        self.maxWidth = 0
+        self.maxHeight = 0
+
+
+def getImageDimensions(buffers: List[bytes]) -> SlideshowImageDimensions:
+    dimensions = SlideshowImageDimensions()
+
+    for buffer in buffers:
+        image = Image.open(io.BytesIO(buffer))
+        width, height = image.size
+
+        if not width or not height:
+            raise Exception("Could not get image dimensions")
+
+        if width > dimensions.maxWidth:
+            dimensions.maxWidth = width
+
+        if height > dimensions.maxHeight:
+            dimensions.maxHeight = height
+    return dimensions
+
+
+"""
+The MIT License (MIT)
+
+Copyright (c) 2014-2015 vingtcinq.io
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+https://github.com/VingtCinq/python-resize-image/blob/9c9a1f6d61abf3f5072ca0934963fcd75ed24c08/LICENSE
+
+Kanged from https://github.com/VingtCinq/python-resize-image/blob/9c9a1f6d61abf3f5072ca0934963fcd75ed24c08/resizeimage/resizeimage.py#L98-L114
+"""
+
+
+def resize_contain(image, size, resample=Image.LANCZOS, bg_color=(255, 255, 255, 0)):
+    """
+    Resize image according to size.
+    image:      a Pillow image instance
+    size:       a list of two integers [width, height]
+    """
+    img_format = image.format
+    img = image.copy()
+    img.thumbnail((size[0], size[1]), resample)
+    background = Image.new("RGBA", (size[0], size[1]), bg_color)
+    img_position = (
+        int(math.ceil((size[0] - img.size[0]) / 2)),
+        int(math.ceil((size[1] - img.size[1]) / 2)),
+    )
+    background.paste(img, img_position)
+    background.format = img_format
+    return background.convert("RGBA")
+
+
+def resize_images(path):
+    # get amount of images
+    images = []
+    for root, _, files in os.walk(path):
+        for name in files:
+            if re.findall("jpg|png|jpeg", name.split(".")[-1]):
+                fname = os.path.join(root, name)
+                images.append(fname)
+    width, heigth = 0, 0
+    images_buffer = []
+    for i in range(1, len(images) + 1):
+        with open(f"{path}/{i}.jpg", "rb") as f:
+            images_buffer.append(f.read())
+    dimensions = getImageDimensions(images_buffer)
+    width = dimensions.maxWidth
+    heigth = dimensions.maxHeight
+
+    if width % 2 != 0:
+        width += 1
+    if heigth % 2 != 0:
+        heigth += 1
+
+    for i in range(1, len(images) + 1):
+        with open(f"{path}/{i}.jpg", "r+b") as f:
+            with Image.open(f) as image:
+                cover = resize_contain(
+                    image,
+                    [width, heigth],
+                    resample=Image.LANCZOS,
+                    bg_color=(0, 0, 0),
+                )
+                cover.convert("RGB").save(f"{path}/{i}.jpg", "JPEG")
 
 
 if __name__ == "__main__":

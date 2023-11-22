@@ -1,12 +1,7 @@
-package handling
+package main
 
 import (
 	"fmt"
-	"meow/collaging"
-	"meow/config"
-	"meow/extracting"
-	"meow/files"
-	"meow/httputil"
 	"os"
 	"sort"
 	"strings"
@@ -15,8 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
-
-var domain = config.Domain
 
 var errorImages = []string{
 	"https://media.discordapp.net/attachments/961445186280509451/980132677338423316/fuckmedaddyharderohyeailovecokcimsocissyfemboy.gif",
@@ -64,30 +57,30 @@ func handleError(c *gin.Context, errorMsg string, errorImageUrl string) {
 	})
 }
 
-func handleDiscordEmbed(c *gin.Context, authorName string, caption string, details extracting.Counts, filename string) {
+func handleDiscordEmbed(c *gin.Context, authorName string, caption string, details Counts, filename string) {
 	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorited
 	renderTemplate(c, "discord.html", gin.H{
 		"authorName": authorName,
 		"caption":    caption,
 		"details":    detailsString,
-		"imageUrl":   domain + "/" + filename,
+		"imageUrl":   Domain + "/" + filename,
 	})
 }
 
-func handleVideoDiscordEmbed(c *gin.Context, authorName string, caption string, details extracting.Counts, filename string, width string, height string) {
+func handleVideoDiscordEmbed(c *gin.Context, authorName string, caption string, details Counts, filename string, width string, height string) {
 	detailsString := "❤️" + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorited
 	authorName = strings.Split(authorName, "(@")[0]
 	renderTemplate(c, "video.html", gin.H{
 		"authorName": authorName,
 		"details":    detailsString,
-		"videoUrl":   domain + "/" + filename,
+		"videoUrl":   Domain + "/" + filename,
 		"width":      width,
 		"height":     height,
 	})
 }
 
 func HandleIndex(c *gin.Context) {
-	if !config.Public {
+	if !Public {
 		renderTemplate(c, "index.html", gin.H{
 			"FileLinks": nil,
 			"count":     "0",
@@ -112,12 +105,12 @@ func HandleIndex(c *gin.Context) {
 	})
 
 	for index, file := range collageFiles {
-		filePaths[index] = domain + "/" + file.Name()
+		filePaths[index] = Domain + "/" + file.Name()
 		count++
 	}
 
-	bytes, err := files.GetDirectorySize("collages")
-	size := files.FormatSize(bytes)
+	bytes, err := GetDirectorySize("collages")
+	size := FormatSize(bytes)
 	if err != nil {
 		handleError(c, err.Error(), errorImages[errorImagesIndexInt()])
 		return
@@ -139,74 +132,74 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
-	videoID, err := extracting.ExtractVideoID(tiktokURL)
+	videoID, err := ExtractVideoID(tiktokURL)
 	if err != nil {
 		handleError(c, "Invalid url", randomErrorImage)
 		return
 	}
 
 	filename := "video-" + videoID + ".mp4"
-	authorName, caption, responseBody, err := extracting.GetVideoAuthorAndCaption(tiktokURL, videoID)
+	authorName, caption, responseBody, err := GetVideoAuthorAndCaption(tiktokURL, videoID)
 	if err != nil {
 		handleError(c, "Couldn't get video author and caption. Is the video available?", randomErrorImage)
 		return
 	}
 
-	details := extracting.GetVideoDetails(responseBody)
+	details := GetVideoDetails(responseBody)
 
 	if _, err := os.Stat("collages/" + filename); err == nil {
-		videoWidth, videoHeight, err := files.GetVideoDimensions("collages/video-" + videoID + ".mp4")
+		videoWidth, videoHeight, err := GetVideoDimensions("collages/" + filename)
 		if err != nil {
 			handleError(c, "Couldn't get video dimensions", randomErrorImage)
 			return
 		}
-		handleVideoDiscordEmbed(c, authorName, caption, details, "video-"+videoID+".mp4", videoWidth, videoHeight)
+		handleVideoDiscordEmbed(c, authorName, caption, details, filename, videoWidth, videoHeight)
 		return
 	}
 
-	links, err := extracting.ExtractImageLinks(responseBody)
+	links, err := ExtractImageLinks(responseBody)
 	if err != nil {
 		handleError(c, "Couldn't get image links", randomErrorImage)
 		return
 	}
 
-	err = httputil.DownloadImages(links, videoID)
+	err = DownloadImages(links, videoID)
 	if err != nil {
 		handleError(c, "Couldn't download images", randomErrorImage)
 		return
 	}
 
-	audioLink, err := extracting.ExtractAudioLink(responseBody)
+	audioLink, err := ExtractAudioLink(responseBody)
 	if err != nil {
 		handleError(c, "Couldn't get audio link", randomErrorImage)
 		return
 	}
 
-	err = httputil.DownloadAudio(audioLink, "audio.mp3", videoID)
+	err = DownloadAudio(audioLink, "audio.mp3", videoID)
 	if err != nil {
 		handleError(c, "Couldn't download audio", randomErrorImage)
 		return
 	}
 
-	err = collaging.MakeCollage(videoID, "collage-"+videoID+".jpg")
+	err = MakeCollage(videoID, "collage-"+videoID+".png")
 	if err != nil {
 		handleError(c, "Couldn't make collage", randomErrorImage)
 		return
 	}
 
-	err = collaging.MakeVideo("collages/collage-"+videoID+".jpg", videoID, filename)
+	err = MakeVideo("collages/collage-"+videoID+".png", videoID, filename)
 	if err != nil {
 		fmt.Println(err)
 		handleError(c, "Couldn't make video", randomErrorImage)
 		return
 	}
 
-	videoWidth, videoHeight, err := files.GetVideoDimensions("collages/video-" + videoID + ".mp4")
+	videoWidth, videoHeight, err := GetVideoDimensions("collages/" + filename)
 	if err != nil {
 		handleError(c, "Couldn't get video dimensions", randomErrorImage)
 		return
 	}
-	handleVideoDiscordEmbed(c, authorName, caption, details, "video-"+videoID+".mp4", videoWidth, videoHeight)
+	handleVideoDiscordEmbed(c, authorName, caption, details, filename, videoWidth, videoHeight)
 	os.RemoveAll(videoID)
 }
 
@@ -222,20 +215,20 @@ func HandleRequest(c *gin.Context) {
 		return
 	}
 
-	videoID, err := extracting.ExtractVideoID(tiktokURL)
+	videoID, err := ExtractVideoID(tiktokURL)
 	if err != nil {
 		handleError(c, "Invalid url", randomErrorImage)
 		return
 	}
 
-	filename := "collage-" + videoID + ".jpg"
-	authorName, caption, responseBody, err := extracting.GetVideoAuthorAndCaption(tiktokURL, videoID)
+	filename := "collage-" + videoID + ".png"
+	authorName, caption, responseBody, err := GetVideoAuthorAndCaption(tiktokURL, videoID)
 	if err != nil {
 		handleError(c, "Couldn't get video author and caption. Is the video available?", randomErrorImage)
 		return
 	}
 
-	details := extracting.GetVideoDetails(responseBody)
+	details := GetVideoDetails(responseBody)
 
 	if _, err := os.Stat("collages/" + filename); err == nil {
 		if debug == "true" {
@@ -246,19 +239,19 @@ func HandleRequest(c *gin.Context) {
 		return
 	}
 
-	links, err := extracting.ExtractImageLinks(responseBody)
+	links, err := ExtractImageLinks(responseBody)
 	if err != nil {
 		handleError(c, "Couldn't get image links", randomErrorImage)
 		return
 	}
 
-	err = httputil.DownloadImages(links, videoID)
+	err = DownloadImages(links, videoID)
 	if err != nil {
 		handleError(c, "Couldn't download images", randomErrorImage)
 		return
 	}
 
-	err = collaging.MakeCollage(videoID, filename)
+	err = MakeCollage(videoID, filename)
 	if err != nil {
 		handleError(c, "Couldn't make collage", randomErrorImage)
 		return
@@ -266,16 +259,96 @@ func HandleRequest(c *gin.Context) {
 
 	if debug == "true" || debug == "1" {
 		elapsed := time.Since(startTime)
-		filesizeBytes, err := files.GetFileSize("collages/" + filename)
+		filesizeBytes, err := GetFileSize("collages/" + filename)
 		if err != nil {
 			handleError(c, "Couldn't get filesize", randomErrorImage)
 			return
 		}
-		filesize := files.FormatSize(filesizeBytes)
+		filesize := FormatSize(filesizeBytes)
 		caption = caption + " | Took " + elapsed.String() + " | " + filesize
 	}
 
 	handleDiscordEmbed(c, authorName, caption, details, filename)
+	os.RemoveAll(videoID)
+}
+
+func HandleFancySlideshowRequest(c *gin.Context) {
+	tiktokURL := c.Query("v")
+
+	randomErrorImage := errorImages[errorImagesIndexInt()]
+
+	if !validateURL(tiktokURL) {
+		handleError(c, "Invalid url", randomErrorImage)
+		return
+	}
+
+	videoID, err := ExtractVideoID(tiktokURL)
+	if err != nil {
+		handleError(c, "Invalid url", randomErrorImage)
+		return
+	}
+
+	filename := "slide-" + videoID + ".mp4"
+	authorName, caption, responseBody, err := GetVideoAuthorAndCaption(tiktokURL, videoID)
+	if err != nil {
+		handleError(c, "Couldn't get video author and caption. Is the video available?", randomErrorImage)
+		return
+	}
+
+	details := GetVideoDetails(responseBody)
+
+	if _, err := os.Stat("collages/" + filename); err == nil {
+		videoWidth, videoHeight, err := GetVideoDimensions("collages/" + filename)
+		if err != nil {
+			handleError(c, "Couldn't get video dimensions", randomErrorImage)
+			return
+		}
+		handleVideoDiscordEmbed(c, authorName, caption, details, filename, videoWidth, videoHeight)
+		return
+	}
+
+	links, err := ExtractImageLinks(responseBody)
+	if err != nil {
+		handleError(c, "Couldn't get image links", randomErrorImage)
+		return
+	}
+
+	err = DownloadImages(links, videoID)
+	if err != nil {
+		handleError(c, "Couldn't download images", randomErrorImage)
+		return
+	}
+
+	audioLink, err := ExtractAudioLink(responseBody)
+	if err != nil {
+		handleError(c, "Couldn't get audio link", randomErrorImage)
+		return
+	}
+
+	err = DownloadAudio(audioLink, "audio.mp3", videoID)
+	if err != nil {
+		handleError(c, "Couldn't download audio", randomErrorImage)
+		return
+	}
+
+	err = MakeCollage(videoID, "collage-"+videoID+".png")
+	if err != nil {
+		handleError(c, "Couldn't make collage", randomErrorImage)
+		return
+	}
+
+	err = MakeVideoSlideshow(videoID, filename)
+	if err != nil {
+		handleError(c, "Couldn't make slideshow video", randomErrorImage)
+		return
+	}
+
+	videoWidth, videoHeight, err := GetVideoDimensions("collages/slide-" + videoID + ".mp4")
+	if err != nil {
+		handleError(c, "Couldn't get video dimensions", randomErrorImage)
+		return
+	}
+	handleVideoDiscordEmbed(c, authorName, caption, details, "slide-"+videoID+".mp4", videoWidth, videoHeight)
 	os.RemoveAll(videoID)
 }
 
@@ -304,6 +377,22 @@ func HandleDirectVideo(c *gin.Context) {
 	}
 
 	filename := "video-" + id
+	if _, err := os.Stat("collages/" + filename); err != nil {
+		handleError(c, "Collage not found", errorImages[errorImagesIndexInt()])
+		return
+	}
+
+	c.File("collages/" + filename)
+}
+
+func HandleDirectFancyCollage(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		handleError(c, "No id provided", errorImages[errorImagesIndexInt()])
+		return
+	}
+
+	filename := "slide-" + id
 	if _, err := os.Stat("collages/" + filename); err != nil {
 		handleError(c, "Collage not found", errorImages[errorImagesIndexInt()])
 		return

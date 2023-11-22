@@ -1,10 +1,9 @@
-package httputil
+package main
 
 import (
 	"fmt"
 	"io"
 	"log"
-	"meow/files"
 	"net/http"
 	"os"
 	"strings"
@@ -55,7 +54,7 @@ func downloadImage(url, outputPath string) error {
 func DownloadImages(links []string, outputDir string) error {
 	var wg sync.WaitGroup
 	photoIds := make(map[string]bool)
-	files.CreateDirectory(outputDir)
+	CreateDirectory(outputDir)
 	for index, link := range links {
 		photoID := strings.Split(strings.Split(link, "/")[4], "~")[0]
 		if photoIds[photoID] {

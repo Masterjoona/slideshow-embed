@@ -9,6 +9,8 @@ Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Brit
 | `DOMAIN`            | YOUR DOMAIN   | The domain where it will serve  |
 | `PORT`              | 4232          | What port it is on |
 | `PUBLIC`            | false         | If the index page is public  |
+| `FFMPEG`            | ?         | read important below  |
+| `FANCY_SLIDESHOW`   | false         | If the slideshow is fancy. Will make a video slideshow instead of a collage with sound like above. This can and will make requests take a lot longer. |
 
 > [!IMPORTANT] 
 > This program will check if `/usr/bin/ffmpeg` or `/usr/local/bin/ffmpeg` exists, if it does, it will enable the sound route. You can override this behaviour by using `FFMPEG` environment var. (You can also set this to true, if ffmpeg is not in those paths)
