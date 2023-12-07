@@ -56,15 +56,17 @@ func GetVideoAuthorAndCaption(url string, videoID string) (string, string, strin
 		return "", "", "", err
 	}
 
-	authorNameRegex := regexp.MustCompile(`{"@type":"Thing","@id":"https:\/\/www\.tiktok\.com\/@(?:.*?)","name":"(.*?) \| TikTok"}},{"@type":`)
-	captionRegex := regexp.MustCompile(`"contents":\[{"desc":"(.*?)",`)
+	authorNameRegex := regexp.MustCompile(`userUniqueId":"(.*?)","secUid":`)
+	nicknameRegex := regexp.MustCompile(`"nickname":"(.*?)","avatarLarger":`)
+	captionRegex := regexp.MustCompile(`"id": "\d+",\s*"desc": ".*?",`)
 	possibleTitleRegex := regexp.MustCompile(`},"title":"(.*?)"},"locationCreated":`)
 
 	authorName := authorNameRegex.FindStringSubmatch(responseBody)
+	nickname := nicknameRegex.FindStringSubmatch(responseBody)
 	if len(authorName) == 0 {
 		return "", "", "", fmt.Errorf("no author name found in response")
 	}
-	authorNameText := authorName[1]
+	author := nickname[1] + " (@" + authorName[1] + ")"
 
 	caption := captionRegex.FindStringSubmatch(responseBody)
 	possibleTitle := possibleTitleRegex.FindStringSubmatch(responseBody)
@@ -85,17 +87,7 @@ func GetVideoAuthorAndCaption(url string, videoID string) (string, string, strin
 	}
 
 	captionText = possibleTitleText + " " + captionText
-	return authorNameText, captionText, responseBody, nil
-}
-
-func extractCount(responseBody, dataE2E string) string {
-	regexPattern := fmt.Sprintf(`<strong data-e2e="%s" class="(?:.*?)">([^<]+)<\/strong>`, dataE2E)
-	regex := regexp.MustCompile(regexPattern)
-	matches := regex.FindStringSubmatch(responseBody)
-	if len(matches) > 1 {
-		return matches[1]
-	}
-	return "0"
+	return author, captionText, responseBody, nil
 }
 
 type Counts struct {
@@ -106,49 +98,43 @@ type Counts struct {
 	Views     string
 }
 
-func formatViews(views int) string {
+func formatNumber(numberString string) string {
 	const (
 		million  = 1000000
 		thousand = 1000
 	)
-
+	number, err := strconv.Atoi(numberString)
+	if err != nil {
+		return "0"
+	}
 	switch {
-	case views >= million:
-		return fmt.Sprintf("%.1fM", float64(views)/million)
-	case views >= thousand:
-		return fmt.Sprintf("%.1fK", float64(views)/thousand)
+	case number >= million:
+		return fmt.Sprintf("%.1fM", float64(number)/million)
+	case number >= thousand:
+		return fmt.Sprintf("%.1fK", float64(number)/thousand)
 	default:
-		return fmt.Sprintf("%d", views)
+		return fmt.Sprintf("%d", number)
 	}
 }
 
 func GetVideoDetails(responseBody string) Counts {
-	likesCount := extractCount(responseBody, "like-count")
-	commentsCount := extractCount(responseBody, "comment-count")
-	favoritedCount := extractCount(responseBody, "undefined-count") // undefined-count lmao
-	sharesCount := extractCount(responseBody, "share-count")
-	playCountRegex := regexp.MustCompile(`,"commentCount":(?:[0-9]*),"playCount":([0-9]*),"collectCount":`)
-
-	views := playCountRegex.FindStringSubmatch(responseBody)
-	viewsGroup := views[1]
-	actualViews, err := strconv.Atoi(viewsGroup)
-
-	if err != nil {
+	detailsRegex := regexp.MustCompile(`{"diggCount":(\d+),"shareCount":(\d+),"commentCount":(\d+),"playCount":(\d+),"collectCount":"(\d+)"}`)
+	detailsMatch := detailsRegex.FindStringSubmatch(responseBody)
+	if len(detailsMatch) == 0 {
 		return Counts{
-			Likes:     likesCount,
-			Comments:  commentsCount,
-			Favorited: favoritedCount,
-			Shares:    sharesCount,
-			Views:     "nuh uh",
+			Likes:     "0",
+			Comments:  "0",
+			Favorited: "0",
+			Shares:    "0",
+			Views:     "0",
 		}
 	}
 
-	viewsFormatted := formatViews(actualViews)
 	return Counts{
-		Likes:     likesCount,
-		Comments:  commentsCount,
-		Favorited: favoritedCount,
-		Shares:    sharesCount,
-		Views:     viewsFormatted,
+		Likes:     formatNumber(detailsMatch[1]),
+		Comments:  formatNumber(detailsMatch[3]),
+		Favorited: formatNumber(detailsMatch[5]),
+		Shares:    formatNumber(detailsMatch[2]),
+		Views:     formatNumber(detailsMatch[4]),
 	}
 }
