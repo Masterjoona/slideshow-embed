@@ -56,18 +56,16 @@ func GetVideoAuthorAndCaption(url string, videoID string) (string, string, strin
 		return "", "", "", err
 	}
 
-	authorNameRegex := regexp.MustCompile(`userUniqueId":"(.*?)","secUid":`)
-	nicknameRegex := regexp.MustCompile(`"nickname":"(.*?)","avatarLarger":`)
+	authorAndNickRegex := regexp.MustCompile(`uniqueId":"(.*?)","nickname":"(.*?)","avatar`)
 	captionRegex := regexp.MustCompile(`"id": "\d+",\s*"desc": ".*?",`)
 	possibleTitleRegex := regexp.MustCompile(`},"title":"(.*?)"},"locationCreated":`)
 
-	authorName := authorNameRegex.FindStringSubmatch(responseBody)
-	nickname := nicknameRegex.FindStringSubmatch(responseBody)
-	if len(authorName) == 0 {
+	authorNick := authorAndNickRegex.FindStringSubmatch(responseBody)
+	if len(authorNick) == 0 {
 		return "", "", "", fmt.Errorf("no author name found in response")
 	}
-	author := nickname[1] + " (@" + authorName[1] + ")"
 
+	author := authorNick[2] + " (@" + authorNick[1] + ")"
 	caption := captionRegex.FindStringSubmatch(responseBody)
 	possibleTitle := possibleTitleRegex.FindStringSubmatch(responseBody)
 
