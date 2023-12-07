@@ -58,7 +58,7 @@ func handleError(c *gin.Context, errorMsg string, errorImageUrl string) {
 }
 
 func handleDiscordEmbed(c *gin.Context, authorName string, caption string, details Counts, filename string) {
-	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorited
+	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorited + " | 👀 " + details.Views
 	renderTemplate(c, "discord.html", gin.H{
 		"authorName": authorName,
 		"caption":    caption,
@@ -68,7 +68,7 @@ func handleDiscordEmbed(c *gin.Context, authorName string, caption string, detai
 }
 
 func handleVideoDiscordEmbed(c *gin.Context, authorName string, caption string, details Counts, filename string, width string, height string) {
-	detailsString := "❤️" + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorited
+	detailsString := "❤️" + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorited + " | 👀 " + details.Views
 	authorName = strings.Split(authorName, "(@")[0]
 	renderTemplate(c, "video.html", gin.H{
 		"authorName": authorName,
