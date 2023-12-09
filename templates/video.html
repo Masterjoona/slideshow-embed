@@ -24,6 +24,8 @@
         </style>
         <button class="buttons" id="tiktok" type="button">tiktok</button>
         <button class="buttons" id="index" type="button">index</button>
+        <p>{{ .details }}</p>
+        <p>{{ .caption }}</p>
         <video controls autoplay loop muted playsinline>
             <source src="{{ .videoUrl }}" type="video/mp4" />
         </video>

@@ -21,7 +21,9 @@
     </style>
     <button class="buttons" id="tiktok" type="button">tiktok</button>
     <button class="buttons" id="index" type="button">index</button>
-    <img src="{{ .imageUrl }}" alt="{{ .authorName }} Image - {{ .caption}}" style="max-width: 100%; margin-top: 20px;">
+    <p>{{ .details }}</p>
+    <p>{{ .caption }}</p>
+    <img src="{{ .imageUrl }}" alt="{{ .authorName }} Image - {{ .caption }}" style="max-width: 100%; margin-top: 20px;">
     <script>
         const tiktok = document.getElementById("tiktok");
         tiktok.addEventListener("click", () => {

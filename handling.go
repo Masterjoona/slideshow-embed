@@ -74,6 +74,7 @@ func handleVideoDiscordEmbed(c *gin.Context, authorName string, caption string, 
 		"authorName": authorName,
 		"details":    detailsString,
 		"videoUrl":   Domain + "/" + filename,
+		"caption":    caption,
 		"width":      width,
 		"height":     height,
 	})
