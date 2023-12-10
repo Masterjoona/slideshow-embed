@@ -111,11 +111,12 @@ func HandleIndex(c *gin.Context) {
 		filePaths[index] = Domain + "/" + file.Name()
 		count++
 	}
-
+	countString := strconv.Itoa(count)
 	if LimitPublicAmount > 0 && len(filePaths) > LimitPublicAmount {
 		filePaths = filePaths[:LimitPublicAmount]
+		countString += " (Only showing " + strconv.Itoa(len(filePaths)) + ")"
 	}
-	countString := strconv.Itoa(count) + "(Only showing " + strconv.Itoa(len(filePaths)) + ")"
+
 	bytes, err := GetDirectorySize("collages")
 	size := FormatSize(bytes)
 	if err != nil {
