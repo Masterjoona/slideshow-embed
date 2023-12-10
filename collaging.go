@@ -50,6 +50,25 @@ func resizeImages(inputDir string) error {
 	return nil
 }
 
+/*
+func getAudioLength(inputDir string) (int, error) {
+	out, err := exec.Command("ffprobe", "-i", inputDir+"/audio.mp3", "-show_entries", "format=duration", "-v", "quiet", "-of", "csv='p=0'").Output()
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println(string(out))
+		return 0, err
+	}
+	//print(string(out))
+	trimmed := strings.TrimSuffix(string(out), "\n")
+	length, err := strconv.Atoi(trimmed)
+	if err != nil {
+		fmt.Println(err)
+		return 0, err
+	}
+	return length, nil
+}
+*/
+
 func MakeVideoSlideshow(inputDir string, outputPath string) error {
 	output := "collages/" + outputPath
 
@@ -86,8 +105,12 @@ func MakeVideoSlideshow(inputDir string, outputPath string) error {
 		inputStr += fmt.Sprintf("-loop 1 -t %.2f -i %s/%s ", time, inputDir, imageFile)
 		variables += fmt.Sprintf("[%d]settb=AVTB[img%d];", i, i+1)
 	}
-	inputStr += "-stream_loop 0 -i " + inputDir + "/audio.mp3" + " -y"
+	inputStr += "-stream_loop -1 -i " + inputDir + "/audio.mp3" + " -y"
 
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
 	for i := 1; i <= len(filteredImageFiles); i++ {
 		if i == 1 {
 			transistions += fmt.Sprintf("[img%d][img%d]xfade=transition=slideleft:duration=0.25:offset=%.2f[filter%d];", i, i+1, offset, i)
@@ -96,6 +119,13 @@ func MakeVideoSlideshow(inputDir string, outputPath string) error {
 		}
 		offset += 3.25
 	}
+
+	/*audioLength, err := getAudioLength(inputDir)
+	finalLength := strconv.FormatFloat(offset-3.25, 'f', 2, 64)
+	// which is longer
+	if audioLength > int(offset-3.25) {
+		finalLength = strconv.Itoa(audioLength)
+	}*/
 
 	transistions = transistions[:len(transistions)-1]
 	lastIndex := strings.LastIndex(transistions[:len(transistions)-1], ";")

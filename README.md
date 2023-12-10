@@ -9,6 +9,7 @@ Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Brit
 | `DOMAIN`            | YOUR DOMAIN   | The domain where it will serve  |
 | `PORT`              | 4232          | What port it is on |
 | `PUBLIC`            | false         | If the index page is public  |
+| `LIMIT_PUBLIC_AMOUNT` | 0           | How many collages are linked on the index. 0 is unlimited |
 | `FFMPEG`            | ?         | read important below  |
 | `FANCY_SLIDESHOW`   | false         | If the slideshow is fancy. Will make a video slideshow instead of a collage with sound like above. This can and will make requests take a lot longer. |
 
@@ -33,7 +34,6 @@ server {
 
     location / {
         proxy_pass http://localhost:4232;
-        root /path/to/your/collages;
     }
 }
 ```

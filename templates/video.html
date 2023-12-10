@@ -18,12 +18,12 @@
     </head>
     <body style="display: flex; flex-direction: column; align-items: center;">
         <style>
-            .buttons {
+            .links {
                 margin: 10px;
             }
         </style>
-        <button class="buttons" id="tiktok" type="button">tiktok</button>
-        <button class="buttons" id="index" type="button">index</button>
+        <a href="tiktok.com" class="links" id="tiktok"> tiktok </a>
+        <a href="#" class="links" id="index"> index </a>
         <p>{{ .details }}</p>
         <p>{{ .caption }}</p>
         <video controls autoplay loop muted playsinline>
@@ -31,13 +31,9 @@
         </video>
         <script>
             const tiktok = document.getElementById("tiktok");
-            tiktok.addEventListener("click", () => {
-                window.location.replace(location.search.replace("?v=",""));
-            });
+            tiktok.href = location.search.replace("?v=","");
             const index = document.getElementById("index");
-            index.addEventListener("click", () => {
-                window.location.replace(location.origin);
-            });
+            index.href = location.origin;
         </script>
     </body>
 </html>
