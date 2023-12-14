@@ -65,9 +65,7 @@ func handleVideoDiscordEmbed(c *gin.Context, tiktokData Data, filename string, w
 
 func handleExistingFile(c *gin.Context, filename string, video bool, tiktokData Data) bool {
 	if _, err := os.Stat("collages/" + filename); err == nil {
-		println("File exists")
 		if video {
-			println("File is video")
 			videoWidth, videoHeight, err := GetVideoDimensions("collages/" + filename)
 			if err != nil {
 				handleError(c, "Couldn't get video dimensions", errorImage())
@@ -145,6 +143,8 @@ func HandleSoundCollageRequest(c *gin.Context) {
 	FetchImages(c, tiktokURL, tiktokData, randomErrorImage)
 	FetchAudio(c, tiktokURL, tiktokData, randomErrorImage)
 	GenerateCollage(c, tiktokData.VideoID, collageFilename, randomErrorImage)
+	// i dont know if there is some race condition or some other bs
+	// it errors first and second request works
 
 	videoWidth, videoHeight := GenerateVideo(c, tiktokData.VideoID, collageFilename, filename, randomErrorImage, false)
 	handleVideoDiscordEmbed(c, tiktokData, filename, videoWidth, videoHeight)
@@ -164,12 +164,10 @@ func HandleRequest(c *gin.Context) {
 	}
 
 	FetchImages(c, tiktokURL, tiktokData, randomErrorImage)
-	println("Images fetched")
 	GenerateCollage(c, tiktokData.VideoID, filename, randomErrorImage)
-	println("Collage generated")
 
 	handleDiscordEmbed(c, tiktokData, filename)
-	//os.RemoveAll(tiktokData.VideoID)
+	os.RemoveAll(tiktokData.VideoID)
 }
 
 func HandleFancySlideshowRequest(c *gin.Context) {
@@ -189,7 +187,7 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 	videoWidth, videoHeight := GenerateVideo(c, tiktokData.VideoID, "", filename, randomErrorImage, true)
 	handleVideoDiscordEmbed(c, tiktokData, filename, videoWidth, videoHeight)
 
-	//os.RemoveAll(tiktokData.VideoID)
+	os.RemoveAll(tiktokData.VideoID)
 }
 
 func HandleDirectFile(c *gin.Context) {
