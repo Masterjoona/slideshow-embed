@@ -36,8 +36,17 @@ import random
 import math
 from PIL import ImageOps
 from PIL import Image
-from typing import List, Optional
+from typing import List
 import io
+import time
+
+fpng_py_imported = False
+try:
+    import fpng_py
+
+    fpng_py_imported = True
+except ImportError:
+    pass
 
 # got idea from https://medium.com/@jtreitz/the-algorithm-for-a-perfectly-balanced-photo-gallery-914c94a5d8af
 
@@ -53,7 +62,7 @@ def linear_partition(seq, k, dataList=None):
     n = len(seq) - 1
     if k > n:
         return map(lambda x: [x], seq)
-    table, solution = linear_partition_table(seq, k)
+    _, solution = linear_partition_table(seq, k)
     k, ans = k - 2, []
     if dataList == None or len(dataList) != len(seq):
         while k >= 0:
@@ -110,24 +119,27 @@ def makeCollage(
     maxHeight = max([img.height for img in imgList])
     if antialias:
         imgList = [
-            img.resize(
-                (int(img.width / img.height * maxHeight), maxHeight), Image.LANCZOS
+            (
+                img.resize(
+                    (int(img.width / img.height * maxHeight), maxHeight), Image.LANCZOS
+                )
+                if img.height < maxHeight
+                else img
             )
-            if img.height < maxHeight
-            else img
             for img in imgList
         ]
     else:
         imgList = [
-            img.resize((int(img.width / img.height * maxHeight), maxHeight))
-            if img.height < maxHeight
-            else img
+            (
+                img.resize((int(img.width / img.height * maxHeight), maxHeight))
+                if img.height < maxHeight
+                else img
+            )
             for img in imgList
         ]
-
     # generate the input for the partition problem algorithm
     # need list of aspect ratios and number of rows (partitions)
-    imgHeights = [img.height for img in imgList]
+    # imgHeights = [img.height for img in imgList]
     totalWidth = sum([img.width for img in imgList])
     avgWidth = totalWidth / len(imgList)
     targetWidth = avgWidth * math.sqrt(len(imgList) * aspectratiofactor)
@@ -198,7 +210,6 @@ def makeCollage(
         yPos += max([img.height for img in row]) + spacing
         xPos = 0
         continue
-
     return outImg
 
 
@@ -275,7 +286,7 @@ def main():
         dest="imagegap",
         type=int,
         help="number of pixels of transparent space (if saving as png file; otherwise black or specified background color) to add between neighboring images",
-        default=0,
+        default=3,
     )
     parse.add_argument(
         "-b",
@@ -344,7 +355,7 @@ def main():
                 images.append(line.strip())
     elif args.folder:
         images = []
-        for root, dirs, files in os.walk(args.folder):
+        for root, _, files in os.walk(args.folder):
             for name in files:
                 if re.findall("jpg|png|jpeg", name.split(".")[-1]):
                     fname = os.path.join(root, name)
@@ -356,55 +367,58 @@ def main():
         print("Need to use 3 or more images. Try again")
         return
     """
+
+    if len(images) == 1:
+        img = Image.open(images[0])
+        img.save(args.output)
+        print(f"Collage is ready at {args.output}!")
+        return
+
     # shuffle images if needed
     if args.shuffle:
         random.shuffle(images)
     else:
-        images = sorted(images, key=lambda x: int(x.split("/")[1].split(".jpg")[0]))
+        try:
+            images = sorted(images, key=lambda x: int(x.split("/")[1].split(".jpg")[0]))
+        except:
+            pass
     if args.count > 2:
         images = images[: args.count]
 
     # get PIL image objects for all the photos
     print("Loading photos...")
     pilImages = []
+    sum_time = 0
     for f in images:
+
         img = Image.open(f)
-        # Need to explicitly tell PIL to rotate image if EXIF orientation data is present
+
         exif = img.getexif()
-        # Remove all exif tags
+        # Remove unwanted EXIF tags
         for k in exif.keys():
             if k != 0x0112:
-                exif[
-                    k
-                ] = None  # If I don't set it to None first (or print it) the del fails for some reason.
-                del exif[k]
-        # Put the new exif object in the original image
-        new_exif = exif.tobytes()
-        img.info["exif"] = new_exif
-        # Rotate the image
-        img = ImageOps.exif_transpose(img)
-        if args.initheight > 2 and img.height > args.initheight:
-            if args.noantialias:
-                pilImages.append(
-                    img.resize(
-                        (int(img.width / img.height * args.initheight), args.initheight)
-                    )
+                exif[k] = (
+                    None  # If I don't set it to None first (or print it) the del fails for some reason.
                 )
-            else:
-                pilImages.append(
-                    img.resize(
-                        (
-                            int(img.width / img.height * args.initheight),
-                            args.initheight,
-                        ),
-                        Image.LANCZOS,
-                    )
-                )
+            del exif[k]
+
+        img.info["exif"] = exif.tobytes()
+        # Rotate the image based on EXIF orientation data
+        ImageOps.exif_transpose(img)
+        # Calculate the initial height only once
+        initial_height = args.initheight
+
+        # Resize the image if needed
+        if initial_height > 2 and img.height > initial_height:
+            # Choose the appropriate resampling method based on 'noantialias' option
+            resampling_method = Image.NEAREST if args.noantialias else Image.LANCZOS
+            new_width = int(img.width / img.height * initial_height)
+            pilImages.append(img.resize((new_width, initial_height), resampling_method))
         else:
             pilImages.append(img)
 
     print("Making collage...")
-
+    st = time.time()
     collage = makeCollage(
         pilImages,
         args.imagegap,
@@ -412,7 +426,7 @@ def main():
         args.background,
         args.aspectratiofactor,
     )
-
+    print(f"Collage took {time.time() - st} seconds")
     if args.width > 0 and collage.width > args.width:
         collage = collage.resize(
             (args.width, int(collage.height / collage.width * args.width)),
@@ -425,14 +439,19 @@ def main():
             Image.LANCZOS,
         )
         pass
-
     output = args.output
-    level = 0
-    collage.save(
-        output, compression_level=level
-    )  # https://stackoverflow.com/a/74468352
 
-    print(f"Collage is ready at {output}! comp level: {level}")
+    if fpng_py_imported:
+        fpng_time = time.time()
+        fpng_py.fpng_encode_image_to_file(
+            output, collage.tobytes(), collage.width, collage.height
+        )
+        print(f"fpng took {time.time() - fpng_time} seconds")
+        # PIL for 22 images 1.4 seconds, fpng 0.068 seconds
+    else:
+        collage.save(output)
+
+    print(f"Collage is ready at {output}!")
 
 
 class SlideshowImageDimensions:

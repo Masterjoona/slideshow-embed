@@ -8,13 +8,14 @@ import (
 
 func main() {
 	InitEnvs()
-	if Domain == "" || Domain == "YOUR_Domain_HERE" {
+	if Domain == "" || Domain == "YOUR_DOMAIN_HERE" {
 		panic("You have not specified a Domain!")
 	}
 	println("Starting server on port " + Port)
 	println("Domain: " + Domain)
 	println("Public: " + strconv.FormatBool(Public))
 	println("Limit public amount: " + strconv.Itoa(LimitPublicAmount))
+	println("Allow slide index: " + strconv.FormatBool(SlideIndex))
 	println("Sound route: " + strconv.FormatBool(IsffmpegInstalled))
 	println("Fancy Slideshow: " + strconv.FormatBool(FancySlideshow))
 
@@ -23,6 +24,13 @@ func main() {
 
 	r.GET("/t", HandleRequest)
 	r.GET("/collage-:id", HandleDirectFile)
+
+	/*
+		if SlideIndex {
+			r.GET("/i", HandleSlideIndexRequest)
+			r.GET("/sIndex-:id", HandleDirectFile)
+		}
+	*/
 
 	if IsffmpegInstalled {
 		r.GET("/s", HandleSoundCollageRequest)

@@ -73,7 +73,7 @@ func DownloadImages(links []string, outputDir string) error {
 	return nil
 }
 
-func DownloadAudio(link string, filename string, outputDir string) error {
+func DownloadAudio(link string, outputDir string) error {
 	headers := map[string]string{
 		"range":   "bytes=0-",
 		"referer": "https://www.tiktok.com/", // 403 without this
@@ -92,13 +92,15 @@ func DownloadAudio(link string, filename string, outputDir string) error {
 	}
 	defer resp.Body.Close()
 
+	os.Mkdir(outputDir, os.ModePerm)
+
 	if resp.StatusCode == http.StatusPartialContent {
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			fmt.Println("Error reading response body:", err)
 			return err
 		}
-		out, err := os.Create(fmt.Sprintf("%s/%s", outputDir, filename))
+		out, err := os.Create(fmt.Sprintf("%s/%s", outputDir, "audio.mp3"))
 		if err != nil {
 			fmt.Println("Error creating the file:", err)
 			return err

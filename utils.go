@@ -1,6 +1,12 @@
 package main
 
-import "strings"
+import (
+	"net/url"
+	"os"
+	"sort"
+	"strconv"
+	"strings"
+)
 
 var errorImages = []string{
 	"https://media.discordapp.net/attachments/961445186280509451/980132677338423316/fuckmedaddyharderohyeailovecokcimsocissyfemboy.gif",
@@ -9,7 +15,7 @@ var errorImages = []string{
 }
 var errorImagesIndex = 0
 
-func errorImage() string {
+func ErrorImage() string {
 	if errorImagesIndex == 2 {
 		errorImagesIndex = 0
 	} else {
@@ -22,8 +28,76 @@ func validateURL(url string) bool {
 	if url == "" {
 		return false
 	}
-	if !strings.Contains(url, "vm.tiktxk.com") && !strings.Contains(url, "vm.tiktok.com") {
+	if !strings.Contains(url, ".tiktxk.com") && !strings.Contains(url, ".tiktok.com") {
 		return false
 	}
 	return true
+}
+
+func SplitURLAndIndex(URL string) (string, string, bool) {
+	lastInd := strings.LastIndex(URL, "/")
+	index := URL[lastInd+1:]
+	if index == "" {
+		index = "1"
+	}
+	sound := strings.HasSuffix(index, "s")
+	if sound {
+		index = strings.Replace(index, "s", "", 1)
+	}
+	return URL[:lastInd], index, sound
+}
+
+type Stats struct {
+	FilePaths []string
+	FileCount string
+	TotalSize string
+}
+
+func UpdateLocalStats() {
+	collageFiles, err := os.ReadDir("collages")
+	if err != nil {
+		println("Error while updating local stats: " + err.Error())
+		return
+	}
+	filePaths := make([]string, len(collageFiles))
+	count := 0
+	sort.Slice(collageFiles, func(i, j int) bool {
+		fileI, err1 := collageFiles[i].Info()
+		fileJ, err2 := collageFiles[j].Info()
+		if err1 != nil || err2 != nil {
+			return collageFiles[i].Name() < collageFiles[j].Name()
+		}
+		return fileI.ModTime().After(fileJ.ModTime())
+	})
+
+	for index, file := range collageFiles {
+		filePaths[index] = Domain + "/" + file.Name()
+		count++
+	}
+	countString := strconv.Itoa(count)
+	if LimitPublicAmount > 0 && len(filePaths) > LimitPublicAmount {
+		filePaths = filePaths[:LimitPublicAmount]
+		countString += " (Only showing " + strconv.Itoa(len(filePaths)) + ")"
+	}
+
+	bytes, err := GetDirectorySize("collages")
+	if err != nil {
+		println("Error while getting size " + err.Error())
+		return
+	}
+	size := FormatSize(bytes)
+
+	LocalStats = Stats{
+		FilePaths: filePaths,
+		FileCount: countString,
+		TotalSize: size,
+	}
+}
+
+func EscapeString(input string) string {
+	decoded, err := url.QueryUnescape(input)
+	if err != nil {
+		return input
+	}
+	return decoded
 }

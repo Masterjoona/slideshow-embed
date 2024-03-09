@@ -1,5 +1,7 @@
 meow
-.png
-.jpg
-.mp4
-.txt
+*.png
+*.jpg
+*.jpeg
+*.mp*
+*.txt
+*.zip

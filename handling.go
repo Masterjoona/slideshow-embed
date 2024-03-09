@@ -2,8 +2,6 @@ package main
 
 import (
 	"os"
-	"sort"
-	"strconv"
 	"strings"
 	"text/template"
 
@@ -16,31 +14,32 @@ type Data struct {
 	VideoID    string
 	Body       string
 	Details    Counts
+	Private    bool
 }
 
 func renderTemplate(c *gin.Context, filename string, data gin.H) {
 	tmpl, err := template.ParseFiles("templates/" + filename)
 	if err != nil {
-		handleError(c, err.Error(), errorImage())
+		HandleError(c, err.Error())
 		return
 	}
 
 	err = tmpl.Execute(c.Writer, data)
 	if err != nil {
-		handleError(c, err.Error(), errorImage())
+		HandleError(c, err.Error())
 	}
 }
 
-func handleError(c *gin.Context, errorMsg string, errorImageUrl string) {
+func HandleError(c *gin.Context, errorMsg string) {
 	renderTemplate(c, "error.html", gin.H{
 		"error":           errorMsg,
-		"error_image_url": errorImageUrl,
+		"error_image_url": ErrorImage(),
 	})
 }
 
 func handleDiscordEmbed(c *gin.Context, tiktokData Data, filename string) {
 	details := tiktokData.Details
-	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorited + " | 👀 " + details.Views
+	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | 👀 " + details.Views
 	renderTemplate(c, "discord.html", gin.H{
 		"authorName": tiktokData.AuthorName,
 		"caption":    tiktokData.Caption,
@@ -49,9 +48,15 @@ func handleDiscordEmbed(c *gin.Context, tiktokData Data, filename string) {
 	})
 }
 
-func handleVideoDiscordEmbed(c *gin.Context, tiktokData Data, filename string, width string, height string) {
+func handleVideoDiscordEmbed(
+	c *gin.Context,
+	tiktokData Data,
+	filename string,
+	width string,
+	height string,
+) {
 	details := tiktokData.Details
-	detailsString := "❤️" + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorited + " | 👀 " + details.Views
+	detailsString := "❤️" + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | 👀 " + details.Views
 	authorName := strings.Split(tiktokData.AuthorName, "(@")[0]
 	renderTemplate(c, "video.html", gin.H{
 		"authorName": authorName,
@@ -68,7 +73,7 @@ func handleExistingFile(c *gin.Context, filename string, video bool, tiktokData 
 		if video {
 			videoWidth, videoHeight, err := GetVideoDimensions("collages/" + filename)
 			if err != nil {
-				handleError(c, "Couldn't get video dimensions", errorImage())
+				HandleError(c, "Couldn't get video dimensions")
 				return true
 			}
 			handleVideoDiscordEmbed(c, tiktokData, filename, videoWidth, videoHeight)
@@ -89,119 +94,218 @@ func HandleIndex(c *gin.Context) {
 		})
 		return
 	}
-	collageFiles, err := os.ReadDir("collages")
-	if err != nil {
-		handleError(c, err.Error(), errorImage())
-		return
-	}
-	filePaths := make([]string, len(collageFiles))
-	count := 0
-	sort.Slice(collageFiles, func(i, j int) bool {
-		fileI, err1 := collageFiles[i].Info()
-		fileJ, err2 := collageFiles[j].Info()
-		if err1 != nil || err2 != nil {
-			return collageFiles[i].Name() < collageFiles[j].Name()
-		}
-		return fileI.ModTime().After(fileJ.ModTime())
-	})
 
-	for index, file := range collageFiles {
-		filePaths[index] = Domain + "/" + file.Name()
-		count++
-	}
-	countString := strconv.Itoa(count)
-	if LimitPublicAmount > 0 && len(filePaths) > LimitPublicAmount {
-		filePaths = filePaths[:LimitPublicAmount]
-		countString += " (Only showing " + strconv.Itoa(len(filePaths)) + ")"
-	}
-
-	bytes, err := GetDirectorySize("collages")
-	size := FormatSize(bytes)
-	if err != nil {
-		handleError(c, err.Error(), errorImage())
-		return
-	}
 	renderTemplate(c, "index.html", gin.H{
-		"FileLinks": filePaths,
-		"count":     countString,
-		"size":      size,
+		"FileLinks": LocalStats.FilePaths,
+		"count":     LocalStats.FileCount,
+		"size":      LocalStats.TotalSize,
 	})
 }
 
 func HandleSoundCollageRequest(c *gin.Context) {
 	tiktokURL := c.Query("v")
 
-	randomErrorImage := errorImage()
-	tiktokData := FetchTiktokData(c, tiktokURL, randomErrorImage)
+	videoId, err := GetLongVideoId(tiktokURL)
+	if err != nil {
+		HandleError(c, "Couldn't fetch slideshow or your URL is invalid")
+		return
+	}
 
-	filename := "video-" + tiktokData.VideoID + ".mp4"
-	if handleExistingFile(c, filename, true, tiktokData) {
+	tiktokData, err := FetchTiktokData(videoId)
+	if err != nil {
+		HandleError(c, "Couldn't fetch TikTok data")
+		return
+	}
+
+	videoFilename := "video-" + tiktokData.VideoID + ".mp4"
+	if handleExistingFile(c, videoFilename, true, tiktokData) {
 		return
 	}
 
 	collageFilename := "collage-" + tiktokData.VideoID + ".png"
-	FetchImages(c, tiktokURL, tiktokData, randomErrorImage)
-	FetchAudio(c, tiktokURL, tiktokData, randomErrorImage)
-	GenerateCollage(c, tiktokData.VideoID, collageFilename, randomErrorImage)
-	// i dont know if there is some race condition or some other bs
-	// it errors first and second request works
+	collageFileExists, _ := os.Stat("collages/" + collageFilename)
+	if collageFileExists != nil {
+		err = FetchAudio(tiktokData.Body, videoId)
+		if err != nil {
+			HandleError(c, "Couldn't fetch audio")
+			return
+		}
+		videoWidth, videoHeight, err := GenerateVideo(
+			videoId,
+			collageFilename,
+			videoFilename,
+			false,
+		)
+		if err != nil {
+			HandleError(c, "Couldn't generate video")
+			return
+		}
+		handleVideoDiscordEmbed(c, tiktokData, videoFilename, videoWidth, videoHeight)
+		return
+	}
 
-	videoWidth, videoHeight := GenerateVideo(c, tiktokData.VideoID, collageFilename, filename, randomErrorImage, false)
-	handleVideoDiscordEmbed(c, tiktokData, filename, videoWidth, videoHeight)
+	err = FetchImages(tiktokData.Body, videoId)
+	if err != nil {
+		HandleError(c, "Couldn't fetch images")
+		return
+	}
 
-	os.RemoveAll(tiktokData.VideoID)
+	err = FetchAudio(tiktokData.Body, videoId)
+	if err != nil {
+		HandleError(c, "Couldn't fetch audio")
+		return
+	}
+
+	err = GenerateCollage(videoId, collageFilename)
+	if err != nil {
+		HandleError(c, "Couldn't generate collage")
+		return
+	}
+
+	videoWidth, videoHeight, err := GenerateVideo(
+		videoId,
+		collageFilename,
+		videoFilename,
+		false,
+	)
+	if err != nil {
+		HandleError(c, "Couldn't generate video")
+		return
+	}
+	handleVideoDiscordEmbed(c, tiktokData, videoFilename, videoWidth, videoHeight)
+
+	os.RemoveAll(videoId)
+	UpdateLocalStats()
 }
 
 func HandleRequest(c *gin.Context) {
 	tiktokURL := c.Query("v")
 
-	randomErrorImage := errorImage()
-	tiktokData := FetchTiktokData(c, tiktokURL, randomErrorImage)
+	videoId, err := GetLongVideoId(tiktokURL)
+	if err != nil {
+		HandleError(c, "Couldn't fetch slideshow")
+		return
+	}
+	tiktokData, err := FetchTiktokData(videoId)
+	if tiktokData.Private {
+		// i dont understand i added println every where in the code and it still doesnt print
+		// but it always returns "Couldn't fetch TikTok data" and i dont know why
+		// test url https://vm.tiktok.com/ZGeDD2kT3/
+		HandleError(c, "This TikTok is private")
+		return
+	}
+	if err != nil {
+		HandleError(c, "Couldn't fetch TikTok data")
+		return
+	}
 
 	filename := "collage-" + tiktokData.VideoID + ".png"
 	if handleExistingFile(c, filename, false, tiktokData) {
 		return
 	}
-
-	FetchImages(c, tiktokURL, tiktokData, randomErrorImage)
-	GenerateCollage(c, tiktokData.VideoID, filename, randomErrorImage)
+	err = FetchImages(tiktokData.Body, videoId)
+	if err != nil {
+		HandleError(c, "Couldn't fetch images")
+		return
+	}
+	err = GenerateCollage(videoId, filename)
+	if err != nil {
+		HandleError(c, "Couldn't generate collage")
+		return
+	}
 
 	handleDiscordEmbed(c, tiktokData, filename)
-	os.RemoveAll(tiktokData.VideoID)
+	os.RemoveAll(videoId)
+	UpdateLocalStats()
 }
 
 func HandleFancySlideshowRequest(c *gin.Context) {
 	tiktokURL := c.Query("v")
 
-	randomErrorImage := errorImage()
-	tiktokData := FetchTiktokData(c, tiktokURL, randomErrorImage)
+	videoId, err := GetLongVideoId(tiktokURL)
+	if err != nil {
+		HandleError(c, "Couldn't fetch slideshow")
+		return
+	}
+	tiktokData, err := FetchTiktokData(videoId)
+	if err != nil {
+		HandleError(c, "Couldn't fetch TikTok data")
+		return
+	}
 
-	filename := "slide-" + tiktokData.VideoID + ".mp4"
+	filename := "slide-" + videoId + ".mp4"
 	if handleExistingFile(c, filename, true, tiktokData) {
 		return
 	}
 
-	FetchImages(c, tiktokURL, tiktokData, randomErrorImage)
-	FetchAudio(c, tiktokURL, tiktokData, randomErrorImage)
+	FetchImages(tiktokData.Body, videoId)
+	FetchAudio(tiktokData.Body, videoId)
 
-	videoWidth, videoHeight := GenerateVideo(c, tiktokData.VideoID, "", filename, randomErrorImage, true)
+	videoWidth, videoHeight, err := GenerateVideo(videoId, "", filename, true)
+	if err != nil {
+		HandleError(c, "Couldn't generate video")
+		return
+	}
+
 	handleVideoDiscordEmbed(c, tiktokData, filename, videoWidth, videoHeight)
 
-	os.RemoveAll(tiktokData.VideoID)
+	//os.RemoveAll(tiktokData.VideoID)
+	UpdateLocalStats()
 }
+
+/*
+	func HandleSlideIndexRequest(c *gin.Context) {
+		tiktokURLAndIndex := c.Query("v")
+		tiktokURL, index, sound := SplitURLAndIndex(tiktokURLAndIndex)
+		println(tiktokURL, index, sound)
+
+		tiktokData := FetchTiktokData(c, tiktokURL)
+
+		filename := "sIndex-" + tiktokData.VideoID + "-" + index + ".png"
+		if handleExistingFile(c, filename, false, tiktokData) && !sound {
+			return
+		}
+
+		videoFilename := "sIndex-" + tiktokData.VideoID + "-" + index + ".mp4"
+		if handleExistingFile(c, videoFilename, true, tiktokData) {
+			return
+		}
+
+		FetchImages(c, tiktokURL, tiktokData, index)
+		if sound {
+			FetchAudio(c, tiktokURL, tiktokData)
+		}
+
+		GenerateCollage(c, tiktokData.VideoID, filename)
+		if sound {
+			videoWidth, videoHeight := GenerateVideo(
+				c,
+				tiktokData.VideoID,
+				filename,
+				videoFilename,
+				false,
+			)
+			handleVideoDiscordEmbed(c, tiktokData, videoFilename, videoWidth, videoHeight)
+			os.RemoveAll(tiktokData.VideoID)
+			return
+		}
+		handleDiscordEmbed(c, tiktokData, filename)
+		os.RemoveAll(tiktokData.VideoID)
+		UpdateLocalStats()
+	}
+*/
 
 func HandleDirectFile(c *gin.Context) {
 	id := c.Param("id")
 	mediaType := strings.Split(c.Request.URL.Path, "-")[0][1:]
 	if id == "" || mediaType == "" {
-		handleError(c, "No id provided", errorImage())
+		HandleError(c, "No id provided")
 		return
 	}
 	filename := mediaType + "-" + id
 	if _, err := os.Stat("collages/" + filename); err != nil {
-		handleError(c, "File not found", errorImage())
+		HandleError(c, "File not found")
 		return
 	}
-
 	c.File("collages/" + filename)
 }

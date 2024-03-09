@@ -13,6 +13,11 @@ COPY templates /app/templates
 COPY collage_maker.py /app/collage_maker.py
 RUN pip install pillow --break-system-packages
 
+# Modify below line to copy the compiled .so file or comment it out if dont want to use fpng
+COPY ./fpng_py/build/lib.linux-aarch64-3.10/fpng_py /app/fpng_py
+
+WORKDIR /app
+RUN rm -rf /tmp/*
 ENV GIN_MODE=release
 EXPOSE 4232
 CMD ["./meow"]

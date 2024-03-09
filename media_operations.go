@@ -2,94 +2,96 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/gin-gonic/gin"
 )
 
-func FetchAudio(c *gin.Context, tiktokURL string, tiktokData Data, randomErrorImage string) {
-	audioLink, err := ExtractAudioLink(tiktokData.Body)
+func FetchImages(content string, videoId string) error {
+	links, err := GetImageLinks(content)
 	if err != nil {
-		handleError(c, "Couldn't get audio link", randomErrorImage)
-		return
+		return err
 	}
 
-	err = DownloadAudio(audioLink, "audio.mp3", tiktokData.VideoID)
+	err = DownloadImages(links, videoId)
 	if err != nil {
-		handleError(c, "Couldn't download audio", randomErrorImage)
-		return
+		return err
 	}
+	return nil
 }
 
-func FetchImages(c *gin.Context, tiktokURL string, tiktokData Data, randomErrorImage string) {
-	links, err := ExtractImageLinks(tiktokData.Body)
+func FetchAudio(content string, videoId string) error {
+	audioUrl, err := GetAudioLink(content)
 	if err != nil {
-		handleError(c, "Couldn't get image links", randomErrorImage)
-		return
+		return err
 	}
 
-	err = DownloadImages(links, tiktokData.VideoID)
+	err = DownloadAudio(audioUrl, videoId)
 	if err != nil {
-		handleError(c, "Couldn't download images", randomErrorImage)
-		return
+		return err
 	}
+	return nil
 }
 
-func FetchTiktokData(c *gin.Context, tiktokURL string, errorImage string) (tiktokData Data) {
-	if !validateURL(tiktokURL) {
-		handleError(c, "Invalid url", errorImage)
-		return
+func FetchTiktokData(videoID string) (Data, error) {
+	var content string
+	var retryCount int
+	var err error
+	for retryCount < 4 {
+		content, err = FetchProxiTokVideo(videoID)
+		if content == "private" {
+			return Data{Private: true}, err
+		}
+		if err != nil {
+			print("Instance failed, retrying... ")
+			retryCount++
+			continue
+		}
+		break
 	}
-
-	videoID, err := ExtractVideoID(tiktokURL)
+	styledAuthor, caption, err := GetAuthorAndCaption(content)
 	if err != nil {
-		handleError(c, "Invalid url", errorImage)
-		return
+		return Data{}, err
 	}
 
-	authorName, caption, responseBody, err := GetVideoAuthorAndCaption(tiktokURL, videoID)
-	if err != nil {
-		handleError(c, "Couldn't get video author and caption. Is the slideshow available?", errorImage)
-		return
-	}
+	details := GetVideoDetails(content)
 
-	details := GetVideoDetails(responseBody)
 	return Data{
-		AuthorName: authorName,
+		AuthorName: styledAuthor,
 		Caption:    caption,
 		VideoID:    videoID,
-		Body:       responseBody,
 		Details:    details,
-	}
+		Body:       content,
+	}, nil
 }
 
-func GenerateCollage(c *gin.Context, videoId string, collageFilename string, errorImage string) {
+func GenerateCollage(videoId string, collageFilename string) error {
 	err := MakeCollage(videoId, collageFilename)
 	if err != nil {
-		handleError(c, "Couldn't make collage", errorImage)
-		return
+		return err
 	}
+	return nil
 }
 
-func GenerateVideo(c *gin.Context, videoId string, collageFilename string, videoFilename string, errorImage string, sliding bool) (videoWidth, videoHeight string) {
+func GenerateVideo(
+	videoId string,
+	collageFilename string,
+	videoFilename string,
+	sliding bool,
+) (string, string, error) {
 	if sliding {
 		err := MakeVideoSlideshow(videoId, videoFilename)
 		if err != nil {
-			handleError(c, "Couldn't make slideshow video", errorImage)
-			return "", ""
+			return "", "", err
 		}
 	} else {
 		err := MakeVideo("collages/"+collageFilename, videoId, videoFilename)
 		if err != nil {
 			fmt.Println(err)
-			handleError(c, "Couldn't make video", errorImage)
-			return "", ""
+			return "", "", err
 		}
 	}
 
 	videoWidth, videoHeight, err := GetVideoDimensions("collages/" + videoFilename)
 	if err != nil {
-		handleError(c, "Couldn't get video dimensions", errorImage)
-		return
+		return "", "", err
 	}
-	return videoWidth, videoHeight
+	return videoWidth, videoHeight, nil
 }
