@@ -9,6 +9,7 @@ import (
 var Domain string
 var Port string
 var LocalStats Stats
+var ProxiTokInstance string
 
 var SlideIndex bool
 var LimitPublicAmount int
@@ -21,9 +22,17 @@ func checkBinary(bin string) bool {
 	return err == nil
 }
 
+func addTrailingSlash(s string) string {
+	if s[len(s)-1] != '/' {
+		return s + "/"
+	}
+	return s
+}
+
 func InitEnvs() {
-	Domain = os.Getenv("DOMAIN")
+	Domain = addTrailingSlash(os.Getenv("DOMAIN"))
 	Public = os.Getenv("PUBLIC") == "true"
+	ProxiTokInstance = os.Getenv("PROXITOK_INSTANCE")
 	FancySlideshow = os.Getenv("FANCY_SLIDESHOW") == "true"
 	// SlideIndex = os.Getenv("SLIDE_INDEX") == "true" iw as gonna do this before they nuked the html
 

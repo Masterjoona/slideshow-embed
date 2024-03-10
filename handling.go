@@ -249,7 +249,7 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 
 	handleVideoDiscordEmbed(c, tiktokData, filename, videoWidth, videoHeight)
 
-	//os.RemoveAll(tiktokData.VideoID)
+	os.RemoveAll(tiktokData.VideoID)
 	UpdateLocalStats()
 }
 

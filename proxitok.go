@@ -35,12 +35,19 @@ var proxitokInstances = []string{
 var instanceIndex = 0
 
 func getNextInstanceURL() string {
-	if instanceIndex == 13 {
+	if instanceIndex == len(proxitokInstances)-1 {
 		instanceIndex = 0
 	} else {
 		instanceIndex++
 	}
 	return proxitokInstances[instanceIndex]
+}
+
+func getInstanceURL() string {
+	if ProxiTokInstance != "" && ProxiTokInstance != "/" {
+		return ProxiTokInstance
+	}
+	return getNextInstanceURL()
 }
 
 func GetLongVideoId(videoUrl string) (string, error) {
@@ -65,7 +72,7 @@ func GetLongVideoId(videoUrl string) (string, error) {
 }
 
 func FetchProxiTokVideo(videoID string) (string, error) {
-	instanceUrl := getNextInstanceURL() + "@placeholder/video/" + videoID
+	instanceUrl := getInstanceURL() + "@placeholder/video/" + videoID
 	println("fetching from " + instanceUrl)
 	resp, err := http.Get(instanceUrl)
 	if err != nil {

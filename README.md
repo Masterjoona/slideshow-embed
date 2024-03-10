@@ -8,6 +8,7 @@ Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Brit
 |---------------------|---------------|-----------------------------------------------|
 | `DOMAIN`            | YOUR DOMAIN   | The domain where it will serve  |
 | `PORT`              | 4232          | What port it is on |
+| `PROXITOK_INSTANCE` | none          | If you want to use a custom ProxiTok instance |
 | `PUBLIC`            | false         | If the index page is public  |
 | `LIMIT_PUBLIC_AMOUNT` | 0           | How many collages are linked on the index. 0 is unlimited |
 | `FFMPEG`            | ?         | read important below  |
@@ -53,7 +54,7 @@ DOMAIN='YOUR_DOMAIN_HERE' GIN_MODE=release ./meow
 
 <details>
 <summary> add fpng_py for fast png encoding</summary>
-Add this to the dockerfile and modify the line in there
+Add this to the dockerfile
 
 ```Dockerfile
 RUN git clone --recurse-submodules https://github.com/K0lb3/fpng_py
@@ -65,13 +66,13 @@ RUN pip install . --break-system-packages
 
 ```
 
-or you can build it yourself and copy the compiled files to the container
+or you can build it yourself
 ```bash
 git clone --recurse-submodules https://github.com/K0lb3/fpng_py
 cd fpng_py
 pip install . 
 ```
-and then copy the files to the container
+and copy the compiled files to the container
 ```Dockerfile
 COPY ./fpng_py/build/lib.path/fpng_py /app/fpng_py
 ```

@@ -47,8 +47,13 @@ func SplitURLAndIndex(URL string) (string, string, bool) {
 	return URL[:lastInd], index, sound
 }
 
+type FileLink struct {
+	Name string
+	Path string
+}
+
 type Stats struct {
-	FilePaths []string
+	FilePaths []FileLink
 	FileCount string
 	TotalSize string
 }
@@ -59,7 +64,6 @@ func UpdateLocalStats() {
 		println("Error while updating local stats: " + err.Error())
 		return
 	}
-	filePaths := make([]string, len(collageFiles))
 	count := 0
 	sort.Slice(collageFiles, func(i, j int) bool {
 		fileI, err1 := collageFiles[i].Info()
@@ -70,14 +74,19 @@ func UpdateLocalStats() {
 		return fileI.ModTime().After(fileJ.ModTime())
 	})
 
-	for index, file := range collageFiles {
-		filePaths[index] = Domain + "/" + file.Name()
+	var fileLinks []FileLink
+
+	for _, file := range collageFiles {
+		fileLinks = append(fileLinks, FileLink{
+			Name: file.Name(),
+			Path: Domain + file.Name(),
+		})
 		count++
 	}
 	countString := strconv.Itoa(count)
-	if LimitPublicAmount > 0 && len(filePaths) > LimitPublicAmount {
-		filePaths = filePaths[:LimitPublicAmount]
-		countString += " (Only showing " + strconv.Itoa(len(filePaths)) + ")"
+	if LimitPublicAmount > 0 && len(fileLinks) > LimitPublicAmount {
+		fileLinks = fileLinks[:LimitPublicAmount]
+		countString += " (Only showing " + strconv.Itoa(len(fileLinks)) + ")"
 	}
 
 	bytes, err := GetDirectorySize("collages")
@@ -88,7 +97,7 @@ func UpdateLocalStats() {
 	size := FormatSize(bytes)
 
 	LocalStats = Stats{
-		FilePaths: filePaths,
+		FilePaths: fileLinks,
 		FileCount: countString,
 		TotalSize: size,
 	}

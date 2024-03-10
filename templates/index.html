@@ -1,42 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>collages</title>
-    <meta name="description" content="site to embed tiktok slideshows in discord." />
-</head>
-<body>
-    <style>
-        h1 {
-            text-align: center;
-        }
-        ul {
-            text-align: center;
-            list-style-position: inside;
-        }
-        p {
-            text-align: center;
-        }
-        .source {
-            text-align: center;
-            display: block;
-        }
-    </style>
-    <h1>explod</h1>
-    <p>currently storing {{ .count }} collages. taking up {{ .size }}</p>
-    <a class="source" href="https://github.com/Masterjoona/slideshow-embed" target="_blank">source code</a>
-    {{ if not .FileLinks }}
-    <ul>
-        <li>No links to display.</li>
-    </ul>
-    {{ else }}
-    <ul>
-        {{ range .FileLinks }}
-        <li><a href="{{ . }}">{{ . }}</a></li>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>collages</title>
+        <meta
+            name="description"
+            content="site to embed tiktok slideshows in discord."
+        />
+    </head>
+    <body>
+        <style>
+            h1 {
+                text-align: center;
+            }
+            ul {
+                text-align: center;
+                list-style-position: inside;
+            }
+            p {
+                text-align: center;
+            }
+            .source {
+                text-align: center;
+                display: block;
+            }
+        </style>
+        <h1>explod</h1>
+        <p>currently storing {{ .count }} collages. taking up {{ .size }}</p>
+        <a
+            class="source"
+            href="https://github.com/Masterjoona/slideshow-embed"
+            target="_blank"
+            >source code</a
+        >
+        {{ if not .FileLinks }}
+        <ul>
+            <li>No links to display.</li>
+        </ul>
+        {{ else }}
+        <ul>
+            {{ range .FileLinks }}
+            <li><a href="{{ .Path }}">{{ .Name }}</a></li>
+            {{ end }}
+        </ul>
         {{ end }}
-    </ul>
-    {{ end }}
-    
-</body>
+    </body>
 </html>
