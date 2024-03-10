@@ -286,7 +286,7 @@ def main():
         dest="imagegap",
         type=int,
         help="number of pixels of transparent space (if saving as png file; otherwise black or specified background color) to add between neighboring images",
-        default=3,
+        default=0,
     )
     parse.add_argument(
         "-b",

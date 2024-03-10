@@ -44,7 +44,7 @@ func handleDiscordEmbed(c *gin.Context, tiktokData Data, filename string) {
 		"authorName": tiktokData.AuthorName,
 		"caption":    tiktokData.Caption,
 		"details":    detailsString,
-		"imageUrl":   Domain + "/" + filename,
+		"imageUrl":   Domain + filename,
 	})
 }
 
@@ -61,7 +61,7 @@ func handleVideoDiscordEmbed(
 	renderTemplate(c, "video.html", gin.H{
 		"authorName": authorName,
 		"details":    detailsString,
-		"videoUrl":   Domain + "/" + filename,
+		"videoUrl":   Domain + filename,
 		"caption":    tiktokData.Caption,
 		"width":      width,
 		"height":     height,

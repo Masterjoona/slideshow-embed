@@ -25,6 +25,10 @@
                 text-align: center;
                 display: block;
             }
+            .new-collage {
+                margin-top: 10px;
+                text-align: center;
+            }
         </style>
         <h1>explod</h1>
         <p>currently storing {{ .count }} collages. taking up {{ .size }}</p>
@@ -34,6 +38,25 @@
             target="_blank"
             >source code</a
         >
+        <div class="new-collage">
+            <select id="collage-type-select">
+                <option value="t">Collage</option>
+                <option value="s">Sound collage</option>
+                <option value="f">Slideshow</option>
+            </select>
+            <input type="text" id="tiktok-link" placeholder="Tiktok link" />
+            <button id="go" onclick="newCollage()">go</button>
+            <script>
+                function newCollage() {
+                    const type = document.getElementById(
+                        "collage-type-select"
+                    ).value;
+                    const link = document.getElementById("tiktok-link").value;
+                    if (link === "") return;
+                    window.open(location.origin + "/" + type + "?v=" + link);
+                }
+            </script>
+        </div>
         {{ if not .FileLinks }}
         <ul>
             <li>No links to display.</li>

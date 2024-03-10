@@ -23,7 +23,7 @@ func checkBinary(bin string) bool {
 }
 
 func addTrailingSlash(s string) string {
-	if s[len(s)-1] != '/' {
+	if s != "" && s[len(s)-1] != '/' {
 		return s + "/"
 	}
 	return s
