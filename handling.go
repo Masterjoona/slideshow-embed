@@ -111,18 +111,30 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
+	collageFilename := "collage-" + videoId + ".png"
+	videoFilename := "video-" + videoId + ".mp4"
 	tiktokData, err := FetchTiktokData(videoId)
+
 	if err != nil {
+		if handleExistingFile(
+			c,
+			videoFilename,
+			true,
+			Data{
+				AuthorName: "n/a",
+				Caption:    "Details are not available, but the collage was saved before",
+			},
+		) {
+			return
+		}
 		HandleError(c, "Couldn't fetch TikTok data")
 		return
 	}
 
-	videoFilename := "video-" + tiktokData.VideoID + ".mp4"
 	if handleExistingFile(c, videoFilename, true, tiktokData) {
 		return
 	}
 
-	collageFilename := "collage-" + tiktokData.VideoID + ".png"
 	collageFileExists, _ := os.Stat("collages/" + collageFilename)
 	if collageFileExists != nil {
 		err = FetchAudio(tiktokData.Body, videoId)
@@ -186,6 +198,7 @@ func HandleRequest(c *gin.Context) {
 		HandleError(c, "Couldn't fetch slideshow")
 		return
 	}
+	filename := "collage-" + videoId + ".png"
 	tiktokData, err := FetchTiktokData(videoId)
 	if tiktokData.Private {
 		// i dont understand i added println every where in the code and it still doesnt print
@@ -195,11 +208,21 @@ func HandleRequest(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		if handleExistingFile(
+			c,
+			filename,
+			false,
+			Data{
+				AuthorName: "n/a",
+				Caption:    "Details are not available, but the collage was saved before",
+			},
+		) {
+			return
+		}
 		HandleError(c, "Couldn't fetch TikTok data")
 		return
 	}
 
-	filename := "collage-" + tiktokData.VideoID + ".png"
 	if handleExistingFile(c, filename, false, tiktokData) {
 		return
 	}
@@ -227,13 +250,24 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		HandleError(c, "Couldn't fetch slideshow")
 		return
 	}
+	filename := "slide-" + videoId + ".mp4"
 	tiktokData, err := FetchTiktokData(videoId)
 	if err != nil {
+		if handleExistingFile(
+			c,
+			filename,
+			true,
+			Data{
+				AuthorName: "n/a",
+				Caption:    "Details are not available, but the slideshow was saved before",
+			},
+		) {
+			return
+		}
 		HandleError(c, "Couldn't fetch TikTok data")
 		return
 	}
 
-	filename := "slide-" + videoId + ".mp4"
 	if handleExistingFile(c, filename, true, tiktokData) {
 		return
 	}

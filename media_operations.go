@@ -32,7 +32,10 @@ func FetchAudio(content string, videoId string) error {
 
 func FetchTiktokData(videoID string) (Data, error) {
 	var content string
-	var retryCount int
+	retryCount := 0
+	if ProxiTokInstance != "" && ProxiTokInstance != "/" {
+		retryCount = 3
+	}
 	var err error
 	for retryCount < 4 {
 		content, err = FetchProxiTokVideo(videoID)
