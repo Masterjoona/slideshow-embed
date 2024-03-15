@@ -34,7 +34,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 	}
 	return SimplifiedData{
 		Author:     GetAuthor(postAweme),
-		Caption:    postAweme.Desc,
+		Caption:    postAweme.Desc + "\n" + postAweme.Music.Title + " - " + postAweme.Music.Author,
 		VideoID:    videoId,
 		Details:    GetVideoDetails(postAweme),
 		ImageLinks: imageLinks,
