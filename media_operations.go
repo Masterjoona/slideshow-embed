@@ -27,7 +27,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 		return SimplifiedData{}, err
 	}
 	postAweme := resp.AwemeList[0]
-	isVideo := !strings.HasSuffix(postAweme.Video.PlayAddr.URLList[0], "mp3")
+	isVideo := !strings.Contains(postAweme.Video.PlayAddr.URLList[0], "music")
 	imageLinks := []string{}
 	if !isVideo {
 		imageLinks = GetImageLinks(postAweme)
