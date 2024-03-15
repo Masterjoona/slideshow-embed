@@ -2,19 +2,22 @@ package main
 
 import (
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 
 	"github.com/gin-gonic/gin"
 )
 
-type Data struct {
+type SimplifiedData struct {
 	AuthorName string
 	Caption    string
 	VideoID    string
-	Body       string
 	Details    Counts
-	Private    bool
+	ImageLinks []string
+	SoundUrl   string
+	IsVideo    bool
+	Video      Video
 }
 
 func renderTemplate(c *gin.Context, filename string, data gin.H) {
@@ -37,9 +40,9 @@ func HandleError(c *gin.Context, errorMsg string) {
 	})
 }
 
-func handleDiscordEmbed(c *gin.Context, tiktokData Data, filename string) {
+func handleDiscordEmbed(c *gin.Context, tiktokData SimplifiedData, filename string) {
 	details := tiktokData.Details
-	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | 👀 " + details.Views
+	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorites + " | ⬇️ " + details.Downloads + " | 👀 " + details.Views
 	renderTemplate(c, "discord.html", gin.H{
 		"authorName": tiktokData.AuthorName,
 		"caption":    tiktokData.Caption,
@@ -50,25 +53,29 @@ func handleDiscordEmbed(c *gin.Context, tiktokData Data, filename string) {
 
 func handleVideoDiscordEmbed(
 	c *gin.Context,
-	tiktokData Data,
-	filename string,
+	tiktokData SimplifiedData,
+	url string,
 	width string,
 	height string,
 ) {
 	details := tiktokData.Details
-	detailsString := "❤️" + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | 👀 " + details.Views
-	authorName := strings.Split(tiktokData.AuthorName, "(@")[0]
+	detailsString := "❤️" + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorites + " | 👀 " + details.Views
 	renderTemplate(c, "video.html", gin.H{
-		"authorName": authorName,
+		"authorName": strings.Split(tiktokData.AuthorName, "(@")[0],
 		"details":    detailsString,
-		"videoUrl":   Domain + filename,
+		"videoUrl":   url,
 		"caption":    tiktokData.Caption,
 		"width":      width,
 		"height":     height,
 	})
 }
 
-func handleExistingFile(c *gin.Context, filename string, video bool, tiktokData Data) bool {
+func handleExistingFile(
+	c *gin.Context,
+	filename string,
+	video bool,
+	tiktokData SimplifiedData,
+) bool {
 	if _, err := os.Stat("collages/" + filename); err == nil {
 		if video {
 			videoWidth, videoHeight, err := GetVideoDimensions("collages/" + filename)
@@ -76,7 +83,7 @@ func handleExistingFile(c *gin.Context, filename string, video bool, tiktokData 
 				HandleError(c, "Couldn't get video dimensions")
 				return true
 			}
-			handleVideoDiscordEmbed(c, tiktokData, filename, videoWidth, videoHeight)
+			handleVideoDiscordEmbed(c, tiktokData, Domain+filename, videoWidth, videoHeight)
 			return true
 		}
 		handleDiscordEmbed(c, tiktokData, filename)
@@ -120,7 +127,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 			c,
 			videoFilename,
 			true,
-			Data{
+			SimplifiedData{
 				AuthorName: "n/a",
 				Caption:    "Details are not available, but the collage was saved before",
 			},
@@ -137,7 +144,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 
 	collageFileExists, _ := os.Stat("collages/" + collageFilename)
 	if collageFileExists != nil {
-		err = FetchAudio(tiktokData.Body, videoId)
+		err = FetchAudio(tiktokData.SoundUrl, videoId)
 		if err != nil {
 			HandleError(c, "Couldn't fetch audio")
 			return
@@ -152,17 +159,17 @@ func HandleSoundCollageRequest(c *gin.Context) {
 			HandleError(c, "Couldn't generate video")
 			return
 		}
-		handleVideoDiscordEmbed(c, tiktokData, videoFilename, videoWidth, videoHeight)
+		handleVideoDiscordEmbed(c, tiktokData, Domain+videoFilename, videoWidth, videoHeight)
 		return
 	}
 
-	err = FetchImages(tiktokData.Body, videoId)
+	err = FetchImages(tiktokData.ImageLinks, videoId)
 	if err != nil {
 		HandleError(c, "Couldn't fetch images")
 		return
 	}
 
-	err = FetchAudio(tiktokData.Body, videoId)
+	err = FetchAudio(tiktokData.SoundUrl, videoId)
 	if err != nil {
 		HandleError(c, "Couldn't fetch audio")
 		return
@@ -184,7 +191,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		HandleError(c, "Couldn't generate video")
 		return
 	}
-	handleVideoDiscordEmbed(c, tiktokData, videoFilename, videoWidth, videoHeight)
+	handleVideoDiscordEmbed(c, tiktokData, Domain+videoFilename, videoWidth, videoHeight)
 
 	os.RemoveAll(videoId)
 	UpdateLocalStats()
@@ -200,33 +207,26 @@ func HandleRequest(c *gin.Context) {
 	}
 	filename := "collage-" + videoId + ".png"
 	tiktokData, err := FetchTiktokData(videoId)
-	if tiktokData.Private {
-		// i dont understand i added println every where in the code and it still doesnt print
-		// but it always returns "Couldn't fetch TikTok data" and i dont know why
-		// test url https://vm.tiktok.com/ZGeDD2kT3/
-		HandleError(c, "This TikTok is private")
+	if err != nil {
+		HandleError(c, "Couldn't fetch TikTok data")
 		return
 	}
-	if err != nil {
-		if handleExistingFile(
+
+	if tiktokData.IsVideo {
+		handleVideoDiscordEmbed(
 			c,
-			filename,
-			false,
-			Data{
-				AuthorName: "n/a",
-				Caption:    "Details are not available, but the collage was saved before",
-			},
-		) {
-			return
-		}
-		HandleError(c, "Couldn't fetch TikTok data")
+			tiktokData,
+			tiktokData.Video.PlayAddr.URLList[0],
+			strconv.Itoa(tiktokData.Video.Width),
+			strconv.Itoa(tiktokData.Video.Height),
+		)
 		return
 	}
 
 	if handleExistingFile(c, filename, false, tiktokData) {
 		return
 	}
-	err = FetchImages(tiktokData.Body, videoId)
+	err = FetchImages(tiktokData.ImageLinks, videoId)
 	if err != nil {
 		HandleError(c, "Couldn't fetch images")
 		return
@@ -253,17 +253,6 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 	filename := "slide-" + videoId + ".mp4"
 	tiktokData, err := FetchTiktokData(videoId)
 	if err != nil {
-		if handleExistingFile(
-			c,
-			filename,
-			true,
-			Data{
-				AuthorName: "n/a",
-				Caption:    "Details are not available, but the slideshow was saved before",
-			},
-		) {
-			return
-		}
 		HandleError(c, "Couldn't fetch TikTok data")
 		return
 	}
@@ -272,8 +261,16 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		return
 	}
 
-	FetchImages(tiktokData.Body, videoId)
-	FetchAudio(tiktokData.Body, videoId)
+	err = FetchImages(tiktokData.ImageLinks, videoId)
+	if err != nil {
+		HandleError(c, "Couldn't fetch images")
+		return
+	}
+	err = FetchAudio(tiktokData.SoundUrl, videoId)
+	if err != nil {
+		HandleError(c, "Couldn't fetch audio")
+		return
+	}
 
 	videoWidth, videoHeight, err := GenerateVideo(videoId, "", filename, true)
 	if err != nil {
@@ -281,7 +278,7 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		return
 	}
 
-	handleVideoDiscordEmbed(c, tiktokData, filename, videoWidth, videoHeight)
+	handleVideoDiscordEmbed(c, tiktokData, Domain+filename, videoWidth, videoHeight)
 
 	os.RemoveAll(tiktokData.VideoID)
 	UpdateLocalStats()
@@ -319,7 +316,7 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 				videoFilename,
 				false,
 			)
-			handleVideoDiscordEmbed(c, tiktokData, videoFilename, videoWidth, videoHeight)
+			handleVideoDiscordEmbed(c, tiktokData, Domain+videoFilename, videoWidth, videoHeight)
 			os.RemoveAll(tiktokData.VideoID)
 			return
 		}

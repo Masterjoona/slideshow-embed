@@ -2,66 +2,45 @@ package main
 
 import (
 	"fmt"
+	"strings"
 )
 
-func FetchImages(content string, videoId string) error {
-	links, err := GetImageLinks(content)
-	if err != nil {
-		return err
-	}
-
-	err = DownloadImages(links, videoId)
+func FetchImages(links []string, videoId string) error {
+	err := DownloadImages(links, videoId)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func FetchAudio(content string, videoId string) error {
-	audioUrl, err := GetAudioLink(content)
-	if err != nil {
-		return err
-	}
-
-	err = DownloadAudio(audioUrl, videoId)
+func FetchAudio(url string, videoId string) error {
+	err := DownloadAudio(url, videoId)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func FetchTiktokData(videoID string) (Data, error) {
-	var content string
-	retryCount := 0
-	if ProxiTokInstance != "" && ProxiTokInstance != "/" {
-		retryCount = 3
-	}
-	var err error
-	for retryCount < 4 {
-		content, err = FetchProxiTokVideo(videoID)
-		if content == "private" {
-			return Data{Private: true}, err
-		}
-		if err != nil {
-			print("Instance failed, retrying... ")
-			retryCount++
-			continue
-		}
-		break
-	}
-	styledAuthor, caption, err := GetAuthorAndCaption(content)
+func FetchTiktokData(videoId string) (SimplifiedData, error) {
+	resp, err := PostDetails(videoId)
 	if err != nil {
-		return Data{}, err
+		return SimplifiedData{}, err
 	}
-
-	details := GetVideoDetails(content)
-
-	return Data{
-		AuthorName: styledAuthor,
-		Caption:    caption,
-		VideoID:    videoID,
-		Details:    details,
-		Body:       content,
+	postAweme := resp.AwemeList[0]
+	isVideo := !strings.HasSuffix(postAweme.Video.PlayAddr.URLList[0], "mp3")
+	imageLinks := []string{}
+	if !isVideo {
+		imageLinks = GetImageLinks(postAweme)
+	}
+	return SimplifiedData{
+		AuthorName: GetAuthor(postAweme),
+		Caption:    postAweme.Desc,
+		VideoID:    videoId,
+		Details:    GetVideoDetails(postAweme),
+		ImageLinks: imageLinks,
+		SoundUrl:   postAweme.Music.PlayURL.URI,
+		IsVideo:    isVideo,
+		Video:      postAweme.Video,
 	}, nil
 }
 
