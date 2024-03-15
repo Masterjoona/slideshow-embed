@@ -13,7 +13,6 @@ func main() {
 	}
 	println("Starting server on port " + Port)
 	println("Domain: " + Domain)
-	println("ProxiTok Instance: " + ProxiTokInstance)
 	println("Public: " + strconv.FormatBool(Public))
 	println("Limit public amount: " + strconv.Itoa(LimitPublicAmount))
 	println("Allow slide index: " + strconv.FormatBool(SlideIndex))

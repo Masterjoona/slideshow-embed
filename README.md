@@ -8,7 +8,6 @@ Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Brit
 |---------------------|---------------|-----------------------------------------------|
 | `DOMAIN`            | YOUR DOMAIN   | The domain where it will serve  |
 | `PORT`              | 4232          | What port it is on |
-| `PROXITOK_INSTANCE` | none          | If you want to use a custom ProxiTok instance |
 | `PUBLIC`            | false         | If the index page is public  |
 | `LIMIT_PUBLIC_AMOUNT` | 0           | How many collages are linked on the index. 0 is unlimited |
 | `FFMPEG`            | ?         | read important below  |
@@ -19,12 +18,6 @@ Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Brit
 > This program will check if `/usr/bin/ffmpeg` or `/usr/local/bin/ffmpeg` exists, if it does, it will enable the sound route. You can override this behaviour by using `FFMPEG` environment var. (You can also set this to true, if ffmpeg is not in those paths)
 > Since my vps is an arm machine I use an arm build of ffmpeg, you will have to change the files in `Dockerfile` to something from [here](https://johnvansickle.com/ffmpeg/)
 
-> [!IMPORTANT]
-> Due to recent frontend change on TikTok's side, slideshow-embed will fetch a [ProxiTok](https://github.com/pablouser1/ProxiTok) public instance to get the audio and image urls as well details for the slideshow.
-> <details>
-> <summary>What did TikTok change?</summary>
-> Previously I was able to get the image urls directly from the page html, but now they are loaded in a separate request and i cannot figure out how to add the necessary signing query parameters to the request. It might take a bit longer to request a collage now.
-> </details>
 
 ### Dockerfile
 Clone this repo and `cd` into it. 
@@ -88,7 +81,6 @@ or youll figure it out if ou dont use docker
 https://github.com/Masterjoona/slideshow-embed/assets/69722179/cb07845d-851d-4cc1-97ed-badf80c37faa
 
 *Yes it is kinda slow but I really cannot affect that*
-*old video*
 
 
 ## notes

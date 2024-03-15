@@ -9,7 +9,6 @@ import (
 var Domain string
 var Port string
 var LocalStats Stats
-var ProxiTokInstance string
 
 var SlideIndex bool
 var LimitPublicAmount int
@@ -32,7 +31,6 @@ func addTrailingSlash(s string) string {
 func InitEnvs() {
 	Domain = addTrailingSlash(os.Getenv("DOMAIN"))
 	Public = os.Getenv("PUBLIC") == "true"
-	ProxiTokInstance = addTrailingSlash(os.Getenv("PROXITOK_INSTANCE"))
 	FancySlideshow = os.Getenv("FANCY_SLIDESHOW") == "true"
 	// SlideIndex = os.Getenv("SLIDE_INDEX") == "true" iw as gonna do this before they nuked the html
 
