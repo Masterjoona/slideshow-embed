@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -22,13 +21,12 @@ const (
 )
 
 func PostDetails(videoId string) (TikTokAPIResponse, error) {
-	rand.New(rand.NewSource(time.Now().UnixNano()))
 	queryString := "https://api22-normal-c-useast2a.tiktokv.com/aweme/v1/feed/?aid=1180&version_name=26.1.3&version_code=260103&aweme_id=" + videoId + "&build_number=26.1.3&manifest_version_code=260103&update_version_code=260103&opeudid=c07d3f637cde7535&uuid=6973698106620498&_rticket=1710507415580&ts=1710507415&device_brand=Google&device_type=Pixel+4&device_platform=android&resolution=1080*1920&dpi=420&os_version=10&os_api=29&carrier_region=US&sys_region=US&region=US&app_name=trill&app_language=en&language=en&timezone_name=America%2FNew_York&timezone_offset=-14400&channel=googleplay&ac=wifi&mcc_mnc=310260&is_my_cn=0&ssmix=a&as=a1qwert123&cp=cbfhckdckkde1"
 	respStruct, err := fetch(queryString)
 	if err != nil {
 		return TikTokAPIResponse{}, err
 	}
-	respStruct.AwemeList = respStruct.AwemeList[:1]
+	respStruct.AwemeList = respStruct.AwemeList[:1] // it returns a couple more than we need
 	return respStruct, nil
 }
 

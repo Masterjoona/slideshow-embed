@@ -123,17 +123,6 @@ func HandleSoundCollageRequest(c *gin.Context) {
 	tiktokData, err := FetchTiktokData(videoId)
 
 	if err != nil {
-		if handleExistingFile(
-			c,
-			videoFilename,
-			true,
-			SimplifiedData{
-				Author:  "n/a",
-				Caption: "Details are not available, but the collage was saved before",
-			},
-		) {
-			return
-		}
 		HandleError(c, "Couldn't fetch TikTok data")
 		return
 	}
