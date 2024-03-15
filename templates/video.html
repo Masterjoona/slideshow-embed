@@ -2,8 +2,8 @@
     <head>
         <title>{{ .authorName }} | {{ .details }}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="og:site_name" content="Slideshow embedder" />
-        <meta name="twitter:site_name" content="Slideshow embedder" />
+        <meta name="og:site_name" content="TikTok embedder" />
+        <meta name="twitter:site_name" content="TikTok embedder" />
         <meta name="theme-color" content="#ee1d51" />
         <meta name="description" content="guh?" />
         <meta property="twitter:player" content="{{ .videoUrl }}" />
@@ -16,7 +16,7 @@
         <meta property="twitter:player:height" content="{{ .height }}" />
         <meta property="og:type" content="video.other" />
     </head>
-    <body style="display: flex; flex-direction: column; align-items: center;">
+    <body style="display: flex; flex-direction: column; align-items: center">
         <style>
             .links {
                 margin: 10px;
@@ -31,7 +31,7 @@
         </video>
         <script>
             const tiktok = document.getElementById("tiktok");
-            tiktok.href = location.search.replace("?v=","");
+            tiktok.href = location.search.replace("?v=", "");
             const index = document.getElementById("index");
             index.href = location.origin;
         </script>

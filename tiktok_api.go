@@ -169,7 +169,7 @@ func GetImageLinks(aweme Aweme) []string {
 }
 
 func GetAuthor(aweme Aweme) string {
-	return EscapeString(aweme.Author.Nickname) + " (" + EscapeString(aweme.Author.UniqueID) + ")"
+	return EscapeString(aweme.Author.Nickname) + " (@" + EscapeString(aweme.Author.UniqueID) + ")"
 }
 
 func GetVideoDetails(aweme Aweme) Counts {

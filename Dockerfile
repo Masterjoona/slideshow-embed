@@ -4,7 +4,7 @@ RUN apk --no-cache add ca-certificates curl bash xz-libs git gcompat python3 py3
 
 WORKDIR /tmp
 RUN curl -L -O https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz
-RUN tar -xf ffmpeg-release-arm64-static.tar.xz && cd ff* && mv ff* /usr/local/bin
+RUN tar -xf ffmpeg-release-arm64-static.tar.xz && cd ff* && mv ff* /usr/bin/
 
 WORKDIR /app
 

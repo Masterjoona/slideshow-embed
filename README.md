@@ -2,6 +2,8 @@
 
 Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Britmoji/tiktxk) exists but it has just one problem: it cannot embed slideshows well, it only shows first image. So what does this program do? It downloads the images and collages them into a nice single image!
 
+Embedding normal tiktoks is also supported.
+
 ## How to setup
 
 | Env var | Default Value | Description                                   |
@@ -15,8 +17,8 @@ Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Brit
 
 
 > [!IMPORTANT] 
-> This program will check if `/usr/bin/ffmpeg` or `/usr/local/bin/ffmpeg` exists, if it does, it will enable the sound route. You can override this behaviour by using `FFMPEG` environment var. (You can also set this to true, if ffmpeg is not in those paths)
-> Since my vps is an arm machine I use an arm build of ffmpeg, you will have to change the files in `Dockerfile` to something from [here](https://johnvansickle.com/ffmpeg/)
+> This program will check if `/usr/bin/ffmpeg` exists, if it does, it will enable the sound route. You can override this behaviour by using `FFMPEG` environment var.
+> Since my vps is an arm machine I use an arm build of ffmpeg, you will have to change the file urls in the [`Dockerfile`](https://github.com/Masterjoona/slideshow-embed/blob/main/Dockerfile) to something from [here](https://johnvansickle.com/ffmpeg/)
 
 
 ### Dockerfile
@@ -82,6 +84,11 @@ https://github.com/Masterjoona/slideshow-embed/assets/69722179/cb07845d-851d-4cc
 
 *Yes it is kinda slow but I really cannot affect that*
 
+| url path | description                            |
+|----------|----------------------------------------|
+| /t?v=    | normal collage or embed a video tiktok | 
+| /s?v=    | collage with sound                     |
+| /f?v=    | slides the images                      |
 
 ## notes
 this is a beginner project so there might some insane design choices ![trolley](https://cdn.discordapp.com/emojis/1068825486265942056.webp?size=48&name=trolley&quality=lossless) 

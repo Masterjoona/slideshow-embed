@@ -45,7 +45,7 @@ func InitEnvs() {
 		Port = ":" + Port
 	}
 
-	IsffmpegInstalled = checkBinary("/usr/bin/ffmpeg") || checkBinary("/usr/local/bin/ffmpeg")
+	IsffmpegInstalled = checkBinary("/usr/bin/ffmpeg")
 
 	if os.Getenv("FFMPEG") == "true" {
 		IsffmpegInstalled = true

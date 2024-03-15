@@ -33,7 +33,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 		imageLinks = GetImageLinks(postAweme)
 	}
 	return SimplifiedData{
-		AuthorName: GetAuthor(postAweme),
+		Author:     GetAuthor(postAweme),
 		Caption:    postAweme.Desc,
 		VideoID:    videoId,
 		Details:    GetVideoDetails(postAweme),

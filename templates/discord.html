@@ -1,34 +1,41 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>{{ .authorName }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="og:site_name" content="Slideshow embedder" />
-    <meta name="twitter:site_name" content="Slideshow embedder" />
-    <meta name="description" content="{{ .details }}
+    <head>
+        <title>{{ .authorName }}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="og:site_name" content="TikTok embedder" />
+        <meta name="twitter:site_name" content="TikTok embedder" />
+        <meta
+            name="description"
+            content="{{ .details }}
     
-{{ .caption }}" />
-    <meta property="og:image" content="{{ .imageUrl }} " />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="theme-color" content="#ee1d51" />
-</head>
+{{ .caption }}"
+        />
+        <meta property="og:image" content="{{ .imageUrl }} " />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="theme-color" content="#ee1d51" />
+    </head>
 
-<body style="display: flex; flex-direction: column; align-items: center;">
-    <style>
-        .links {
-            margin: 10px;
-        }
-    </style>
-    <a href="tiktok.com" class="links" id="tiktok"> tiktok </a>
-    <a href="#" class="links" id="index"> index </a>
-    <p>{{ .details }}</p>
-    <p>{{ .caption }}</p>
-    <img src="{{ .imageUrl }}" alt="{{ .authorName }} Image - {{ .caption }}" style="max-width: 100%; margin-top: 20px;">
-    <script>
-        const tiktok = document.getElementById("tiktok");
-        tiktok.href = location.search.replace("?v=","");
-        const index = document.getElementById("index");
-        index.href = location.origin;
-    </script>
-</body>
+    <body style="display: flex; flex-direction: column; align-items: center">
+        <style>
+            .links {
+                margin: 10px;
+            }
+        </style>
+        <a href="tiktok.com" class="links" id="tiktok"> tiktok </a>
+        <a href="#" class="links" id="index"> index </a>
+        <p>{{ .details }}</p>
+        <p>{{ .caption }}</p>
+        <img
+            src="{{ .imageUrl }}"
+            alt="{{ .authorName }} Image - {{ .caption }}"
+            style="max-width: 100%; margin-top: 20px"
+        />
+        <script>
+            const tiktok = document.getElementById("tiktok");
+            tiktok.href = location.search.replace("?v=", "");
+            const index = document.getElementById("index");
+            index.href = location.origin;
+        </script>
+    </body>
 </html>

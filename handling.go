@@ -10,7 +10,7 @@ import (
 )
 
 type SimplifiedData struct {
-	AuthorName string
+	Author     string
 	Caption    string
 	VideoID    string
 	Details    Counts
@@ -44,7 +44,7 @@ func handleDiscordEmbed(c *gin.Context, tiktokData SimplifiedData, filename stri
 	details := tiktokData.Details
 	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorites + " | ⬇️ " + details.Downloads + " | 👀 " + details.Views
 	renderTemplate(c, "discord.html", gin.H{
-		"authorName": tiktokData.AuthorName,
+		"authorName": tiktokData.Author,
 		"caption":    tiktokData.Caption,
 		"details":    detailsString,
 		"imageUrl":   Domain + filename,
@@ -61,7 +61,7 @@ func handleVideoDiscordEmbed(
 	details := tiktokData.Details
 	detailsString := "❤️" + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorites + " | 👀 " + details.Views
 	renderTemplate(c, "video.html", gin.H{
-		"authorName": strings.Split(tiktokData.AuthorName, "(@")[0],
+		"authorName": strings.Split(tiktokData.Author, "(@")[0],
 		"details":    detailsString,
 		"videoUrl":   url,
 		"caption":    tiktokData.Caption,
@@ -128,8 +128,8 @@ func HandleSoundCollageRequest(c *gin.Context) {
 			videoFilename,
 			true,
 			SimplifiedData{
-				AuthorName: "n/a",
-				Caption:    "Details are not available, but the collage was saved before",
+				Author:  "n/a",
+				Caption: "Details are not available, but the collage was saved before",
 			},
 		) {
 			return
