@@ -53,6 +53,12 @@
                     ).value;
                     const link = document.getElementById("tiktok-link").value;
                     if (link === "") return;
+                    if (
+                        link.includes("tiktok.com") &&
+                        !link.startsWith("https://www.")
+                    ) {
+                        link = "https://www." + link;
+                    }
                     window.open(location.origin + "/" + type + "?v=" + link);
                 }
             </script>
