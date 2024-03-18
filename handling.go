@@ -133,7 +133,8 @@ func HandleSoundCollageRequest(c *gin.Context) {
 
 	collageFileExists, _ := os.Stat("collages/" + collageFilename)
 	if collageFileExists != nil {
-		err = FetchAudio(tiktokData.SoundUrl, videoId)
+		CreateDirectory(videoId)
+		err = DownloadAudio(tiktokData.SoundUrl, videoId)
 		if err != nil {
 			HandleError(c, "Couldn't fetch audio")
 			return
@@ -152,19 +153,19 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
-	err = FetchImages(tiktokData.ImageLinks, videoId)
+	err = DownloadImages(tiktokData.ImageLinks, videoId)
 	if err != nil {
 		HandleError(c, "Couldn't fetch images")
 		return
 	}
 
-	err = FetchAudio(tiktokData.SoundUrl, videoId)
+	err = DownloadAudio(tiktokData.SoundUrl, videoId)
 	if err != nil {
 		HandleError(c, "Couldn't fetch audio")
 		return
 	}
 
-	err = GenerateCollage(videoId, collageFilename)
+	err = MakeCollage(videoId, collageFilename)
 	if err != nil {
 		HandleError(c, "Couldn't generate collage")
 		return
@@ -215,12 +216,12 @@ func HandleRequest(c *gin.Context) {
 	if handleExistingFile(c, filename, false, tiktokData) {
 		return
 	}
-	err = FetchImages(tiktokData.ImageLinks, videoId)
+	err = DownloadImages(tiktokData.ImageLinks, videoId)
 	if err != nil {
 		HandleError(c, "Couldn't fetch images")
 		return
 	}
-	err = GenerateCollage(videoId, filename)
+	err = MakeCollage(videoId, filename)
 	if err != nil {
 		HandleError(c, "Couldn't generate collage")
 		return
@@ -250,12 +251,12 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		return
 	}
 
-	err = FetchImages(tiktokData.ImageLinks, videoId)
+	err = DownloadImages(tiktokData.ImageLinks, videoId)
 	if err != nil {
 		HandleError(c, "Couldn't fetch images")
 		return
 	}
-	err = FetchAudio(tiktokData.SoundUrl, videoId)
+	err = DownloadAudio(tiktokData.SoundUrl, videoId)
 	if err != nil {
 		HandleError(c, "Couldn't fetch audio")
 		return
@@ -291,9 +292,9 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 			return
 		}
 
-		FetchImages(c, tiktokURL, tiktokData, index)
+		DownloadImages(c, tiktokURL, tiktokData, index)
 		if sound {
-			FetchAudio(c, tiktokURL, tiktokData)
+			DownloadAudio(c, tiktokURL, tiktokData)
 		}
 
 		GenerateCollage(c, tiktokData.VideoID, filename)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"sort"
@@ -32,6 +33,14 @@ func validateURL(url string) bool {
 		return false
 	}
 	return true
+}
+
+func EscapeString(input string) string {
+	decoded, err := url.QueryUnescape(input)
+	if err != nil {
+		return input
+	}
+	return decoded
 }
 
 func SplitURLAndIndex(URL string) (string, string, bool) {
@@ -86,7 +95,7 @@ func UpdateLocalStats() {
 	countString := strconv.Itoa(count)
 	if LimitPublicAmount > 0 && len(fileLinks) > LimitPublicAmount {
 		fileLinks = fileLinks[:LimitPublicAmount]
-		countString += " (Only showing " + strconv.Itoa(len(fileLinks)) + ")"
+		countString += fmt.Sprintf(" (limited to %d)", LimitPublicAmount)
 	}
 
 	bytes, err := GetDirectorySize("collages")
@@ -103,10 +112,21 @@ func UpdateLocalStats() {
 	}
 }
 
-func EscapeString(input string) string {
-	decoded, err := url.QueryUnescape(input)
+func FormatLargeNumbers(numberString string) string {
+	const (
+		million  = 1000000
+		thousand = 1000
+	)
+	number, err := strconv.Atoi(numberString)
 	if err != nil {
-		return input
+		return "0"
 	}
-	return decoded
+	switch {
+	case number >= million:
+		return fmt.Sprintf("%.1fM", float64(number)/million)
+	case number >= thousand:
+		return fmt.Sprintf("%.1fK", float64(number)/thousand)
+	default:
+		return fmt.Sprintf("%d", number)
+	}
 }

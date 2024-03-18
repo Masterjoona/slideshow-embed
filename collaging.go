@@ -55,7 +55,6 @@ func getAudioLength(inputDir string) (string, error) {
 	out, err := exec.Command("ffprobe", "-i", inputDir+"/audio.mp3", "-show_entries", "format=duration", "-v", "quiet", "-of", "csv=p=0").
 		Output()
 	if err != nil {
-		println("IM ERRORING")
 		fmt.Println(err)
 		fmt.Println(string(out))
 		return "0", err
@@ -65,36 +64,30 @@ func getAudioLength(inputDir string) (string, error) {
 	return trimmed, nil
 }
 
-func MakeVideoSlideshow(inputDir string, outputPath string) error {
-	output := "collages/" + outputPath
+func MakeVideoSlideshow(imageInputDir string, outputPath string) error {
+	resizeImages(imageInputDir)
 
-	resizeImages(inputDir)
+	var ffmpegInput string
+	var timeElapsed float64
+	var ffmpegVariables string
+	var ffmpegTransistions string
+	imageDuration, offset := 3.5, 3.25
 
-	inputStr := ""
-	offset := 3.0
-	currentTime := 0.0
-	variables := ""
-	transistions := ""
-	listOfFiles, err := os.ReadDir(inputDir)
+	imageInputFiles, err := os.ReadDir(imageInputDir)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
 
-	var filteredImageFiles []string
-	for _, file := range listOfFiles {
-		if !strings.Contains(file.Name(), "audio.mp3") {
-			filteredImageFiles = append(filteredImageFiles, file.Name())
-		}
+	filteredImageFiles := make([]string, 0, len(imageInputFiles)-1)
+	for _, file := range imageInputFiles[:len(imageInputFiles)-1] {
+		filteredImageFiles = append(filteredImageFiles, file.Name())
 	}
 
-	fullLengthAudio := false
-	audioLength, err := getAudioLength(inputDir)
+	audioLength, err := getAudioLength(imageInputDir)
 	if err != nil {
 		fmt.Println(err)
-		audioLength = strconv.FormatFloat(3.25*float64(len(filteredImageFiles)), 'f', 2, 64)
-	} else {
-		fullLengthAudio = true
+		audioLength = strconv.FormatFloat(3.5*float64(len(filteredImageFiles)), 'f', 2, 64)
 	}
 
 	sort.Slice(filteredImageFiles, func(i, j int) bool {
@@ -106,33 +99,43 @@ func MakeVideoSlideshow(inputDir string, outputPath string) error {
 		)
 		return numI < numJ
 	})
-	time := 3.25
-	for i, imageFile := range filteredImageFiles {
-		if i+1 == len(filteredImageFiles) || i == 0 {
-			time = 3.25
-		} else {
-			// TODO maybe, this might need a better way something what this has https://github.com/0x464e/slideshow-video/blob/c033056d0d9b4f49f797140429474175dafa5e84/src/ffmpeg.ts#L270
-			time = 3.5
-		}
-		currentTime += time
-		if i+1 == len(filteredImageFiles) && fullLengthAudio {
-			time, err = strconv.ParseFloat(audioLength, 64)
-			if err != nil {
-				fmt.Println(err)
-				time = 3.25
-			} else {
-				time -= currentTime
-			}
-		}
 
-		inputStr += fmt.Sprintf("-loop 1 -t %.2f -i %s/%s ", time, inputDir, imageFile)
-		variables += fmt.Sprintf("[%d]settb=AVTB[img%d];", i, i+1)
+	for i := 0; i < len(filteredImageFiles)-1; i++ {
+		timeElapsed += imageDuration
+		ffmpegInput += fmt.Sprintf(
+			"-loop 1 -t %.2f -i %s/%s ",
+			imageDuration,
+			imageInputDir,
+			filteredImageFiles[i],
+		)
+		ffmpegVariables += fmt.Sprintf("[%d]settb=AVTB[img%d];", i, i+1)
 	}
-	inputStr += "-stream_loop -1 -i " + inputDir + "/audio.mp3" + " -y"
+
+	lastImageTime, err := strconv.ParseFloat(audioLength, 64)
+	if err != nil {
+		fmt.Println(err)
+		lastImageTime = 3.5
+	} else {
+		lastImageTime -= timeElapsed
+	}
+
+	ffmpegInput += fmt.Sprintf(
+		"-loop 1 -t %.2f -i %s/%s ",
+		lastImageTime,
+		imageInputDir,
+		filteredImageFiles[len(filteredImageFiles)-1],
+	)
+	ffmpegVariables += fmt.Sprintf(
+		"[%d]settb=AVTB[img%d];",
+		len(filteredImageFiles)-1,
+		len(filteredImageFiles),
+	)
+
+	ffmpegInput += "-stream_loop -1 -i " + imageInputDir + "/audio.mp3" + " -y"
 
 	for i := 1; i <= len(filteredImageFiles); i++ {
 		if i == 1 {
-			transistions += fmt.Sprintf(
+			ffmpegTransistions += fmt.Sprintf(
 				"[img%d][img%d]xfade=transition=slideleft:duration=0.25:offset=%.2f[filter%d];",
 				i,
 				i+1,
@@ -140,48 +143,69 @@ func MakeVideoSlideshow(inputDir string, outputPath string) error {
 				i,
 			)
 		} else {
-			transistions += fmt.Sprintf("[filter%d][img%d]xfade=transition=slideleft:duration=0.25:offset=%.2f[filter%d];", i-1, i+1, offset, i)
+			ffmpegTransistions += fmt.Sprintf("[filter%d][img%d]xfade=transition=slideleft:duration=0.25:offset=%.2f[filter%d];", i-1, i+1, offset, i)
 		}
 		offset += 3.25
 	}
 
-	transistions = transistions[:len(transistions)-1]
-	lastIndex := strings.LastIndex(transistions[:len(transistions)-1], ";")
-	transistions = transistions[:lastIndex]
-	//cmd := fmt.Sprintf("ffmpeg %s -filter_complex '%s' -map '[filter%d]' -vcodec libx264 -map %d:a -pix_fmt yuv420p -t %.2f %s", inputStr, variables+transistions, len(filteredImageFiles)-1, len(filteredImageFiles), offset-3.25, output)
-	//fmt.Println(cmd)
-	lastFilter := "[filter" + strconv.Itoa(len(filteredImageFiles)-1) + "]"
-	mapThings := strconv.Itoa(len(filteredImageFiles)) + ":a"
-	filters := variables + transistions
+	ffmpegTransistions = strings.TrimRight(ffmpegTransistions, ";")
+	ffmpegTransistions = ffmpegTransistions[:strings.LastIndex(ffmpegTransistions[:len(ffmpegTransistions)-1], ";")]
+
 	//inputArgs := strings.Fields(inputStr)
 	//var stdBuffer bytes.Buffer
 	//mw := io.MultiWriter(os.Stdout, &stdBuffer)
 
-	cmd := exec.Command("ffmpeg", strings.Fields(inputStr)...)
+	cmd := exec.Command("ffmpeg", strings.Fields(ffmpegInput)...)
 	cmd.Args = append(
 		cmd.Args,
 		"-filter_complex",
-		filters,
+		ffmpegVariables+ffmpegTransistions,
 		"-map",
-		lastFilter,
+		"[filter"+strconv.Itoa(len(filteredImageFiles)-1)+"]", // the last filter
 		"-vcodec",
 		"libx264",
 		"-map",
-		mapThings,
+		strconv.Itoa(len(filteredImageFiles))+":a", // map the audio
 		"-pix_fmt",
 		"yuv420p",
 		"-t",
 		audioLength,
-		output,
+		"collages/"+outputPath,
 	)
-
-	//cmd.Stdout = mw
-	//cmd.Stderr = mw
-	println(cmd.String())
+	/*
+		cmd.Stdout = mw
+		cmd.Stderr = mw
+		println(cmd.String())
+	*/
 	if err := cmd.Run(); err != nil {
 		log.Panic(err)
 	}
 
 	//log.Println(stdBuffer.String())
 	return nil
+}
+
+func GenerateVideo(
+	videoId string,
+	collageFilename string,
+	videoFilename string,
+	sliding bool,
+) (string, string, error) {
+	if sliding {
+		err := MakeVideoSlideshow(videoId, videoFilename)
+		if err != nil {
+			return "", "", err
+		}
+	} else {
+		err := MakeVideo("collages/"+collageFilename, videoId, videoFilename)
+		if err != nil {
+			return "", "", err
+		}
+	}
+
+	videoWidth, videoHeight, err := GetVideoDimensions("collages/" + videoFilename)
+	if err != nil {
+		return "", "", err
+	}
+	return videoWidth, videoHeight, nil
 }

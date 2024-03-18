@@ -55,11 +55,11 @@
                     if (link === "") return;
                     if (
                         link.includes("tiktok.com") &&
-                        !link.startsWith("https://www.")
+                        !link.startsWith("https://")
                     ) {
                         link = "https://www." + link;
                     }
-                    window.open(location.origin + "/" + type + "?v=" + link);
+                    location.href = location.origin + "/" + type + "?v=" + link;
                 }
             </script>
         </div>
