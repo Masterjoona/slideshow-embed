@@ -45,12 +45,6 @@ func GetFileSize(filePath string) (int64, error) {
 }
 
 func FormatSize(size int64) string {
-	const (
-		KB = 1 << 10
-		MB = 1 << 20
-		GB = 1 << 30
-	)
-
 	switch {
 	case size >= GB:
 		return fmt.Sprintf("%.2f GB", float64(size)/float64(GB))
@@ -64,7 +58,8 @@ func FormatSize(size int64) string {
 }
 
 func GetVideoDimensions(filename string) (string, string, error) {
-	out, err := exec.Command("ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=s=x:p=0", filename).Output()
+	out, err := exec.Command("ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=s=x:p=0", filename).
+		Output()
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println(string(out))

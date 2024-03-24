@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	"log"
+	"io"
+	"mime/multipart"
+	"net/http"
 	"os"
 	"os/exec"
 	"sort"
@@ -10,45 +13,79 @@ import (
 	"strings"
 )
 
-func MakeCollage(inputDir string, outputPath string) error {
-	// kek because im an idiot we will call a python script to do this
-	// you're welcome of course to rewrite this in go if you feel
-	// like helping an idiot out
-	output := "collages/" + outputPath
+func MultiImagePostServer(urlPath, videoId string, images *[][]byte) error {
+	form := new(bytes.Buffer)
+	writer := multipart.NewWriter(form)
+	for i, image := range *images {
+		part, err := writer.CreateFormFile("images", strconv.Itoa(i)+".jpg")
+		if err != nil {
+			return err
+		}
+		part.Write(image)
+	}
 
-	out, err := exec.Command("python3", "collage_maker.py", "-f", inputDir, "-o", output).Output()
+	part, err := writer.CreateFormFile("video_id", videoId)
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println(string(out))
 		return err
 	}
-	fmt.Println(string(out))
+	part.Write([]byte(videoId))
+
+	writer.Close()
+
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", PythonServer+urlPath, form)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", bodyText)
 	return nil
 }
 
-func MakeVideo(collagePath string, inputDir string, outputPath string) error {
-	output := "collages/" + outputPath
-	audioFilePath := inputDir + "/audio.mp3"
-	out, err := exec.Command("ffmpeg", "-loop", "1", "-framerate", "1", "-i", collagePath, "-i", audioFilePath, "-map", "0", "-map", "1:a", "-c:v", "libx264", "-preset", "ultrafast", "-tune", "stillimage", "-vf", "fps=1,format=yuv420p", "-c:a", "copy", "-shortest", output).
+func MakeCollage(images *[][]byte, videoId string) error {
+	err := MultiImagePostServer("/collage", videoId, images)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func MakeCollageWithAudio(
+	collagePath string,
+	audio *[]byte,
+	videoId string,
+) (string, string, error) {
+	err := os.WriteFile("audio-"+videoId+".mp3", *audio, 0644)
+	if err != nil {
+		return "", "", err
+	}
+
+	out, err := exec.Command("ffmpeg", "-loop", "1", "-framerate", "1", "-i", collagePath, "-i", "audio-"+videoId+".mp3", "-map", "0", "-map", "1:a", "-c:v", "libx264", "-preset", "ultrafast", "-tune", "stillimage", "-vf", "fps=1,format=yuv420p", "-c:a", "copy", "-shortest", "collages/video-"+videoId+".mp4").
 		Output()
 	if err != nil {
 		fmt.Println(err)
 		fmt.Println(string(out))
-		return err
+		return "", "", err
 	}
-	fmt.Println(string(out))
-	return nil
-}
 
-func resizeImages(inputDir string) error {
-	out, err := exec.Command("python3", "collage_maker.py", "-resize", "-f", inputDir).Output()
+	fmt.Println(string(out))
+	os.Remove("audio-" + videoId + ".mp3")
+
+	videoWidth, videoHeight, err := GetVideoDimensions("collages/video-" + videoId + ".mp4")
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println(string(out))
-		return err
+		return "", "", err
 	}
-	//print(string(out))
-	return nil
+
+	return videoWidth, videoHeight, nil
 }
 
 func getAudioLength(inputDir string) (string, error) {
@@ -64,8 +101,29 @@ func getAudioLength(inputDir string) (string, error) {
 	return trimmed, nil
 }
 
-func MakeVideoSlideshow(imageInputDir string, outputPath string) error {
-	resizeImages(imageInputDir)
+func resizeImages(images *[][]byte, videoId string) error {
+	err := MultiImagePostServer("/resize", videoId, images)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func MakeVideoSlideshow(images *[][]byte, audio *[]byte, videoId string) (string, string, error) {
+	err := CreateDirectory("/tmp/collages/" + videoId)
+	if err != nil {
+		return "", "", err
+	}
+
+	err = os.WriteFile("/tmp/collages/"+videoId+"/audio.mp3", *audio, 0644)
+	if err != nil {
+		return "", "", err
+	}
+
+	err = resizeImages(images, videoId)
+	if err != nil {
+		return "0", "0", err
+	}
 
 	var ffmpegInput string
 	var timeElapsed float64
@@ -73,18 +131,26 @@ func MakeVideoSlideshow(imageInputDir string, outputPath string) error {
 	var ffmpegTransistions string
 	imageDuration, offset := 3.5, 3.25
 
-	imageInputFiles, err := os.ReadDir(imageInputDir)
+	imageInputFiles, err := os.ReadDir("/tmp/collages/" + videoId)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		println("Error reading image files")
+		return "0", "0", err
 	}
 
 	filteredImageFiles := make([]string, 0, len(imageInputFiles)-1)
 	for _, file := range imageInputFiles[:len(imageInputFiles)-1] {
-		filteredImageFiles = append(filteredImageFiles, file.Name())
+		filteredImageFiles = append(
+			filteredImageFiles,
+			strings.Replace(
+				file.Name(),
+				"jpg",
+				"png",
+				1,
+			), // images were renamed to png on python server
+		)
 	}
 
-	audioLength, err := getAudioLength(imageInputDir)
+	audioLength, err := getAudioLength("/tmp/collages/" + videoId)
 	if err != nil {
 		fmt.Println(err)
 		audioLength = strconv.FormatFloat(3.5*float64(len(filteredImageFiles)), 'f', 2, 64)
@@ -92,10 +158,10 @@ func MakeVideoSlideshow(imageInputDir string, outputPath string) error {
 
 	sort.Slice(filteredImageFiles, func(i, j int) bool {
 		numI, _ := strconv.Atoi(
-			strings.TrimSuffix(strings.TrimPrefix(filteredImageFiles[i], "img"), ".jpg"),
+			strings.TrimSuffix(strings.TrimPrefix(filteredImageFiles[i], "img"), ".png"),
 		)
 		numJ, _ := strconv.Atoi(
-			strings.TrimSuffix(strings.TrimPrefix(filteredImageFiles[j], "img"), ".jpg"),
+			strings.TrimSuffix(strings.TrimPrefix(filteredImageFiles[j], "img"), ".png"),
 		)
 		return numI < numJ
 	})
@@ -103,9 +169,9 @@ func MakeVideoSlideshow(imageInputDir string, outputPath string) error {
 	for i := 0; i < len(filteredImageFiles)-1; i++ {
 		timeElapsed += imageDuration
 		ffmpegInput += fmt.Sprintf(
-			"-loop 1 -t %.2f -i %s/%s ",
+			"-loop 1 -t %.2f -i /tmp/collages/%s/%s ",
 			imageDuration,
-			imageInputDir,
+			videoId,
 			filteredImageFiles[i],
 		)
 		ffmpegVariables += fmt.Sprintf("[%d]settb=AVTB[img%d];", i, i+1)
@@ -120,9 +186,9 @@ func MakeVideoSlideshow(imageInputDir string, outputPath string) error {
 	}
 
 	ffmpegInput += fmt.Sprintf(
-		"-loop 1 -t %.2f -i %s/%s ",
+		"-loop 1 -t %.2f -i /tmp/collages/%s/%s ",
 		lastImageTime,
-		imageInputDir,
+		videoId,
 		filteredImageFiles[len(filteredImageFiles)-1],
 	)
 	ffmpegVariables += fmt.Sprintf(
@@ -131,7 +197,7 @@ func MakeVideoSlideshow(imageInputDir string, outputPath string) error {
 		len(filteredImageFiles),
 	)
 
-	ffmpegInput += "-stream_loop -1 -i " + imageInputDir + "/audio.mp3" + " -y"
+	ffmpegInput += "-stream_loop -1 -i /tmp/collages/" + videoId + "/audio.mp3" + " -y"
 
 	for i := 1; i <= len(filteredImageFiles); i++ {
 		if i == 1 {
@@ -170,42 +236,24 @@ func MakeVideoSlideshow(imageInputDir string, outputPath string) error {
 		"yuv420p",
 		"-t",
 		audioLength,
-		"collages/"+outputPath,
+		"collages/slide-"+videoId+".mp4",
 	)
-	/*
-		cmd.Stdout = mw
-		cmd.Stderr = mw
-		println(cmd.String())
-	*/
-	if err := cmd.Run(); err != nil {
-		log.Panic(err)
-	}
 
-	//log.Println(stdBuffer.String())
-	return nil
-}
+	//println(cmd.String())
+	//cmd.Stdout = mw
+	//cmd.Stderr = mw
+	err = cmd.Run()
 
-func GenerateVideo(
-	videoId string,
-	collageFilename string,
-	videoFilename string,
-	sliding bool,
-) (string, string, error) {
-	if sliding {
-		err := MakeVideoSlideshow(videoId, videoFilename)
-		if err != nil {
-			return "", "", err
-		}
-	} else {
-		err := MakeVideo("collages/"+collageFilename, videoId, videoFilename)
-		if err != nil {
-			return "", "", err
-		}
-	}
-
-	videoWidth, videoHeight, err := GetVideoDimensions("collages/" + videoFilename)
 	if err != nil {
+		fmt.Println(err)
+		//fmt.Println(stdBuffer.String())
+		return "0", "0", err
+	}
+	videoWidth, videoHeight, err := GetVideoDimensions("collages/slide-" + videoId + ".mp4")
+	if err != nil {
+		println("Error getting video dimensions")
 		return "", "", err
 	}
+	os.RemoveAll("/tmp/collages/" + videoId)
 	return videoWidth, videoHeight, nil
 }

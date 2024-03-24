@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  tiktok_embdedder:
+    build: 
+      dockerfile: ./docker/tiktok_embedder/Dockerfile
+    container_name: tiktok_embedder
+    environment:
+      - DOMAIN=your domain
+      - PORT=4232
+      - FANCY_SLIDESHOW=false
+      - PUBLIC=false
+      - LIMIT_PUBLIC_AMOUNT=0
+      - FFMPEG=false
+      - GIN_MODE=release
+    ports:
+      - "4232:4232"
+    networks:
+      - tiktok_network
+    volumes:
+      - your local path:/app/collages
+      - /tmp/collages:/tmp/collages
+
+  photo_collager:
+    build:
+      dockerfile: ./docker/photo_collager/Dockerfile
+    container_name: photo_collager
+    networks:
+      - tiktok_network
+    volumes:
+      - your local path:/app/collages
+      - /tmp/collages:/tmp/collages
+
+networks:
+  tiktok_network:
+    driver: bridge

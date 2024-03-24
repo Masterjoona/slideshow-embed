@@ -118,7 +118,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
-	collageFilename := "collage-" + videoId + ".png"
+	collageFilename := "collages/collage-" + videoId + ".png"
 	videoFilename := "video-" + videoId + ".mp4"
 	tiktokData, err := FetchTiktokData(videoId)
 
@@ -131,19 +131,18 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
-	collageFileExists, _ := os.Stat("collages/" + collageFilename)
+	collageFileExists, _ := os.Stat(collageFilename)
 	if collageFileExists != nil {
 		CreateDirectory(videoId)
-		err = DownloadAudio(tiktokData.SoundUrl, videoId)
+		audioBuffer, err := DownloadAudio(tiktokData.SoundUrl)
 		if err != nil {
 			HandleError(c, "Couldn't fetch audio")
 			return
 		}
-		videoWidth, videoHeight, err := GenerateVideo(
-			videoId,
+		videoWidth, videoHeight, err := MakeCollageWithAudio(
 			collageFilename,
-			videoFilename,
-			false,
+			audioBuffer,
+			videoId,
 		)
 		if err != nil {
 			HandleError(c, "Couldn't generate video")
@@ -153,30 +152,30 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
-	err = DownloadImages(tiktokData.ImageLinks, videoId)
+	imageBuffers, err := DownloadImages(tiktokData.ImageLinks)
 	if err != nil {
 		HandleError(c, "Couldn't fetch images")
 		return
 	}
 
-	err = DownloadAudio(tiktokData.SoundUrl, videoId)
+	audioBuffer, err := DownloadAudio(tiktokData.SoundUrl)
 	if err != nil {
 		HandleError(c, "Couldn't fetch audio")
 		return
 	}
 
-	err = MakeCollage(videoId, collageFilename)
+	err = MakeCollage(imageBuffers, videoId)
 	if err != nil {
 		HandleError(c, "Couldn't generate collage")
 		return
 	}
 
-	videoWidth, videoHeight, err := GenerateVideo(
-		videoId,
+	videoWidth, videoHeight, err := MakeCollageWithAudio(
 		collageFilename,
-		videoFilename,
-		false,
+		audioBuffer,
+		videoId,
 	)
+
 	if err != nil {
 		HandleError(c, "Couldn't generate video")
 		return
@@ -216,12 +215,12 @@ func HandleRequest(c *gin.Context) {
 	if handleExistingFile(c, filename, false, tiktokData) {
 		return
 	}
-	err = DownloadImages(tiktokData.ImageLinks, videoId)
+	images, err := DownloadImages(tiktokData.ImageLinks)
 	if err != nil {
 		HandleError(c, "Couldn't fetch images")
 		return
 	}
-	err = MakeCollage(videoId, filename)
+	err = MakeCollage(images, videoId)
 	if err != nil {
 		HandleError(c, "Couldn't generate collage")
 		return
@@ -251,18 +250,18 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		return
 	}
 
-	err = DownloadImages(tiktokData.ImageLinks, videoId)
+	imageBuffers, err := DownloadImages(tiktokData.ImageLinks)
 	if err != nil {
 		HandleError(c, "Couldn't fetch images")
 		return
 	}
-	err = DownloadAudio(tiktokData.SoundUrl, videoId)
+	audioBuffer, err := DownloadAudio(tiktokData.SoundUrl)
 	if err != nil {
 		HandleError(c, "Couldn't fetch audio")
 		return
 	}
 
-	videoWidth, videoHeight, err := GenerateVideo(videoId, "", filename, true)
+	videoWidth, videoHeight, err := MakeVideoSlideshow(imageBuffers, audioBuffer, videoId)
 	if err != nil {
 		HandleError(c, "Couldn't generate video")
 		return
@@ -273,48 +272,6 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 	os.RemoveAll(tiktokData.VideoID)
 	UpdateLocalStats()
 }
-
-/*
-	func HandleSlideIndexRequest(c *gin.Context) {
-		tiktokURLAndIndex := c.Query("v")
-		tiktokURL, index, sound := SplitURLAndIndex(tiktokURLAndIndex)
-		println(tiktokURL, index, sound)
-
-		tiktokData := FetchTiktokData(c, tiktokURL)
-
-		filename := "sIndex-" + tiktokData.VideoID + "-" + index + ".png"
-		if handleExistingFile(c, filename, false, tiktokData) && !sound {
-			return
-		}
-
-		videoFilename := "sIndex-" + tiktokData.VideoID + "-" + index + ".mp4"
-		if handleExistingFile(c, videoFilename, true, tiktokData) {
-			return
-		}
-
-		DownloadImages(c, tiktokURL, tiktokData, index)
-		if sound {
-			DownloadAudio(c, tiktokURL, tiktokData)
-		}
-
-		GenerateCollage(c, tiktokData.VideoID, filename)
-		if sound {
-			videoWidth, videoHeight := GenerateVideo(
-				c,
-				tiktokData.VideoID,
-				filename,
-				videoFilename,
-				false,
-			)
-			handleVideoDiscordEmbed(c, tiktokData, Domain+videoFilename, videoWidth, videoHeight)
-			os.RemoveAll(tiktokData.VideoID)
-			return
-		}
-		handleDiscordEmbed(c, tiktokData, filename)
-		os.RemoveAll(tiktokData.VideoID)
-		UpdateLocalStats()
-	}
-*/
 
 func HandleDirectFile(c *gin.Context) {
 	id := c.Param("id")

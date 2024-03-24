@@ -5,3 +5,5 @@ meow
 *.mp*
 *.txt
 *.zip
+__pycache__
+.vscode 

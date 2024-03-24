@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"net/url"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var errorImages = []string{
@@ -112,11 +114,35 @@ func UpdateLocalStats() {
 	}
 }
 
+func isDocker() bool {
+	_, err := os.Stat("/.dockerenv")
+	return !os.IsNotExist(err)
+}
+
+func ternary(cond bool, a, b string) string {
+	if cond {
+		return a
+	}
+	return b
+}
+
+const (
+	million  = 1000000
+	thousand = 1000
+	digits   = "0123456789"
+	hexChars = "0123456789abcdef"
+
+	KB = 1 << 10
+	MB = 1 << 20
+	GB = 1 << 30
+
+	UserAgent = "com.ss.android.ugc.trill/494+Mozilla/5.0+(Linux;+Android+12;+2112123G+Build/SKQ1.211006.001;+wv)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Version/4.0+Chrome/107.0.5304.105+Mobile+Safari/537.36"
+)
+
+var PythonServer = "http://" + ternary(isDocker(), "photo_collager", "localhost") + ":9700"
+
 func FormatLargeNumbers(numberString string) string {
-	const (
-		million  = 1000000
-		thousand = 1000
-	)
+
 	number, err := strconv.Atoi(numberString)
 	if err != nil {
 		return "0"
@@ -129,4 +155,22 @@ func FormatLargeNumbers(numberString string) string {
 	default:
 		return fmt.Sprintf("%d", number)
 	}
+}
+
+func GenerateRandomString(hexify bool) string {
+	var b strings.Builder
+	var charset string
+	if hexify {
+		charset = hexChars
+	} else {
+		charset = digits
+	}
+	for i := 0; i < 6; i++ {
+		b.WriteByte(charset[rand.Intn(len(charset))])
+	}
+	return b.String()
+}
+
+func GetTimestamp(precision string) string {
+	return strconv.FormatInt(time.Now().Unix(), 10) + precision
 }
