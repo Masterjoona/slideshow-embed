@@ -89,7 +89,7 @@ func getSlideLinks(body *string) []string {
 func getVideoLink(body *string) string {
 	re := regexp.MustCompile(`<a href="(.*)" on`)
 	matches := re.FindAllStringSubmatch(*body, -1)
-	return matches[1][1]
+	return matches[0][1]
 }
 
 func getVideoDimensionsFromUrl(videoURL string) (width, height string, err error) {
