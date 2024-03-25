@@ -2,23 +2,11 @@ package main
 
 import (
 	"os"
-	"strconv"
 	"strings"
 	"text/template"
 
 	"github.com/gin-gonic/gin"
 )
-
-type SimplifiedData struct {
-	Author     string
-	Caption    string
-	VideoID    string
-	Details    Counts
-	ImageLinks []string
-	SoundUrl   string
-	IsVideo    bool
-	Video      Video
-}
 
 func renderTemplate(c *gin.Context, filename string, data gin.H) {
 	tmpl, err := template.ParseFiles("templates/" + filename)
@@ -42,7 +30,7 @@ func HandleError(c *gin.Context, errorMsg string) {
 
 func handleDiscordEmbed(c *gin.Context, tiktokData SimplifiedData, filename string) {
 	details := tiktokData.Details
-	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorites + " | ⬇️ " + details.Downloads + " | 👀 " + details.Views
+	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorites + " | 👀 " + details.Views
 	renderTemplate(c, "discord.html", gin.H{
 		"authorName": tiktokData.Author,
 		"caption":    tiktokData.Caption,
@@ -120,7 +108,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 
 	collageFilename := "collages/collage-" + videoId + ".png"
 	videoFilename := "video-" + videoId + ".mp4"
-	tiktokData, err := FetchTiktokData(videoId)
+	tiktokData, err := ScrapeTTSave(videoId)
 
 	if err != nil {
 		HandleError(c, "Couldn't fetch TikTok data")
@@ -195,7 +183,7 @@ func HandleRequest(c *gin.Context) {
 		return
 	}
 	filename := "collage-" + videoId + ".png"
-	tiktokData, err := FetchTiktokData(videoId)
+	tiktokData, err := ScrapeTTSave(videoId)
 	if err != nil {
 		HandleError(c, "Couldn't fetch TikTok data")
 		return
@@ -205,9 +193,9 @@ func HandleRequest(c *gin.Context) {
 		handleVideoDiscordEmbed(
 			c,
 			tiktokData,
-			tiktokData.Video.PlayAddr.URLList[0],
-			strconv.Itoa(tiktokData.Video.Width),
-			strconv.Itoa(tiktokData.Video.Height),
+			tiktokData.Video.Url,
+			tiktokData.Video.Width,
+			tiktokData.Video.Height,
 		)
 		return
 	}
@@ -240,7 +228,7 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		return
 	}
 	filename := "slide-" + videoId + ".mp4"
-	tiktokData, err := FetchTiktokData(videoId)
+	tiktokData, err := ScrapeTTSave(videoId)
 	if err != nil {
 		HandleError(c, "Couldn't fetch TikTok data")
 		return

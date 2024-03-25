@@ -6,7 +6,7 @@ services:
       dockerfile: ./docker/tiktok_embedder/Dockerfile
     container_name: tiktok_embedder
     environment:
-      - DOMAIN=your domain
+      - DOMAIN=https://tt.yourdomain.tld
       - PORT=4232
       - FANCY_SLIDESHOW=false
       - PUBLIC=false
@@ -18,7 +18,7 @@ services:
     networks:
       - tiktok_network
     volumes:
-      - your local path:/app/collages
+      - your path:/app/collages
       - /tmp/collages:/tmp/collages
 
   photo_collager:
@@ -28,7 +28,7 @@ services:
     networks:
       - tiktok_network
     volumes:
-      - your local path:/app/collages
+      - your path:/app/collages
       - /tmp/collages:/tmp/collages
 
 networks:

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"net/url"
 	"os"
 	"sort"
@@ -58,17 +57,6 @@ func SplitURLAndIndex(URL string) (string, string, bool) {
 	return URL[:lastInd], index, sound
 }
 
-type FileLink struct {
-	Name string
-	Path string
-}
-
-type Stats struct {
-	FilePaths []FileLink
-	FileCount string
-	TotalSize string
-}
-
 func UpdateLocalStats() {
 	collageFiles, err := os.ReadDir("collages")
 	if err != nil {
@@ -119,7 +107,7 @@ func isDocker() bool {
 	return !os.IsNotExist(err)
 }
 
-func ternary(cond bool, a, b string) string {
+func Ternary(cond bool, a, b string) string {
 	if cond {
 		return a
 	}
@@ -139,7 +127,7 @@ const (
 	UserAgent = "com.ss.android.ugc.trill/494+Mozilla/5.0+(Linux;+Android+12;+2112123G+Build/SKQ1.211006.001;+wv)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Version/4.0+Chrome/107.0.5304.105+Mobile+Safari/537.36"
 )
 
-var PythonServer = "http://" + ternary(isDocker(), "photo_collager", "localhost") + ":9700"
+var PythonServer = "http://" + Ternary(isDocker(), "photo_collager", "localhost") + ":9700"
 
 func FormatLargeNumbers(numberString string) string {
 
@@ -157,20 +145,14 @@ func FormatLargeNumbers(numberString string) string {
 	}
 }
 
-func GenerateRandomString(hexify bool) string {
-	var b strings.Builder
-	var charset string
-	if hexify {
-		charset = hexChars
-	} else {
-		charset = digits
-	}
-	for i := 0; i < 6; i++ {
-		b.WriteByte(charset[rand.Intn(len(charset))])
-	}
-	return b.String()
-}
-
 func GetTimestamp(precision string) string {
 	return strconv.FormatInt(time.Now().Unix(), 10) + precision
+}
+
+func ReverseString(s string) string {
+	var reversed strings.Builder
+	for i := len(s) - 1; i >= 0; i-- {
+		reversed.WriteByte(s[i])
+	}
+	return reversed.String()
 }
