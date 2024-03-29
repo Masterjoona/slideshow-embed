@@ -1,3 +1,5 @@
+//go:build scrape
+
 package main
 
 import (
@@ -10,6 +12,8 @@ import (
 	"regexp"
 	"strings"
 )
+
+const Scraping = true
 
 func getHash(url string) string {
 	reversed := ReverseString(url)
@@ -52,7 +56,7 @@ func getData(body *string) (string, string, Counts) {
 
 	nicknameRe := regexp.MustCompile(`text-center">(.*)</h2>`)
 	match = nicknameRe.FindStringSubmatch(*body)
-	author = match[1] + "(@" + author + ")"
+	author = match[1] + " (" + author + ")"
 
 	captionRe := regexp.MustCompile(`oneliner">(.*)<\/p>`)
 	match = captionRe.FindStringSubmatch(*body)
@@ -93,7 +97,18 @@ func getVideoLink(body *string) string {
 }
 
 func getVideoDimensionsFromUrl(videoURL string) (width, height string, err error) {
-	cmd := exec.Command("ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=s=x:p=0", videoURL)
+	cmd := exec.Command(
+		"ffprobe",
+		"-v",
+		"error",
+		"-select_streams",
+		"v:0",
+		"-show_entries",
+		"stream=width,height",
+		"-of",
+		"csv=s=x:p=0",
+		videoURL,
+	)
 
 	output, err := cmd.Output()
 	if err != nil {
@@ -111,8 +126,8 @@ func getVideoDimensionsFromUrl(videoURL string) (width, height string, err error
 	return width, height, nil
 }
 
-func ScrapeTTSave(videoId string) (SimplifiedData, error) {
-	url := "https://www.tiktok.com/@placeholder_/video/" + videoId
+func FetchTiktokData(videoId string) (SimplifiedData, error) {
+	url := "https://www.tiktok.com/@placeholder/video/" + videoId
 	hash := getHash(url)
 
 	data, err := fetchTTSave(url, "slide", hash)
@@ -150,16 +165,13 @@ func ScrapeTTSave(videoId string) (SimplifiedData, error) {
 		return SimplifiedData{}, err
 	}
 
-	audioLink := getAudioLink(audioData)
-
 	return SimplifiedData{
 		Author:     author,
 		Caption:    caption,
 		Details:    stats,
-		SoundUrl:   audioLink,
+		SoundUrl:   getAudioLink(audioData),
 		ImageLinks: slideLinks,
 		IsVideo:    false,
 		Video:      SimplifiedVideo{},
 	}, nil
-
 }

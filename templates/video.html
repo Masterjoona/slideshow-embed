@@ -26,7 +26,15 @@
         <a href="#" class="links" id="index"> index </a>
         <p>{{ .details }}</p>
         <p>{{ .caption }}</p>
-        <video controls autoplay loop muted playsinline>
+        <video
+            controls
+            autoplay
+            loop
+            muted
+            playsinline
+            width="{{ .width }}"
+            height="{{ .height }}"
+        >
             <source src="{{ .videoUrl }}" type="video/mp4" />
         </video>
         <script>

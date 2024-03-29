@@ -125,11 +125,14 @@ func MakeVideoSlideshow(images *[][]byte, audio *[]byte, videoId string) (string
 		return "0", "0", err
 	}
 
-	var ffmpegInput string
-	var timeElapsed float64
-	var ffmpegVariables string
-	var ffmpegTransistions string
-	imageDuration, offset := 3.5, 3.25
+	var (
+		ffmpegTransistions string
+		ffmpegVariables    string
+		ffmpegInput        string
+		timeElapsed        float64
+		imageDuration      float64 = 3.5
+		offset             float64 = 3.25
+	)
 
 	imageInputFiles, err := os.ReadDir("/tmp/collages/" + videoId)
 	if err != nil {

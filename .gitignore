@@ -6,5 +6,4 @@ meow
 *.txt
 *.zip
 __pycache__
-.vscode 
 docker-compose.yml

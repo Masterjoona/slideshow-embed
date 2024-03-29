@@ -8,7 +8,8 @@ RUN go mod download
 
 COPY *.go ./
 ENV GOCACHE=/root/.cache/go-build
-RUN --mount=type=cache,target="/root/.cache/go-build" go build
+ARG build_tags=""
+RUN --mount=type=cache,target="/root/.cache/go-build" go build -ldflags "-s -w" -tags=${build_tags}
 
 FROM alpine:latest
 

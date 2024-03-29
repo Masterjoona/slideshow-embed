@@ -13,6 +13,7 @@ func main() {
 	}
 	println("Starting server on port " + Port)
 	println("Domain: " + Domain)
+	println("Scraping: " + strconv.FormatBool(Scraping))
 	println("Public: " + strconv.FormatBool(Public))
 	println("Limit public amount: " + strconv.Itoa(LimitPublicAmount))
 	println("Sound route: " + strconv.FormatBool(IsffmpegInstalled))

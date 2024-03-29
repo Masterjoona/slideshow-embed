@@ -35,7 +35,7 @@ from PIL import Image
 from PIL.Image import Image as ImageType
 from typing import List
 from maths import linear_partition, clamp, ensure_even
-from config import save_image, width_arg, height_arg
+from config import save_image, width_arg, height_arg, init_height
 from io import BytesIO
 import time
 
@@ -127,13 +127,11 @@ def make_collage(images: List[bytes], output: str) -> float:
         img.info["exif"] = exif.tobytes()
         # Rotate the image based on EXIF orientation data
         ImageOps.exif_transpose(img)
-        # uncomment to save space and little time
-        # commented makes bigger images
-        # if img.height > init_height:
-        #    new_width = int(img.width / img.height * init_height)
-        #    pilImages.append(img.resize((new_width, init_height), Image.LANCZOS))
-        # else:
-        pilImages.append(img)
+        if img.height > init_height:
+            new_width = int(img.width / img.height * init_height)
+            pilImages.append(img.resize((new_width, init_height), Image.LANCZOS))
+        else:
+            pilImages.append(img)
 
     collage = create_collage(pilImages)
 

@@ -7,20 +7,29 @@ import (
 	"time"
 )
 
-var Domain string
-var Port string
-var LocalStats Stats
-
-var LimitPublicAmount int
-var Public bool
-var IsffmpegInstalled bool
-var FancySlideshow bool
+var (
+	Domain            string
+	Port              string
+	LocalStats        Stats
+	InstallIds        []string
+	LimitPublicAmount int
+	Public            bool
+	IsffmpegInstalled bool
+	FancySlideshow    bool
+)
 
 func addTrailingSlash(s string) string {
 	if s != "" && s[len(s)-1] != '/' {
 		return s + "/"
 	}
 	return s
+}
+
+func checkEnvOrDefault(env string, def string) string {
+	if val := os.Getenv(env); val != "" {
+		return val
+	}
+	return def
 }
 
 func InitEnvs() {
@@ -30,17 +39,20 @@ func InitEnvs() {
 	IsffmpegInstalled = os.Getenv("FFMPEG") == "true"
 	FancySlideshow = os.Getenv("FANCY_SLIDESHOW") == "true"
 
-	if LimitPublicAmount = 0; os.Getenv("LIMIT_PUBLIC_AMOUNT") != "" {
-		LimitPublicAmount, _ = strconv.Atoi(os.Getenv("LIMIT_PUBLIC_AMOUNT"))
-	}
+	LimitPublicAmount, _ = strconv.Atoi(os.Getenv("LIMIT_PUBLIC_AMOUNT"))
 
-	if Port = os.Getenv("PORT"); Port == "" {
-		Port = "4232"
-	}
-	if Port[0] != ':' {
-		Port = ":" + Port
+	Port = checkEnvOrDefault("PORT", ":4232")
+
+	if installId := os.Getenv("INSTALL_ID"); installId != "" {
+		InstallIds = []string{installId}
+	} else {
+		// thanks yt-dlp love you <3 (and tiktxk)
+		InstallIds = []string{
+			"7351144126450059040",
+			"7351149742343391009",
+			"7351153174894626592",
+		}
 	}
 
 	UpdateLocalStats()
-
 }

@@ -4,6 +4,9 @@ services:
   tiktok_embdedder:
     build: 
       dockerfile: ./docker/tiktok_embedder/Dockerfile
+    # uncomment to scrape ttsave for data instead relying on tiktok api
+    #args:
+    #  - build_tags=scrape
     container_name: tiktok_embedder
     environment:
       - DOMAIN=https://tt.yourdomain.tld
@@ -13,6 +16,7 @@ services:
       - LIMIT_PUBLIC_AMOUNT=0
       - FFMPEG=false
       - GIN_MODE=release
+      #- INSTALL_ID=your install id if you have gotten one from somewhere
     ports:
       - "4232:4232"
     networks:

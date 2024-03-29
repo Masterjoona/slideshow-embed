@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"net/url"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 )
 
 var errorImages = []string{
@@ -124,7 +124,11 @@ const (
 	MB = 1 << 20
 	GB = 1 << 30
 
-	UserAgent = "com.ss.android.ugc.trill/494+Mozilla/5.0+(Linux;+Android+12;+2112123G+Build/SKQ1.211006.001;+wv)+AppleWebKit/537.36+(KHTML,+like+Gecko)+Version/4.0+Chrome/107.0.5304.105+Mobile+Safari/537.36"
+	appName            = "musical_ly"
+	appId              = 0 //_AID = 0 # aweme = 1128, trill = 1180, musical_ly = 1233, universal = 0;
+	appVersion         = "34.1.2"
+	appManifestVersion = "2023401020"
+	UserAgent          = "com.zhiliaoapp.musically/" + appVersion + " (Linux; U; Android 13; en_US; Pixel 7; Build/TD1A.220804.031; Cronet/58.0.2991.0)"
 )
 
 var PythonServer = "http://" + Ternary(isDocker(), "photo_collager", "localhost") + ":9700"
@@ -145,14 +149,26 @@ func FormatLargeNumbers(numberString string) string {
 	}
 }
 
-func GetTimestamp(precision string) string {
-	return strconv.FormatInt(time.Now().Unix(), 10) + precision
-}
-
 func ReverseString(s string) string {
 	var reversed strings.Builder
 	for i := len(s) - 1; i >= 0; i-- {
 		reversed.WriteByte(s[i])
 	}
 	return reversed.String()
+}
+
+func randomInt(min, max int) int {
+	return min + rand.Intn(max-min)
+}
+
+func randomBigInt(min, max int64) int64 {
+	return min + rand.Int63n(max-min)
+}
+
+func GenerateRandomHex() string {
+	var b strings.Builder
+	for i := 0; i < 16; i++ {
+		b.WriteByte(hexChars[rand.Intn(len(hexChars))])
+	}
+	return b.String()
 }

@@ -108,7 +108,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 
 	collageFilename := "collages/collage-" + videoId + ".png"
 	videoFilename := "video-" + videoId + ".mp4"
-	tiktokData, err := ScrapeTTSave(videoId)
+	tiktokData, err := FetchTiktokData(videoId)
 
 	if err != nil {
 		HandleError(c, "Couldn't fetch TikTok data")
@@ -183,7 +183,7 @@ func HandleRequest(c *gin.Context) {
 		return
 	}
 	filename := "collage-" + videoId + ".png"
-	tiktokData, err := ScrapeTTSave(videoId)
+	tiktokData, err := FetchTiktokData(videoId)
 	if err != nil {
 		HandleError(c, "Couldn't fetch TikTok data")
 		return
@@ -228,7 +228,7 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		return
 	}
 	filename := "slide-" + videoId + ".mp4"
-	tiktokData, err := ScrapeTTSave(videoId)
+	tiktokData, err := FetchTiktokData(videoId)
 	if err != nil {
 		HandleError(c, "Couldn't fetch TikTok data")
 		return

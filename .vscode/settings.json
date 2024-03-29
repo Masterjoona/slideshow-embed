@@ -1,0 +1,6 @@
+{
+    "python.analysis.typeCheckingMode": "basic",
+    "gopls": {
+        "build.buildFlags": ["-tags", "!scrape"]
+    }
+}
