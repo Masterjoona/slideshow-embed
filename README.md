@@ -9,16 +9,17 @@ Embedding normal tiktoks is also supported.
 
 | Env var | Default Value | Description                                   |
 |---------------------|---------------|-----------------------------------------------|
-| `DOMAIN`            | your domain   | The domain where it will serve  |
+| `DOMAIN`            | ""   | The domain where it will serve  |
 | `PORT`              | 4232          | What port it is on |
 | `PUBLIC`            | false         | If the index page is public  |
 | `LIMIT_PUBLIC_AMOUNT` | 0           | How many collages are linked on the index. 0 is unlimited |
 | `FFMPEG`            | false         | collages with sound  |
 | `FANCY_SLIDESHOW`   | false         | will make a video slideshow instead of a collage with sound like above. This can and will make requests take a lot longer. |
+| `INSTALL_ID`      | "" | if you have acquired a tiktok install id, you can put it here. |
 
 
 ### Docker compose
-Clone this repo and `cd` into it. edit the compose file for path for the collages
+Clone this repo and `cd` into it. edit the compose file for path for the collages. You can also the uncommenn the build tag if you want to scrape ttsave.app instead of relying on the api endpoint.
 
 ```bash
 docker compose build && docker compose up -d
@@ -73,7 +74,6 @@ https://github.com/Masterjoona/slideshow-embed/assets/69722179/cb07845d-851d-4cc
 ## notes
 this is a beginner project so there might some insane design choices ![trolley](https://cdn.discordapp.com/emojis/1068825486265942056.webp?size=48&name=trolley&quality=lossless) 
 
-~~Tiktok "killed" the api endpoint im using (and [few](https://github.com/Britmoji/tiktxk/issues/11) [others](https://github.com/yt-dlp/yt-dlp/issues/9506) were using). If ones spams the endpoint, it will respond eventually, but this can take time.~~ This project scrapes [TTSave.app](https://ttsave.app/) now.
 
 One such example is calling [this](https://github.com/twilsonco/PyPhotoCollage) python script to make the collages. actually it doenst call it anymore, there are two containers, one for http server and a python one for collaging and resizing.
 
