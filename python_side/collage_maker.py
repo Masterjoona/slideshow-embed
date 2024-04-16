@@ -72,15 +72,17 @@ def create_collage(img_list: List[ImageType]) -> ImageType:
         row_widths = [sum([img.width for img in row]) for row in img_rows]
         min_row_width = min(row_widths)
         row_width_ratios = [min_row_width / w for w in row_widths]
-        img_rows = [
-            [
-                img.resize(
-                    (int(img.width * width_ratio), int(img.height * width_ratio))
-                )
-                for img in row
-            ]
-            for row, width_ratio in zip(img_rows, row_width_ratios)
-        ]
+
+        new_img_rows = []
+        for row, width_ratio in zip(img_rows, row_width_ratios):
+            new_row = []
+            for img in row:
+                new_width = int(img.width * width_ratio)
+                new_height = int(img.height * width_ratio)
+                new_row.append(img.resize((new_width, new_height)))
+
+            new_img_rows.append(new_row)
+        img_rows = new_img_rows
 
     row_widths = [sum([img.width for img in row]) for row in img_rows]
     row_heights = [max([img.height for img in row]) for row in img_rows]
@@ -91,15 +93,15 @@ def create_collage(img_list: List[ImageType]) -> ImageType:
     h = ensure_even(h)
 
     result_image = Image.new("RGBA", (w, h))
-    xPos, yPos = (0, 0)
+    x_pos, y_pos = (0, 0)
 
     for row in img_rows:
         for img in row:
-            result_image.paste(img, (xPos, yPos))
-            xPos += img.width
+            result_image.paste(img, (x_pos, y_pos))
+            x_pos += img.width
             continue
-        yPos += max([img.height for img in row])
-        xPos = 0
+        y_pos += max([img.height for img in row])
+        x_pos = 0
         continue
 
     return result_image
@@ -109,10 +111,11 @@ def make_collage(images: List[bytes], output: str) -> float:
     print(output)
     start = time.time()
     if len(images) == 1:
-        save_image(output, Image.open(images[0]), 0, 0)
+        image = Image.open(BytesIO(images[0]))
+        save_image("collages/"+output, image, image.width, image.height)
         return time.time() - start
 
-    pilImages = []
+    pil_images = []
 
     for image in images:
         img = Image.open(BytesIO(image))
@@ -129,11 +132,11 @@ def make_collage(images: List[bytes], output: str) -> float:
         ImageOps.exif_transpose(img)
         if img.height > init_height:
             new_width = int(img.width / img.height * init_height)
-            pilImages.append(img.resize((new_width, init_height), Image.LANCZOS))
+            pil_images.append(img.resize((new_width, init_height), Image.LANCZOS))
         else:
-            pilImages.append(img)
+            pil_images.append(img)
 
-    collage = create_collage(pilImages)
+    collage = create_collage(pil_images)
 
     if collage.width > width_arg:
         collage = collage.resize(
@@ -148,3 +151,24 @@ def make_collage(images: List[bytes], output: str) -> float:
     save_image("collages/" + output, collage, collage.width, collage.height)
 
     return time.time() - start
+
+
+if __name__ == "__main__":
+    import sys
+    import os
+
+    folder_images = sys.argv[1] if len(sys.argv) > 1 else None
+    if folder_images:
+        files = os.listdir(folder_images)
+        files.sort(key=lambda x: int(x.split("_")[1].split(".")[0]))
+        images = [Image.open(os.path.join(folder_images, file)) for file in files]
+    else:
+        images = [
+            Image.open("../test_images/1.jpg"),
+            Image.open("../test_images/2.jpg"),
+            Image.open("../test_images/3.jpg"),
+            Image.open("../test_images/4.jpg"),
+            Image.open("../test_images/5.jpg"),
+        ]
+    collage = create_collage(images)
+    save_image("outputs/collage.png", collage, collage.width, collage.height)

@@ -1,7 +1,9 @@
+// go:build scrape
 package main
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +16,7 @@ func main() {
 	println("Starting server on port " + Port)
 	println("Domain: " + Domain)
 	println("Scraping: " + strconv.FormatBool(Scraping))
+	println("Install IDs: " + strings.Join(InstallIds, ", ") + Ternary(Scraping, " (Ignored)", ""))
 	println("Public: " + strconv.FormatBool(Public))
 	println("Limit public amount: " + strconv.Itoa(LimitPublicAmount))
 	println("Sound route: " + strconv.FormatBool(IsffmpegInstalled))

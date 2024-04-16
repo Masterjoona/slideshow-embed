@@ -1,12 +1,9 @@
-version: '3.8'
-
 services:
   tiktok_embdedder:
-    build: 
+    build:
       dockerfile: ./docker/tiktok_embedder/Dockerfile
-    # uncomment to scrape ttsave for data instead relying on tiktok api
-    #args:
-    #  - build_tags=scrape
+    args:
+      - build_tags=scrape
     container_name: tiktok_embedder
     environment:
       - DOMAIN=https://tt.yourdomain.tld

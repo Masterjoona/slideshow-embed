@@ -128,13 +128,12 @@ const (
 	appId              = 0 //_AID = 0 # aweme = 1128, trill = 1180, musical_ly = 1233, universal = 0;
 	appVersion         = "34.1.2"
 	appManifestVersion = "2023401020"
-	UserAgent          = "com.zhiliaoapp.musically/" + appVersion + " (Linux; U; Android 13; en_US; Pixel 7; Build/TD1A.220804.031; Cronet/58.0.2991.0)"
+	UserAgent          = "com.zhiliaoapp.musically" + appVersion + " (Linux; U; Android 13; en_US; Pixel 7; Build/TD1A.220804.031; Cronet/58.0.2991.0)"
 )
 
 var PythonServer = "http://" + Ternary(isDocker(), "photo_collager", "localhost") + ":9700"
 
 func FormatLargeNumbers(numberString string) string {
-
 	number, err := strconv.Atoi(numberString)
 	if err != nil {
 		return "0"
@@ -161,10 +160,11 @@ func randomInt(min, max int) int {
 	return min + rand.Intn(max-min)
 }
 
-func randomBigInt(min, max int64) int64 {
-	return min + rand.Int63n(max-min)
-}
-
+/*
+	func randomBigInt(min, max int64) int64 {
+		return min + rand.Int63n(max-min)
+	}
+*/
 func GenerateRandomHex() string {
 	var b strings.Builder
 	for i := 0; i < 16; i++ {

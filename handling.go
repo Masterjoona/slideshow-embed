@@ -102,7 +102,8 @@ func HandleSoundCollageRequest(c *gin.Context) {
 
 	videoId, err := GetLongVideoId(tiktokURL)
 	if err != nil {
-		HandleError(c, "Couldn't fetch slideshow or your URL is invalid")
+		println(err.Error())
+		HandleError(c, "Couldn't fetch slideshow or your link is invalid")
 		return
 	}
 
@@ -111,6 +112,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 	tiktokData, err := FetchTiktokData(videoId)
 
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't fetch TikTok data")
 		return
 	}
@@ -124,6 +126,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		CreateDirectory(videoId)
 		audioBuffer, err := DownloadAudio(tiktokData.SoundUrl)
 		if err != nil {
+			println(err.Error())
 			HandleError(c, "Couldn't fetch audio")
 			return
 		}
@@ -133,6 +136,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 			videoId,
 		)
 		if err != nil {
+			println(err.Error())
 			HandleError(c, "Couldn't generate video")
 			return
 		}
@@ -142,18 +146,21 @@ func HandleSoundCollageRequest(c *gin.Context) {
 
 	imageBuffers, err := DownloadImages(tiktokData.ImageLinks)
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't fetch images")
 		return
 	}
 
 	audioBuffer, err := DownloadAudio(tiktokData.SoundUrl)
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't fetch audio")
 		return
 	}
 
 	err = MakeCollage(imageBuffers, videoId)
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't generate collage")
 		return
 	}
@@ -165,6 +172,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 	)
 
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't generate video")
 		return
 	}
@@ -179,12 +187,14 @@ func HandleRequest(c *gin.Context) {
 
 	videoId, err := GetLongVideoId(tiktokURL)
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't fetch slideshow")
 		return
 	}
 	filename := "collage-" + videoId + ".png"
 	tiktokData, err := FetchTiktokData(videoId)
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't fetch TikTok data")
 		return
 	}
@@ -205,11 +215,13 @@ func HandleRequest(c *gin.Context) {
 	}
 	images, err := DownloadImages(tiktokData.ImageLinks)
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't fetch images")
 		return
 	}
 	err = MakeCollage(images, videoId)
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't generate collage")
 		return
 	}
@@ -224,12 +236,14 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 
 	videoId, err := GetLongVideoId(tiktokURL)
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't fetch slideshow")
 		return
 	}
 	filename := "slide-" + videoId + ".mp4"
 	tiktokData, err := FetchTiktokData(videoId)
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't fetch TikTok data")
 		return
 	}
@@ -240,17 +254,20 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 
 	imageBuffers, err := DownloadImages(tiktokData.ImageLinks)
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't fetch images")
 		return
 	}
 	audioBuffer, err := DownloadAudio(tiktokData.SoundUrl)
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't fetch audio")
 		return
 	}
 
 	videoWidth, videoHeight, err := MakeVideoSlideshow(imageBuffers, audioBuffer, videoId)
 	if err != nil {
+		println(err.Error())
 		HandleError(c, "Couldn't generate video")
 		return
 	}

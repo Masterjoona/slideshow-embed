@@ -91,6 +91,7 @@ func fetch(apiURL string) (TikTokAPIResponse, error) {
 	err = json.NewDecoder(resp.Body).Decode(&responseStruct)
 	if err != nil {
 		fmt.Println("Error decoding JSON:", err)
+		println(apiURL)
 		return TikTokAPIResponse{}, err
 	}
 
@@ -121,14 +122,14 @@ func getRandomIID() string {
 }
 
 func buildQueryUrl(videoId string) string {
-	query := "https://api22-normal-c-useast2a.tiktokv.com/aweme/v1/feed/?"
+	query := "https://api16-normal-c-useast1a.tiktokv.com/aweme/v1/feed/?"
 	query += setParam("aweme_id", videoId)
 	query += setParam("iid", getRandomIID())
 	query += setParam(
 		"last_install_time",
 		strconv.FormatInt(time.Now().Unix()-int64(randomInt(86400, 1123200)), 10),
 	)
-	query += "&aid=0&app_name=musical_ly&version_code=340102&version_name=34.1.2&manifest_version_code=2023401020&update_version_code=2023401020&ab_version=34.1.2&build_number=34.1.2&ssmix=a&channel=googleplay&resolution=1080*2400&dpi=420&language=en&os=android&os_api=29&os_version=13&ac=wifi&is_pad=0&current_region=US&app_type=normal&sys_region=US&timezone_name=America/New_York&residence=US&app_language=en&timezone_offset=-14400&host_abi=armeabi-v7a&locale=en&ac2=wifi5g&uoo=1&op_region=US&region=US&"
+	query += "&aid=0&app_name=musical_ly&version_code=340102&version_name=34.1.2&manifest_version_code=2023401020&update_version_code=2023401020&ab_version=34.1.2&build_number=34.1.2&ssmix=a&channel=googleplay&resolution=1080*2400&dpi=420&language=en&os=android&os_api=29&os_version=13&ac=wifi&is_pad=0&current_region=US&app_type=normal&sys_region=US&carrier_region=US&timezone_name=America/New_York&residence=US&app_language=en&timezone_offset=-14400&host_abi=armeabi-v7a&locale=en&ac2=wifi5g&uoo=1&op_region=US&region=US&"
 	query += setParam(
 		"_rticket",
 		strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10),
@@ -137,7 +138,8 @@ func buildQueryUrl(videoId string) string {
 	query += setParam("openudid", GenerateRandomHex())
 	query += setParam(
 		"device_id",
-		strconv.FormatInt(randomBigInt(7250000000000000000, 7351147085025500000), 10),
+		"7351044760062330401", // my own, i tried my own install id as well but it doesnt work??
+		//strconv.FormatInt(randomBigInt(7250000000000000000, 7351147085025500000), 10),
 	)
 	query += "&device_type=Pixel%207&device_brand=Google&device_platform=android"
 	return query

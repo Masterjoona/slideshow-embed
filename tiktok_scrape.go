@@ -74,7 +74,7 @@ func getData(body *string) (string, string, Counts) {
 	}
 }
 
-func getAudioLink(body *string) string {
+func getMediaLink(body *string) string {
 	re := regexp.MustCompile(`<a href="(.*)" on`)
 	match := re.FindStringSubmatch(*body)
 	return match[1]
@@ -88,12 +88,6 @@ func getSlideLinks(body *string) []string {
 		slideLinks = append(slideLinks, match[1])
 	}
 	return slideLinks
-}
-
-func getVideoLink(body *string) string {
-	re := regexp.MustCompile(`<a href="(.*)" on`)
-	matches := re.FindAllStringSubmatch(*body, -1)
-	return matches[0][1]
 }
 
 func getVideoDimensionsFromUrl(videoURL string) (width, height string, err error) {
@@ -130,7 +124,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 	url := "https://www.tiktok.com/@placeholder/video/" + videoId
 	hash := getHash(url)
 
-	data, err := fetchTTSave(url, "slide", hash)
+	data, err := fetchTTSave(url, "video", hash)
 	if err != nil {
 		return SimplifiedData{}, err
 	}
@@ -140,12 +134,8 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 
 	if len(slideLinks) == 0 {
 		// must be a video?
-		data, err = fetchTTSave(url, "video", hash)
-		if err != nil {
-			return SimplifiedData{}, err
-		}
 		isVideo := true
-		video := getVideoLink(data)
+		video := getMediaLink(data)
 		width, height, err := getVideoDimensionsFromUrl(video)
 		if err != nil {
 			return SimplifiedData{}, err
@@ -160,16 +150,11 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 
 	}
 
-	audioData, err := fetchTTSave(url, "audio", hash)
-	if err != nil {
-		return SimplifiedData{}, err
-	}
-
 	return SimplifiedData{
 		Author:     author,
 		Caption:    caption,
 		Details:    stats,
-		SoundUrl:   getAudioLink(audioData),
+		SoundUrl:   getMediaLink(data),
 		ImageLinks: slideLinks,
 		IsVideo:    false,
 		Video:      SimplifiedVideo{},
