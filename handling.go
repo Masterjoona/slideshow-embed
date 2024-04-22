@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"text/template"
@@ -144,11 +145,9 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
-	imageBuffers, err := DownloadImages(tiktokData.ImageLinks)
-	if err != nil {
-		println(err.Error())
-		HandleError(c, "Couldn't fetch images")
-		return
+	imageBuffers, failedCount := DownloadImages(tiktokData.ImageLinks)
+	if failedCount > 0 {
+		tiktokData.Caption += fmt.Sprintf("\n\nFailed to download %d images", failedCount)
 	}
 
 	audioBuffer, err := DownloadAudio(tiktokData.SoundUrl)
@@ -213,12 +212,12 @@ func HandleRequest(c *gin.Context) {
 	if handleExistingFile(c, filename, false, tiktokData) {
 		return
 	}
-	images, err := DownloadImages(tiktokData.ImageLinks)
-	if err != nil {
-		println(err.Error())
-		HandleError(c, "Couldn't fetch images")
-		return
+
+	images, failedCount := DownloadImages(tiktokData.ImageLinks)
+	if failedCount > 0 {
+		tiktokData.Caption += fmt.Sprintf("\n\nFailed to download %d images", failedCount)
 	}
+
 	err = MakeCollage(images, videoId)
 	if err != nil {
 		println(err.Error())
@@ -252,12 +251,11 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		return
 	}
 
-	imageBuffers, err := DownloadImages(tiktokData.ImageLinks)
-	if err != nil {
-		println(err.Error())
-		HandleError(c, "Couldn't fetch images")
-		return
+	imageBuffers, failedCount := DownloadImages(tiktokData.ImageLinks)
+	if failedCount > 0 {
+		tiktokData.Caption += fmt.Sprintf("\n\nFailed to download %d images", failedCount)
 	}
+
 	audioBuffer, err := DownloadAudio(tiktokData.SoundUrl)
 	if err != nil {
 		println(err.Error())

@@ -93,7 +93,7 @@ def create_collage(img_list: List[ImageType]) -> ImageType:
     h = ensure_even(h)
 
     result_image = Image.new("RGBA", (w, h))
-    x_pos, y_pos = (0, 0)
+    x_pos, y_pos = 0, 0
 
     for row in img_rows:
         for img in row:
@@ -110,47 +110,51 @@ def create_collage(img_list: List[ImageType]) -> ImageType:
 def make_collage(images: List[bytes], output: str) -> float:
     print(output)
     start = time.time()
-    if len(images) == 1:
-        image = Image.open(BytesIO(images[0]))
-        save_image("collages/"+output, image, image.width, image.height)
+    try:
+        if len(images) == 1:
+            image = Image.open(BytesIO(images[0]))
+            save_image("collages/"+output, image, image.width, image.height)
+            return time.time() - start
+
+        pil_images = []
+
+        for image in images:
+            img = Image.open(BytesIO(image))
+            exif = img.getexif()
+            for k in exif.keys():
+                if k != 0x0112:
+                    exif[k] = (
+                        None  # If I don't set it to None first (or print it) the del fails for some reason.
+                    )
+                del exif[k]
+
+            img.info["exif"] = exif.tobytes()
+            # Rotate the image based on EXIF orientation data
+            ImageOps.exif_transpose(img)
+            if img.height > init_height:
+                new_width = int(img.width / img.height * init_height)
+                pil_images.append(img.resize((new_width, init_height), Image.LANCZOS))
+            else:
+                pil_images.append(img)
+
+        collage = create_collage(pil_images)
+
+        if collage.width > width_arg:
+            collage = collage.resize(
+                (width_arg, int(collage.height / collage.width * width_arg)),
+                Image.LANCZOS,
+            )
+        elif collage.height > height_arg:
+            collage = collage.resize(
+                (int(collage.width / collage.height * height_arg), height_arg),
+                Image.LANCZOS,
+            )
+        save_image("collages/" + output, collage, collage.width, collage.height)
+
         return time.time() - start
-
-    pil_images = []
-
-    for image in images:
-        img = Image.open(BytesIO(image))
-        exif = img.getexif()
-        for k in exif.keys():
-            if k != 0x0112:
-                exif[k] = (
-                    None  # If I don't set it to None first (or print it) the del fails for some reason.
-                )
-            del exif[k]
-
-        img.info["exif"] = exif.tobytes()
-        # Rotate the image based on EXIF orientation data
-        ImageOps.exif_transpose(img)
-        if img.height > init_height:
-            new_width = int(img.width / img.height * init_height)
-            pil_images.append(img.resize((new_width, init_height), Image.LANCZOS))
-        else:
-            pil_images.append(img)
-
-    collage = create_collage(pil_images)
-
-    if collage.width > width_arg:
-        collage = collage.resize(
-            (width_arg, int(collage.height / collage.width * width_arg)),
-            Image.LANCZOS,
-        )
-    elif collage.height > height_arg:
-        collage = collage.resize(
-            (int(collage.width / collage.height * height_arg), height_arg),
-            Image.LANCZOS,
-        )
-    save_image("collages/" + output, collage, collage.width, collage.height)
-
-    return time.time() - start
+    except Exception as e:
+        print(e)
+        return -1
 
 
 if __name__ == "__main__":

@@ -59,6 +59,15 @@ func downloadImage(url string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
+	if !strings.Contains(resp.Header.Get("Content-Type"), "image") {
+		/*
+			thats weird?
+			https://vm.tiktok.com/ZGeH3Covr/
+			{ "code": 4404,"error": "fail to get resource"}
+		*/
+		return nil, errors.New("tiktok returned a non-image response")
+	}
+
 	imageBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -67,9 +76,10 @@ func downloadImage(url string) ([]byte, error) {
 	return imageBytes, nil
 }
 
-func DownloadImages(links []string) (*[][]byte, error) {
+func DownloadImages(links []string) (*[][]byte, int) {
 	var wg sync.WaitGroup
 	var imagesInted []ImageWithIndex
+	failedCount := 0
 
 	for i, link := range links {
 		wg.Add(1)
@@ -79,6 +89,7 @@ func DownloadImages(links []string) (*[][]byte, error) {
 				imagesInted = append(imagesInted, ImageWithIndex{Bytes: imgBytes, Index: index})
 			} else {
 				log.Printf("error downloading image %s: %v\n", url, err)
+				failedCount += 1
 			}
 		}(link, i)
 	}
@@ -92,7 +103,7 @@ func DownloadImages(links []string) (*[][]byte, error) {
 	for _, img := range imagesInted {
 		images = append(images, img.Bytes)
 	}
-	return &images, nil
+	return &images, failedCount
 }
 
 func DownloadAudio(link string) (*[]byte, error) {

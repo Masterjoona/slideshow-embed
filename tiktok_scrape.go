@@ -49,9 +49,12 @@ func fetchTTSave(tiktokUrl, mode, hash string) (*string, error) {
 	return &text, nil
 }
 
-func getData(body *string) (string, string, Counts) {
+func getData(body *string) (string, string, Counts, error) {
 	authorRe := regexp.MustCompile(`mb-2">(.*)</a>`)
 	match := authorRe.FindStringSubmatch(*body)
+	if len(match) == 0 {
+		return "", "", Counts{}, fmt.Errorf("could not find author")
+	}
 	author := match[1]
 
 	nicknameRe := regexp.MustCompile(`text-center">(.*)</h2>`)
@@ -71,7 +74,7 @@ func getData(body *string) (string, string, Counts) {
 		Comments:  matches[2][1],
 		Favorites: matches[3][1],
 		Shares:    matches[4][1],
-	}
+	}, nil
 }
 
 func getMediaLink(body *string) string {
@@ -130,7 +133,10 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 	}
 
 	slideLinks := getSlideLinks(data)
-	author, caption, stats := getData(data)
+	author, caption, stats, err := getData(data)
+	if err != nil {
+		return SimplifiedData{}, err
+	}
 
 	if len(slideLinks) == 0 {
 		// must be a video?
