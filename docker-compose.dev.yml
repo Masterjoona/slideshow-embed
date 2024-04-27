@@ -6,6 +6,11 @@ services:
       - build_tags=scrape
     container_name: tiktok_embedder
     environment:
+      # trailing slash will be added automatically if not present
+      # same for leading colon for PORT
+      #  comma separated list of ids
+      #- INSTALL_IDS=your install id if you have gotten one from somewhere
+      #- DEVICE_IDS= you can use default or your own
       - DOMAIN=https://tt.yourdomain.tld
       - PORT=4232
       - FANCY_SLIDESHOW=false
@@ -13,7 +18,6 @@ services:
       - LIMIT_PUBLIC_AMOUNT=0
       - FFMPEG=false
       - GIN_MODE=release
-      #- INSTALL_ID=your install id if you have gotten one from somewhere
     ports:
       - "4232:4232"
     networks:

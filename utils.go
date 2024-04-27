@@ -10,27 +10,21 @@ import (
 	"strings"
 )
 
-var errorImages = []string{
-	"https://media.discordapp.net/attachments/961445186280509451/980132677338423316/fuckmedaddyharderohyeailovecokcimsocissyfemboy.gif",
-	"https://media.discordapp.net/attachments/901959319719936041/996927812927750264/chrome_2WOKI6Jm3v.gif",
-	"https://cdn.discordapp.com/attachments/749030987530502197/980338691706880051/79587A35-FD36-41D3-8232-7A29B46D2543.gif",
-}
-var errorImagesIndex = 0
-
 func ErrorImage() string {
-	if errorImagesIndex == 2 {
-		errorImagesIndex = 0
+	if ErrorImagesIndex == 2 {
+		ErrorImagesIndex = 0
 	} else {
-		errorImagesIndex++
+		ErrorImagesIndex++
 	}
-	return errorImages[errorImagesIndex]
+	return ErrorImages[ErrorImagesIndex]
 }
 
 func validateURL(url string) bool {
 	if url == "" {
 		return false
 	}
-	if !strings.Contains(url, ".tiktxk.com") && !strings.Contains(url, ".tiktok.com") {
+	if !strings.Contains(url, ".tiktxk.com") && !strings.Contains(url, ".tiktok.com") &&
+		!strings.Contains(url, ".vxtiktok.com") {
 		return false
 	}
 	return true
@@ -114,25 +108,6 @@ func Ternary(cond bool, a, b string) string {
 	return b
 }
 
-const (
-	million  = 1000000
-	thousand = 1000
-	digits   = "0123456789"
-	hexChars = "0123456789abcdef"
-
-	KB = 1 << 10
-	MB = 1 << 20
-	GB = 1 << 30
-
-	appName            = "musical_ly"
-	appId              = 0 //_AID = 0 # aweme = 1128, trill = 1180, musical_ly = 1233, universal = 0;
-	appVersion         = "34.1.2"
-	appManifestVersion = "2023401020"
-	UserAgent          = "com.zhiliaoapp.musically" + appVersion + " (Linux; U; Android 13; en_US; Pixel 7; Build/TD1A.220804.031; Cronet/58.0.2991.0)"
-)
-
-var PythonServer = "http://" + Ternary(isDocker(), "photo_collager", "localhost") + ":9700"
-
 func FormatLargeNumbers(numberString string) string {
 	number, err := strconv.Atoi(numberString)
 	if err != nil {
@@ -156,11 +131,11 @@ func ReverseString(s string) string {
 	return reversed.String()
 }
 
-func randomInt(min, max int) int {
-	return min + rand.Intn(max-min)
-}
-
 /*
+	func randomInt(min, max int) int {
+		return min + rand.Intn(max-min)
+	}
+
 	func randomBigInt(min, max int64) int64 {
 		return min + rand.Int63n(max-min)
 	}

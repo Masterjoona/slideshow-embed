@@ -13,6 +13,9 @@ func main() {
 	if Domain == "" || Domain == "your domain" {
 		panic("You have not specified a Domain!")
 	}
+	if len(InstallIds) == 0 && !Scraping {
+		panic("You are trying to use tiktok api without any install ids!")
+	}
 	println("Starting server on port " + Port)
 	println("Domain: " + Domain)
 	println("Scraping: " + strconv.FormatBool(Scraping))

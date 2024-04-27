@@ -10,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 const Scraping = false
@@ -117,30 +115,26 @@ func setParam(key, value string) string {
 	return key + "=" + value + "&"
 }
 
-func getRandomIID() string {
-	return InstallIds[rand.Intn(len(InstallIds))]
+func getNextId(ids []string) string {
+	return ids[rand.Intn(len(ids))]
 }
 
 func buildQueryUrl(videoId string) string {
-	query := "https://api16-normal-c-useast1a.tiktokv.com/aweme/v1/feed/?"
-	query += setParam("aweme_id", videoId)
-	query += setParam("iid", getRandomIID())
-	query += setParam(
-		"last_install_time",
-		strconv.FormatInt(time.Now().Unix()-int64(randomInt(86400, 1123200)), 10),
-	)
-	query += "&aid=0&app_name=musical_ly&version_code=340102&version_name=34.1.2&manifest_version_code=2023401020&update_version_code=2023401020&ab_version=34.1.2&build_number=34.1.2&ssmix=a&channel=googleplay&resolution=1080*2400&dpi=420&language=en&os=android&os_api=29&os_version=13&ac=wifi&is_pad=0&current_region=US&app_type=normal&sys_region=US&carrier_region=US&timezone_name=America/New_York&residence=US&app_language=en&timezone_offset=-14400&host_abi=armeabi-v7a&locale=en&ac2=wifi5g&uoo=1&op_region=US&region=US&"
-	query += setParam(
-		"_rticket",
-		strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10),
-	)
-	query += setParam("cdid", uuid.New().String())
-	query += setParam("openudid", GenerateRandomHex())
+	query := "https://api22-normal-c-alisg.tiktokv.com/aweme/v1/feed/?"
+	query += setParam("iid", getNextId(InstallIds))
 	query += setParam(
 		"device_id",
-		"7351044760062330401", // my own, i tried my own install id as well but it doesnt work??
+		getNextId(DeviceIds),
 		//strconv.FormatInt(randomBigInt(7250000000000000000, 7351147085025500000), 10),
 	)
-	query += "&device_type=Pixel%207&device_brand=Google&device_platform=android"
-	return query
+
+	// https://github.com/Evil0ctal/Douyin_TikTok_Download_API
+	query += setParam("channel", "googleplay")
+	query += setParam("app_name", "musical_ly")
+	query += setParam("version_code", "300904")
+	query += setParam("device_platform", "android")
+	query += setParam("device_type", "SM-ASUS_Z01QD")
+	query += setParam("os_version", "9")
+
+	return query + setParam("aweme_id", videoId)
 }

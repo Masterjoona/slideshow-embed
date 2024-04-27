@@ -77,9 +77,12 @@ func getData(body *string) (string, string, Counts, error) {
 	}, nil
 }
 
-func getMediaLink(body *string) string {
-	re := regexp.MustCompile(`<a href="(.*)" on`)
-	match := re.FindStringSubmatch(*body)
+func getMediaLink(body *string, video bool) string {
+	if video {
+		match := VideoSrcLinkRe.FindStringSubmatch(*body)
+		return match[1]
+	}
+	match := AudioSrcRe.FindStringSubmatch(*body)
 	return match[1]
 }
 
@@ -141,7 +144,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 	if len(slideLinks) == 0 {
 		// must be a video?
 		isVideo := true
-		video := getMediaLink(data)
+		video := getMediaLink(data, true)
 		width, height, err := getVideoDimensionsFromUrl(video)
 		if err != nil {
 			return SimplifiedData{}, err
@@ -160,7 +163,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 		Author:     author,
 		Caption:    caption,
 		Details:    stats,
-		SoundUrl:   getMediaLink(data),
+		SoundUrl:   getMediaLink(data, false),
 		ImageLinks: slideLinks,
 		IsVideo:    false,
 		Video:      SimplifiedVideo{},

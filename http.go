@@ -16,29 +16,29 @@ func GetLongVideoId(videoUrl string) (string, error) {
 	if !validateURL(videoUrl) {
 		return "", errors.New("invalid URL")
 	}
-	if strings.Contains(videoUrl, "/photo/") {
-		return strings.Split(videoUrl, "/photo/")[1], nil
+
+	matches := longLinkRe.FindStringSubmatch(videoUrl)
+	if len(matches) > 1 {
+		return matches[1], nil
 	}
 
-	if strings.Contains(videoUrl, "/video/") {
-		return strings.Split(videoUrl, "/video/")[1], nil
+	matches = shortLinkRe.FindStringSubmatch(videoUrl)
+	if len(matches) > 1 {
+		resp, err := http.Head("https://vm.tiktok.com/" + matches[1])
+		if err != nil {
+			return "", err
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode != 200 {
+			return "", errors.New("failed to fetch the tiktok")
+		}
+
+		return longLinkRe.FindStringSubmatch(resp.Request.URL.String())[1], nil
 	}
 
-	videoUrl = strings.ReplaceAll(videoUrl, "tiktxk.com", "tiktok.com")
-	resp, err := http.Head(videoUrl)
-	if err != nil {
-		return "", err
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return "", errors.New("failed to fetch the tiktok")
-	}
-
-	queryless := strings.Split(resp.Request.URL.String(), "?")[0]
-	return strings.Split(queryless, "/")[5], nil
-
+	return "", errors.New("failed to extract the video id")
 }
 
 func downloadImage(url string) ([]byte, error) {

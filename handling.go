@@ -29,14 +29,14 @@ func HandleError(c *gin.Context, errorMsg string) {
 	})
 }
 
-func handleDiscordEmbed(c *gin.Context, tiktokData SimplifiedData, filename string) {
+func handleDiscordEmbed(c *gin.Context, tiktokData SimplifiedData, imageUrl string) {
 	details := tiktokData.Details
 	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorites + " | 👀 " + details.Views
 	renderTemplate(c, "discord.html", gin.H{
 		"authorName": tiktokData.Author,
 		"caption":    tiktokData.Caption,
 		"details":    detailsString,
-		"imageUrl":   Domain + filename,
+		"imageUrl":   imageUrl,
 	})
 }
 
@@ -75,7 +75,7 @@ func handleExistingFile(
 			handleVideoDiscordEmbed(c, tiktokData, Domain+filename, videoWidth, videoHeight)
 			return true
 		}
-		handleDiscordEmbed(c, tiktokData, filename)
+		handleDiscordEmbed(c, tiktokData, Domain+filename)
 		return true
 	}
 	return false
@@ -103,8 +103,12 @@ func HandleSoundCollageRequest(c *gin.Context) {
 
 	videoId, err := GetLongVideoId(tiktokURL)
 	if err != nil {
-		println(err.Error())
-		HandleError(c, "Couldn't fetch slideshow or your link is invalid")
+		if err.Error() == "invalid URL" {
+			HandleError(c, "link: "+tiktokURL+" is invalid")
+
+		} else {
+			HandleError(c, "Couldn't fetch slideshow")
+		}
 		return
 	}
 
@@ -186,10 +190,15 @@ func HandleRequest(c *gin.Context) {
 
 	videoId, err := GetLongVideoId(tiktokURL)
 	if err != nil {
-		println(err.Error())
-		HandleError(c, "Couldn't fetch slideshow")
+		if err.Error() == "invalid URL" {
+			HandleError(c, "link: "+tiktokURL+" is invalid")
+
+		} else {
+			HandleError(c, "Couldn't fetch slideshow")
+		}
 		return
 	}
+
 	filename := "collage-" + videoId + ".png"
 	tiktokData, err := FetchTiktokData(videoId)
 	if err != nil {
@@ -212,6 +221,10 @@ func HandleRequest(c *gin.Context) {
 	if handleExistingFile(c, filename, false, tiktokData) {
 		return
 	}
+	if len(tiktokData.ImageLinks) == 1 {
+		handleDiscordEmbed(c, tiktokData, tiktokData.ImageLinks[0])
+		return
+	}
 
 	images, failedCount := DownloadImages(tiktokData.ImageLinks)
 	if failedCount > 0 {
@@ -225,7 +238,7 @@ func HandleRequest(c *gin.Context) {
 		return
 	}
 
-	handleDiscordEmbed(c, tiktokData, filename)
+	handleDiscordEmbed(c, tiktokData, Domain+filename)
 	os.RemoveAll(videoId)
 	UpdateLocalStats()
 }
@@ -235,12 +248,18 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 
 	videoId, err := GetLongVideoId(tiktokURL)
 	if err != nil {
-		println(err.Error())
-		HandleError(c, "Couldn't fetch slideshow")
+		if err.Error() == "invalid URL" {
+			HandleError(c, "link: "+tiktokURL+" is invalid")
+
+		} else {
+			HandleError(c, "Couldn't fetch slideshow")
+		}
 		return
 	}
+
 	filename := "slide-" + videoId + ".mp4"
 	tiktokData, err := FetchTiktokData(videoId)
+
 	if err != nil {
 		println(err.Error())
 		HandleError(c, "Couldn't fetch TikTok data")

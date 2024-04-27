@@ -4,23 +4,16 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
-var (
-	Domain            string
-	Port              string
-	LocalStats        Stats
-	InstallIds        []string
-	LimitPublicAmount int
-	Public            bool
-	IsffmpegInstalled bool
-	FancySlideshow    bool
-)
-
-func addTrailingSlash(s string) string {
-	if s != "" && s[len(s)-1] != '/' {
-		return s + "/"
+func addString(s string, r string, trailing bool) string {
+	if (trailing && !strings.HasSuffix(s, r)) || (!trailing && !strings.HasPrefix(s, r)) {
+		if trailing {
+			return s + r
+		}
+		return r + s
 	}
 	return s
 }
@@ -32,27 +25,39 @@ func checkEnvOrDefault(env string, def string) string {
 	return def
 }
 
+func commaSeparatedToStrs(s string) []string {
+	if s == "" {
+		return []string{}
+	}
+	strs := strings.Split(s, ",")
+	for i, str := range strs {
+		strs[i] = strings.TrimSpace(str)
+	}
+	return strs
+}
+
 func InitEnvs() {
 	rand.NewSource(time.Now().UnixNano())
-	Domain = addTrailingSlash(os.Getenv("DOMAIN"))
+	Domain = addString(os.Getenv("DOMAIN"), "/", true)
 	Public = os.Getenv("PUBLIC") == "true"
 	IsffmpegInstalled = os.Getenv("FFMPEG") == "true"
 	FancySlideshow = os.Getenv("FANCY_SLIDESHOW") == "true"
 
 	LimitPublicAmount, _ = strconv.Atoi(os.Getenv("LIMIT_PUBLIC_AMOUNT"))
 
-	Port = checkEnvOrDefault("PORT", ":4232")
+	Port = addString(checkEnvOrDefault("PORT", ":4232"), ":", false)
 
-	if installId := os.Getenv("INSTALL_ID"); installId != "" {
-		InstallIds = []string{installId}
-	} else {
-		// thanks yt-dlp love you <3 (and tiktxk)
-		InstallIds = []string{
-			"7351144126450059040",
-			"7351149742343391009",
-			"7351153174894626592",
-		}
-	}
+	InstallIds = commaSeparatedToStrs(checkEnvOrDefault(
+		"INSTALL_IDS",
+		"",
+	))
+
+	DeviceIds = commaSeparatedToStrs(checkEnvOrDefault(
+		"DEVICE_IDS",
+		"7351044760062330401",
+	))
+	// my own - I use my own iid as well
+	// while testing, two iids returned different responses?
 
 	UpdateLocalStats()
 }
