@@ -57,7 +57,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 
 func fetch(apiURL string) (TikTokAPIResponse, error) {
 	client := &http.Client{
-		Timeout: time.Second * 4,
+		Timeout: time.Second * 10,
 	}
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
