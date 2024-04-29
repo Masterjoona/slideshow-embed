@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func MultiImagePostServer(urlPath, videoId string, images *[][]byte) error {
+func multiImagePostServer(urlPath, videoId string, images *[][]byte) error {
 	form := new(bytes.Buffer)
 	writer := multipart.NewWriter(form)
 	for i, image := range *images {
@@ -51,25 +51,19 @@ func MultiImagePostServer(urlPath, videoId string, images *[][]byte) error {
 	return nil
 }
 
-func MakeCollage(images *[][]byte, videoId string) error {
-	err := MultiImagePostServer("/collage", videoId, images)
-	if err != nil {
-		return err
-	}
-	return nil
+func (t *SimplifiedData) MakeCollage() error {
+	return multiImagePostServer("/collage", t.VideoID, &t.ImageBuffers)
 }
 
-func MakeCollageWithAudio(
-	collagePath string,
-	audio *[]byte,
-	videoId string,
-) (string, string, error) {
-	err := os.WriteFile("audio-"+videoId+".mp3", *audio, 0644)
+func (t *SimplifiedData) MakeCollageWithAudio() (string, string, error) {
+	videoId := t.VideoID
+	audioFileName := "audio-" + videoId + ".mp3"
+	err := os.WriteFile(audioFileName, t.SoundBuffer, 0644)
 	if err != nil {
 		return "", "", err
 	}
 
-	out, err := exec.Command("ffmpeg", "-loop", "1", "-framerate", "1", "-i", collagePath, "-i", "audio-"+videoId+".mp3", "-map", "0", "-map", "1:a", "-c:v", "libx264", "-preset", "ultrafast", "-tune", "stillimage", "-vf", "fps=1,format=yuv420p", "-c:a", "copy", "-shortest", "collages/video-"+videoId+".mp4").
+	out, err := exec.Command("ffmpeg", "-loop", "1", "-framerate", "1", "-i", "collages/collage-"+videoId+".png", "-i", audioFileName, "-map", "0", "-map", "1:a", "-c:v", "libx264", "-preset", "ultrafast", "-tune", "stillimage", "-vf", "fps=1,format=yuv420p", "-c:a", "copy", "-shortest", "collages/video-"+videoId+".mp4").
 		Output()
 	if err != nil {
 		fmt.Println(err)
@@ -78,7 +72,7 @@ func MakeCollageWithAudio(
 	}
 
 	fmt.Println(string(out))
-	os.Remove("audio-" + videoId + ".mp3")
+	os.Remove(audioFileName)
 
 	videoWidth, videoHeight, err := GetVideoDimensions("collages/video-" + videoId + ".mp4")
 	if err != nil {
@@ -102,25 +96,26 @@ func getAudioLength(inputDir string) (string, error) {
 }
 
 func resizeImages(images *[][]byte, videoId string) error {
-	err := MultiImagePostServer("/resize", videoId, images)
+	err := multiImagePostServer("/resize", videoId, images)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func MakeVideoSlideshow(images *[][]byte, audio *[]byte, videoId string) (string, string, error) {
+func (t *SimplifiedData) MakeVideoSlideshow() (string, string, error) {
+	videoId := t.VideoID
 	err := CreateDirectory("/tmp/collages/" + videoId)
 	if err != nil {
 		return "", "", err
 	}
 
-	err = os.WriteFile("/tmp/collages/"+videoId+"/audio.mp3", *audio, 0644)
+	err = os.WriteFile("/tmp/collages/"+videoId+"/audio.mp3", t.SoundBuffer, 0644)
 	if err != nil {
 		return "", "", err
 	}
 
-	err = resizeImages(images, videoId)
+	err = resizeImages(&t.ImageBuffers, videoId)
 	if err != nil {
 		return "0", "0", err
 	}

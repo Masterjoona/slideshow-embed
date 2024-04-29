@@ -143,7 +143,6 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 
 	if len(slideLinks) == 0 {
 		// must be a video?
-		isVideo := true
 		video := getMediaLink(data, true)
 		width, height, err := getVideoDimensionsFromUrl(video)
 		if err != nil {
@@ -153,7 +152,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 			Author:  author,
 			Caption: caption,
 			Details: stats,
-			IsVideo: isVideo,
+			IsVideo: true,
 			Video:   SimplifiedVideo{Url: video, Width: width, Height: height},
 		}, nil
 
@@ -163,7 +162,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 		Author:     author,
 		Caption:    caption,
 		Details:    stats,
-		SoundUrl:   getMediaLink(data, false),
+		SoundLink:  getMediaLink(data, false),
 		ImageLinks: slideLinks,
 		IsVideo:    false,
 		Video:      SimplifiedVideo{},

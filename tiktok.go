@@ -45,7 +45,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 		VideoID:    videoId,
 		Details:    getVideoDetails(postAweme),
 		ImageLinks: imageLinks,
-		SoundUrl:   postAweme.Music.PlayURL.URI,
+		SoundLink:  postAweme.Music.PlayURL.URI,
 		IsVideo:    isVideo,
 		Video: SimplifiedVideo{
 			Url:    postAweme.Video.PlayAddr.URLList[0],

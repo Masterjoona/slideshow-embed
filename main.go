@@ -28,15 +28,15 @@ func main() {
 	r := gin.Default()
 	r.GET("/", HandleIndex)
 
-	r.GET("/t", HandleRequest)
+	r.GET(PathCollage, HandleRequest)
 	r.GET("/collage-:id", HandleDirectFile)
 
 	if IsffmpegInstalled {
-		r.GET("/s", HandleSoundCollageRequest)
+		r.GET(PathCollageSound, HandleSoundCollageRequest)
 		r.GET("/video-:id", HandleDirectFile)
 	}
 	if IsffmpegInstalled && FancySlideshow {
-		r.GET("/f", HandleFancySlideshowRequest)
+		r.GET(PathSlide, HandleFancySlideshowRequest)
 		r.GET("/slide-:id", HandleDirectFile)
 	}
 

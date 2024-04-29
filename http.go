@@ -76,40 +76,38 @@ func downloadImage(url string) ([]byte, error) {
 	return imageBytes, nil
 }
 
-func DownloadImages(links []string) (*[][]byte, int) {
+func (t *SimplifiedData) DownloadImages() {
 	var wg sync.WaitGroup
-	var imagesInted []ImageWithIndex
-	failedCount := 0
+	var indexedImages []ImageWithIndex
 
-	for i, link := range links {
+	for i, link := range t.ImageLinks {
 		wg.Add(1)
 		go func(url string, index int) {
 			defer wg.Done()
 			if imgBytes, err := downloadImage(url); err == nil {
-				imagesInted = append(imagesInted, ImageWithIndex{Bytes: imgBytes, Index: index})
+				indexedImages = append(indexedImages, ImageWithIndex{Bytes: imgBytes, Index: index})
 			} else {
 				log.Printf("error downloading image %s: %v\n", url, err)
-				failedCount += 1
 			}
 		}(link, i)
 	}
 	wg.Wait()
 
-	sort.Slice(imagesInted, func(i, j int) bool {
-		return imagesInted[i].Index < imagesInted[j].Index
+	sort.Slice(indexedImages, func(i, j int) bool {
+		return indexedImages[i].Index < indexedImages[j].Index
 	})
 
-	images := make([][]byte, 0, len(imagesInted))
-	for _, img := range imagesInted {
-		images = append(images, img.Bytes)
+	t.ImageBuffers = make([][]byte, len(indexedImages))
+	for _, img := range indexedImages {
+		t.ImageBuffers[img.Index] = img.Bytes
 	}
-	return &images, failedCount
+
 }
 
-func DownloadAudio(link string) (*[]byte, error) {
-	req, err := http.NewRequest("GET", link, nil)
+func (t *SimplifiedData) DownloadSound() error {
+	req, err := http.NewRequest("GET", t.SoundLink, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	req.Header.Set("User-Agent", UserAgent)
 	req.Header.Set("range", "bytes=0-")
@@ -118,18 +116,18 @@ func DownloadAudio(link string) (*[]byte, error) {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("Error making the request:", err)
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusPartialContent {
-		return nil, errors.New("failed to fetch the audio")
+		return errors.New("failed to fetch the audio")
 	}
 
-	audioBytes, err := io.ReadAll(resp.Body)
+	t.SoundBuffer, err = io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &audioBytes, nil
+	return nil
 }

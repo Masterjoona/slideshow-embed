@@ -7,14 +7,16 @@ type SimplifiedVideo struct {
 }
 
 type SimplifiedData struct {
-	Author     string
-	Caption    string
-	VideoID    string
-	Details    Counts
-	ImageLinks []string
-	SoundUrl   string
-	IsVideo    bool
-	Video      SimplifiedVideo
+	Author       string
+	Caption      string
+	VideoID      string
+	Details      Counts
+	ImageLinks   []string
+	ImageBuffers [][]byte
+	SoundLink    string
+	SoundBuffer  []byte
+	IsVideo      bool
+	Video        SimplifiedVideo
 }
 
 type Counts struct {
