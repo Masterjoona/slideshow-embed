@@ -19,22 +19,20 @@ const (
 	PathSlide        = "/f"
 )
 
-var ErrorImages = []string{
-	"https://media.discordapp.net/attachments/961445186280509451/980132677338423316/fuckmedaddyharderohyeailovecokcimsocissyfemboy.gif",
-	"https://media.discordapp.net/attachments/901959319719936041/996927812927750264/chrome_2WOKI6Jm3v.gif",
-	"https://cdn.discordapp.com/attachments/749030987530502197/980338691706880051/79587A35-FD36-41D3-8232-7A29B46D2543.gif",
-}
-var ErrorImagesIndex = 0
+var (
+	ErrorImages = []string{
+		"https://media.discordapp.net/attachments/961445186280509451/980132677338423316/fuckmedaddyharderohyeailovecokcimsocissyfemboy.gif",
+		"https://media.discordapp.net/attachments/901959319719936041/996927812927750264/chrome_2WOKI6Jm3v.gif",
+		"https://cdn.discordapp.com/attachments/749030987530502197/980338691706880051/79587A35-FD36-41D3-8232-7A29B46D2543.gif",
+	}
+	ErrorImagesIndex = 0
+)
 
 var PythonServer = "http://" + Ternary(isDocker(), "photo_collager", "localhost") + ":9700"
 
 var (
-	longLinkRe = regexp.MustCompile(
-		`https:\/\/(?:www.)?(?:vxtiktok|tiktok|tiktxk|)\.com\/@.{2,32}\/(?:photo|video)\/(\d+)`,
-	)
-	shortLinkRe = regexp.MustCompile(
-		`https:\/\/.{1,3}\.(?:(?:vx|)tikt(?:x|o)k)\.com/(?:.{1,2}/|)(.{5,12})`,
-	)
+	longLinkRe     = regexp.MustCompile(`https:\/\/(?:www.)?(?:vxtiktok|tiktok|tiktxk|)\.com\/@.{2,32}\/(?:photo|video)\/(\d+)`)
+	shortLinkRe    = regexp.MustCompile(`https:\/\/.{1,3}\.(?:(?:vx|)tikt(?:x|o)k)\.com/(?:.{1,2}/|)(.{5,12})`)
 	AudioSrcRe     = regexp.MustCompile(`<a href="(.*)" onclick="bdl\(this, event\)" type="audio`)
 	VideoSrcLinkRe = regexp.MustCompile(`<a href="(.*)" onclick="bdl\(this, event\)" rel`)
 )

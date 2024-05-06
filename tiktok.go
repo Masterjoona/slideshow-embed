@@ -28,7 +28,11 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 	queryString := buildQueryUrl(videoId)
 	apiResponse, err := fetch(queryString)
 	if err != nil {
-		return SimplifiedData{}, err
+	    // fetch again, sometimes empty resp and then not empty resp.
+		apiResponse, err = fetch(queryString)
+		if err != nil {
+			return SimplifiedData{}, err
+		}
 	}
 	postAweme := apiResponse.AwemeList[0]
 

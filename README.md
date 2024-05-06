@@ -1,22 +1,22 @@
 # tiktok slideshow collage
 
-Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Britmoji/tiktxk) exists but it has just one problem: it cannot embed slideshows well, it only shows first image. So what does this program do? It downloads the images and collages them into a nice single image!
+Sharing tiktoks can be hard on other platforms. [tiktxk](https://github.com/Britmoji/tiktxk) exists but it has just one problem: it cannot embed slideshows well, it only shows first couple images. So what does this program do? It downloads the images and collages them into a nice single image!
 
-Embedding normal tiktoks is also supported.
+Embedding video tiktoks is also supported.
 
 
 ## How to setup
 
 | Env var | Default Value | Description                                   |
 |---------------------|---------------|-----------------------------------------------|
-| `DOMAIN`            | ""   | The domain where it will serve  |
+| `DOMAIN`            | none          | The domain where it will serve  |
 | `PORT`              | 4232          | What port it is on |
 | `PUBLIC`            | false         | If the index page is public  |
 | `LIMIT_PUBLIC_AMOUNT` | 0           | How many collages are linked on the index. 0 is unlimited |
 | `FFMPEG`            | false         | collages with sound  |
 | `FANCY_SLIDESHOW`   | false         | will make a video slideshow instead of a collage with sound like above. This can and will make requests take a lot longer. |
-| `INSTALL_ID`      | "" | if you have acquired a tiktok install id, you can put it here. |
-
+| `INSTALL_IDS`       | none          | if you have acquired a tiktok install ids, you can put them here. comma separated |
+| `DEVICE_IDS`        | 7351044760062330401 | tiktok device id, no need to change. comma separated |
 
 ### Docker compose
 Clone this repo and `cd` into it. edit the compose file for path for the collages. You can also the uncommenn the build tag if you want to scrape ttsave.app instead of relying on the api endpoint.
@@ -69,7 +69,7 @@ https://github.com/Masterjoona/slideshow-embed/assets/69722179/cb07845d-851d-4cc
 |----------|----------------------------------------|
 | /t?v=    | normal collage or embed a video tiktok | 
 | /s?v=    | collage with sound, i guess you can embed a video tiktok as well...                     |
-| /f?v=    | slides the images, same for this lol                      |
+| /f?v=    | slides the images, same for this lol. The requests to this will take a long time to complete, so its better to open this in a browser and when it completes send it to discord.                     |
 
 ## notes
 this is a beginner project so there might some insane design choices ![trolley](https://cdn.discordapp.com/emojis/1068825486265942056.webp?size=48&name=trolley&quality=lossless) 

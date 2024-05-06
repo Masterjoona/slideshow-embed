@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"text/template"
@@ -75,19 +76,20 @@ func HandleIndex(c *gin.Context) {
 	})
 }
 
-func HandleDirectFile(c *gin.Context) {
-	id := c.Param("id")
-	mediaType := strings.Split(c.Request.URL.Path, "-")[0][1:]
-	if id == "" || mediaType == "" {
-		HandleError(c, "No id provided")
-		return
+func HandleDirectFile(fileType string) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		if id == "" {
+			HandleError(c, "No id provided")
+			return
+		}
+		filename := fmt.Sprintf("collages/%s-%s", fileType, id)
+		if _, err := os.Stat(filename); err != nil {
+			HandleError(c, "File not found")
+			return
+		}
+		c.File(filename)
 	}
-	filename := mediaType + "-" + id
-	if _, err := os.Stat("collages/" + filename); err != nil {
-		HandleError(c, "File not found")
-		return
-	}
-	c.File("collages/" + filename)
 }
 
 func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {

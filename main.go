@@ -10,7 +10,7 @@ import (
 
 func main() {
 	InitEnvs()
-	if Domain == "" || Domain == "your domain" {
+	if Domain == "" {
 		panic("You have not specified a Domain!")
 	}
 	if len(InstallIds) == 0 && !Scraping {
@@ -29,15 +29,15 @@ func main() {
 	r.GET("/", HandleIndex)
 
 	r.GET(PathCollage, HandleRequest)
-	r.GET("/collage-:id", HandleDirectFile)
+	r.GET("/collage-:id", HandleDirectFile("collage"))
 
 	if IsffmpegInstalled {
 		r.GET(PathCollageSound, HandleSoundCollageRequest)
-		r.GET("/video-:id", HandleDirectFile)
+		r.GET("/video-:id", HandleDirectFile("video"))
 	}
 	if IsffmpegInstalled && FancySlideshow {
 		r.GET(PathSlide, HandleFancySlideshowRequest)
-		r.GET("/slide-:id", HandleDirectFile)
+		r.GET("/slide-:id", HandleDirectFile("slide"))
 	}
 
 	r.Run(Port)
