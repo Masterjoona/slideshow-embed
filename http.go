@@ -77,11 +77,11 @@ func downloadImage(url string) ([]byte, error) {
 	return imageBytes, nil
 }
 
-func (t *SimplifiedData) DownloadImages() uint8 {
+func (t *SimplifiedData) DownloadImages() int {
 	var wg sync.WaitGroup
 	var indexedImages []ImageWithIndex
 
-	var failedCount uint8 = 0 // Max images in a tiktok is 35, so we can expect fails to be <=35
+	var failedCount int = 0 // Max images in a tiktok is 35, so we can expect fails to be <=35
 
 	for i, link := range t.ImageLinks {
 		wg.Add(1)

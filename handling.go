@@ -157,15 +157,14 @@ func processRequest(c *gin.Context, collageImages bool, downloadSound bool) (Sim
 		return tiktokData, true, nil
 	}
 	failedImageCount := tiktokData.DownloadImages()
+	if failedImageCount == len(tiktokData.ImageLinks) {
+		println("all images failed to download")
+		return SimplifiedData{}, false, errors.New("all images failed to download") // This will call HandleError
+	}
 	if failedImageCount > 0 {
 		tiktokData.Caption += fmt.Sprintf("\n\nFailed to download %d images", failedImageCount)
-		if failedImageCount == uint8(len(tiktokData.ImageLinks)) { // What could go wrong with casting to uint8 :clueless:
-			println("all images failed to download")
-			return SimplifiedData{}, false, errors.New("all images failed to download") // This will call Handle
-		}
 	}
 	
-
 	if downloadSound {
 		err := tiktokData.DownloadSound()
 		if err != nil {
