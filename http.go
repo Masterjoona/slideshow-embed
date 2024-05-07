@@ -43,6 +43,7 @@ func GetLongVideoId(videoUrl string) (string, error) {
 
 func downloadImage(url string) ([]byte, error) {
 	url = EscapeString(url)
+	
 	client := &http.Client{
 		Timeout: time.Second * 4,
 	}
@@ -76,9 +77,11 @@ func downloadImage(url string) ([]byte, error) {
 	return imageBytes, nil
 }
 
-func (t *SimplifiedData) DownloadImages() {
+func (t *SimplifiedData) DownloadImages() uint8 {
 	var wg sync.WaitGroup
 	var indexedImages []ImageWithIndex
+
+	var failedCount uint8 = 0 // Max images in a tiktok is 35, so we can expect fails to be <=35
 
 	for i, link := range t.ImageLinks {
 		wg.Add(1)
@@ -88,6 +91,7 @@ func (t *SimplifiedData) DownloadImages() {
 				indexedImages = append(indexedImages, ImageWithIndex{Bytes: imgBytes, Index: index})
 			} else {
 				log.Printf("error downloading image %s: %v\n", url, err)
+				failedCount += 1
 			}
 		}(link, i)
 	}
@@ -97,11 +101,11 @@ func (t *SimplifiedData) DownloadImages() {
 		return indexedImages[i].Index < indexedImages[j].Index
 	})
 
-	t.ImageBuffers = make([][]byte, len(indexedImages))
+	t.ImageBuffers = make([][]byte, 0, len(indexedImages))
 	for _, img := range indexedImages {
-		t.ImageBuffers[img.Index] = img.Bytes
-	}
-
+        t.ImageBuffers = append(t.ImageBuffers, img.Bytes)
+    }
+	return failedCount
 }
 
 func (t *SimplifiedData) DownloadSound() error {
