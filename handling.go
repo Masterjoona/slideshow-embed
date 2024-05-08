@@ -93,7 +93,6 @@ func HandleDirectFile(fileType string) func(c *gin.Context) {
 	}
 }
 
-
 func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 	tiktokURL := c.Query("v")
 	videoId, err := GetLongVideoId(tiktokURL)
@@ -159,12 +158,12 @@ func processRequest(c *gin.Context, collageImages bool, downloadSound bool) (Sim
 	failedImageCount := tiktokData.DownloadImages()
 	if failedImageCount == len(tiktokData.ImageLinks) {
 		println("all images failed to download")
-		return SimplifiedData{}, false, errors.New("all images failed to download") // This will call HandleError
+		return SimplifiedData{}, false, errors.New("all images failed to download")
 	}
 	if failedImageCount > 0 {
 		tiktokData.Caption += fmt.Sprintf("\n\nFailed to download %d images", failedImageCount)
 	}
-	
+
 	if downloadSound {
 		err := tiktokData.DownloadSound()
 		if err != nil {

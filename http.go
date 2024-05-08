@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"sort"
 	"strings"
@@ -31,11 +30,10 @@ func GetLongVideoId(videoUrl string) (string, error) {
 
 		defer resp.Body.Close()
 
-		if resp.StatusCode != 200 {
-			return "", errors.New("failed to fetch the tiktok")
+		finalUrl := resp.Request.URL.String()
+		if strings.Contains(finalUrl, "@") {
+			return longLinkRe.FindStringSubmatch(finalUrl)[1], nil
 		}
-
-		return longLinkRe.FindStringSubmatch(resp.Request.URL.String())[1], nil
 	}
 
 	return "", errors.New("failed to extract the video id")
@@ -43,7 +41,7 @@ func GetLongVideoId(videoUrl string) (string, error) {
 
 func downloadImage(url string) ([]byte, error) {
 	url = EscapeString(url)
-	
+
 	client := &http.Client{
 		Timeout: time.Second * 4,
 	}
@@ -63,7 +61,8 @@ func downloadImage(url string) ([]byte, error) {
 	if !strings.Contains(resp.Header.Get("Content-Type"), "image") {
 		/*
 			thats weird?
-			https://vm.tiktok.com/ZGeH3Covr/
+			https://www.tiktok.com/@f3l1xfromvenus/photo/7360247887340637472
+			some image had
 			{ "code": 4404,"error": "fail to get resource"}
 		*/
 		return nil, errors.New("tiktok returned a non-image response")
@@ -81,7 +80,7 @@ func (t *SimplifiedData) DownloadImages() int {
 	var wg sync.WaitGroup
 	var indexedImages []ImageWithIndex
 
-	var failedCount int = 0 // Max images in a tiktok is 35, so we can expect fails to be <=35
+	var failedCount int // Max images in a tiktok is 35, so we can expect fails to be <=35
 
 	for i, link := range t.ImageLinks {
 		wg.Add(1)
@@ -90,7 +89,7 @@ func (t *SimplifiedData) DownloadImages() int {
 			if imgBytes, err := downloadImage(url); err == nil {
 				indexedImages = append(indexedImages, ImageWithIndex{Bytes: imgBytes, Index: index})
 			} else {
-				log.Printf("error downloading image %s: %v\n", url, err)
+				println("error downloading image %s: %v\n", url, err)
 				failedCount += 1
 			}
 		}(link, i)
@@ -103,8 +102,8 @@ func (t *SimplifiedData) DownloadImages() int {
 
 	t.ImageBuffers = make([][]byte, 0, len(indexedImages))
 	for _, img := range indexedImages {
-        t.ImageBuffers = append(t.ImageBuffers, img.Bytes)
-    }
+		t.ImageBuffers = append(t.ImageBuffers, img.Bytes)
+	}
 	return failedCount
 }
 
