@@ -95,7 +95,7 @@ func HandleDirectFile(fileType string) func(c *gin.Context) {
 
 func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 	tiktokURL := c.Query("v")
-	videoId, err := GetLongVideoId(tiktokURL)
+	uniqueUserId, videoId, err := GetLongVideoId(tiktokURL)
 	if err != nil {
 		if err.Error() == "invalid URL" {
 			HandleError(c, "link: "+tiktokURL+" is invalid")
@@ -107,9 +107,13 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 
 	tiktokData, err := FetchTiktokData(videoId)
 	if err != nil {
-		HandleError(c, "Couldn't get tiktok")
+		HandleError(c, "Couldn't get the tiktok")
 		return SimplifiedData{}, true
 	}
+	if !strings.Contains(tiktokData.Author, uniqueUserId) {
+		tiktokData.Caption += "\n\ntiktok returned a different user, is the post available?"
+	}
+
 	if tiktokData.IsVideo {
 		handleVideoDiscordEmbed(
 			c,
@@ -143,7 +147,7 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 
 	width, height, err := GetVideoDimensions("collages/" + filename)
 	if err != nil {
-		HandleError(c, "Couldn't get video dimensions")
+		HandleError(c, "Couldn't get video dimensions. The video might still be rendering...")
 		return SimplifiedData{}, true
 	}
 	handleVideoDiscordEmbed(c, tiktokData, Domain+filename, width, height)
@@ -177,8 +181,6 @@ func processRequest(c *gin.Context, collageImages bool, downloadSound bool) (Sim
 
 	err := tiktokData.MakeCollage()
 	if err != nil {
-		println(err.Error())
-		HandleError(c, "Couldn't generate collage")
 		return SimplifiedData{}, false, err
 	}
 
@@ -208,7 +210,7 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
-	width, height, err := tiktokData.MakeCollageWithAudio()
+	width, height, err := tiktokData.MakeCollageWithAudio("video")
 	if err != nil {
 		println(err.Error())
 		HandleError(c, "Couldn't generate video")
@@ -229,6 +231,18 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		return
 	}
 
+	if len(tiktokData.ImageBuffers) == 1 {
+		width, height, err := tiktokData.MakeCollageWithAudio("slide")
+		if err != nil {
+			println(err.Error())
+			HandleError(c, "Couldn't generate video")
+			return
+		}
+		handleVideoDiscordEmbed(c, tiktokData, Domain+"slide-"+tiktokData.VideoID+".mp4", width, height)
+		UpdateLocalStats()
+		return
+	}
+
 	videoWidth, videoHeight, err := tiktokData.MakeVideoSlideshow()
 	if err != nil {
 		println(err.Error())
@@ -244,6 +258,5 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		videoHeight,
 	)
 
-	os.RemoveAll(tiktokData.VideoID)
 	UpdateLocalStats()
 }

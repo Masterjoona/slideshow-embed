@@ -35,7 +35,7 @@ import time
 import io
 import os
 from maths import ensure_even
-from config import save_image, find_largest_image_dimensions
+from config import save_image, find_largest_image_dimensions, temporary_dir
 
 
 def resize_contain(
@@ -61,16 +61,16 @@ def resize_contain(
 
 def resize_images(images: List[bytes], output: str) -> float:
     start = time.time()
-    os.makedirs(output, exist_ok=True)
+    os.makedirs(f"{temporary_dir}/{output}", exist_ok=True)
     to_width, to_heigth = find_largest_image_dimensions(images)
 
     to_width = ensure_even(to_width)
     to_heigth = ensure_even(to_heigth)
 
-    for image in images:
+    for index, image in enumerate(images):
         cover = resize_contain(image, (to_width, to_heigth))
         save_image(
-            f"/tmp/collages/{output}/{images.index(image)}.png",
+            f"{temporary_dir}/{output}/{index}.png",
             cover,
             to_width,
             to_heigth,

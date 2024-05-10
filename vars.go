@@ -32,20 +32,21 @@ var (
 var PythonServer = "http://" + Ternary(isDocker(), "photo_collager", "localhost") + ":9700"
 
 var (
-	longLinkRe     = regexp.MustCompile(`https:\/\/(?:www.)?(?:vxtiktok|tiktok|tiktxk|)\.com\/@.{2,32}\/(?:photo|video)\/(\d+)`)
+	longLinkRe     = regexp.MustCompile(`https:\/\/(?:www.)?(?:vxtiktok|tiktok|tiktxk|)\.com\/(@.{2,32})\/(?:photo|video)\/(\d+)`)
 	shortLinkRe    = regexp.MustCompile(`https:\/\/.{1,3}\.(?:(?:vx|)tikt(?:x|o)k)\.com/(?:.{1,2}/|)(.{5,12})`)
 	AudioSrcRe     = regexp.MustCompile(`<a href="(.*)" onclick="bdl\(this, event\)" type="audio`)
 	VideoSrcLinkRe = regexp.MustCompile(`<a href="(.*)" onclick="bdl\(this, event\)" rel`)
 )
 
 var (
-	Domain            string
-	Port              string
-	LocalStats        Stats
-	InstallIds        []string
-	DeviceIds         []string
-	LimitPublicAmount int
-	Public            bool
-	IsffmpegInstalled bool
-	FancySlideshow    bool
+	Domain             string
+	Port               string
+	TemporaryDirectory = Ternary(isDocker(), "/tmp", "tmp")
+	LocalStats         Stats
+	InstallIds         []string
+	DeviceIds          []string
+	LimitPublicAmount  int
+	Public             bool
+	IsffmpegInstalled  bool
+	FancySlideshow     bool
 )

@@ -3,6 +3,7 @@ import cgi  # deprecated do something in the future
 from typing import List
 from collage_maker import make_collage
 from resizing import resize_images
+from config import collages_path
 
 
 def parse_post(
@@ -19,10 +20,9 @@ def parse_post(
     }
 
     form = cgi.FieldStorage(fp=handler.rfile, headers=handler.headers, environ=environ)
-    images = form.getlist("images")
-    video_id = form.getfirst("video_id", "")
+    video_id = form.getvalue("video_id")
 
-    return images, str(video_id).replace("b", "").replace("'", "")
+    return form.getlist("images"), str(video_id).replace("b", "").replace("'", "")
 
 
 class ImageHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
@@ -39,7 +39,7 @@ class ImageHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         if not images:
             self.send_error(400, "No images provided")
             return
-        time_taken = make_collage(images, f"collage-{video_id}.png")
+        time_taken = make_collage(images, f"{collages_path}/collage-{video_id}.png")
         self.send_response(200)
         self.end_headers()
         response_message = f"Collage created in {time_taken:.4f} seconds".encode()

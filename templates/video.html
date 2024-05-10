@@ -39,9 +39,11 @@
         </video>
         <script>
             const tiktok = document.getElementById("tiktok");
-            tiktok.href = location.search.replace("?v=", "");
+            tiktok.href = location.search.split("=")[1];
             const index = document.getElementById("index");
             index.href = location.origin;
+            video = document.getElementsByTagName("video")[0];
+            video.height = window.innerHeight;
         </script>
     </body>
 </html>

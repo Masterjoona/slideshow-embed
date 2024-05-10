@@ -29,8 +29,7 @@ Created on May 24, 2020
 
 @author: Tim Wilson
 """
-import math
-from PIL import ImageOps
+
 from PIL import Image
 from PIL.Image import Image as ImageType
 from typing import List
@@ -38,8 +37,20 @@ from maths import linear_partition, clamp, ensure_even
 from config import save_image, width_arg, height_arg, init_height
 from io import BytesIO
 import time
+import concurrent.futures
 
 # got idea from https://medium.com/@jtreitz/the-algorithm-for-a-perfectly-balanced-photo-gallery-914c94a5d8af
+
+
+
+
+def process_image(image: bytes, index: int):
+    img = Image.open(BytesIO(image))
+    height = img.height
+    if height > init_height:
+        new_width = int(img.width / height * init_height)
+        return img.resize((new_width, init_height), Image.LANCZOS), index
+    return img, index
 
 
 # takes list of PIL image objects and returns the collage as a PIL image object
@@ -54,21 +65,19 @@ def create_collage(img_list: List[ImageType]) -> ImageType:
         for img in img_list
     ]
 
+    len_img_list = len(img_list)
     total_width = sum([img.width for img in img_list])
-    avg_width = total_width / len(img_list)
-    target_width = avg_width * math.sqrt(len(img_list))
+    avg_width = total_width / len_img_list
+    target_width = avg_width * (len_img_list**0.5)
+    num_rows = clamp(int(round(total_width / target_width)), len_img_list)
 
-    num_rows = clamp(int(round(total_width / target_width)), len(img_list))
     if num_rows == 1:
         img_rows = [img_list]
-    elif num_rows == len(img_list):
+    elif num_rows == len_img_list:
         img_rows = [[img] for img in img_list]
     else:
-
         aspect_ratios = [int(img.width / img.height * 100) for img in img_list]
-
         img_rows = linear_partition(aspect_ratios, num_rows, img_list)
-
         row_widths = [sum([img.width for img in row]) for row in img_rows]
         min_row_width = min(row_widths)
         row_width_ratios = [min_row_width / w for w in row_widths]
@@ -82,19 +91,17 @@ def create_collage(img_list: List[ImageType]) -> ImageType:
                 new_row.append(img.resize((new_width, new_height)))
 
             new_img_rows.append(new_row)
+
         img_rows = new_img_rows
 
     row_widths = [sum([img.width for img in row]) for row in img_rows]
     row_heights = [max([img.height for img in row]) for row in img_rows]
 
-    w, h = min(row_widths), sum(row_heights)
+    w = ensure_even(min(row_widths))
+    h = ensure_even(sum(row_heights))
 
-    w = ensure_even(w)
-    h = ensure_even(h)
-
-    result_image = Image.new("RGBA", (w, h))
+    result_image = Image.new("RGB", (w, h))
     x_pos, y_pos = 0, 0
-
     for row in img_rows:
         for img in row:
             result_image.paste(img, (x_pos, y_pos))
@@ -103,57 +110,46 @@ def create_collage(img_list: List[ImageType]) -> ImageType:
         y_pos += max([img.height for img in row])
         x_pos = 0
         continue
-
     return result_image
 
 
 def make_collage(images: List[bytes], output: str) -> float:
-    print(output)
     start = time.time()
     try:
         if len(images) == 1:
             image = Image.open(BytesIO(images[0]))
-            save_image("collages/"+output, image, image.width, image.height)
+            save_image(output, image, image.width, image.height)
             return time.time() - start
 
         pil_images = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(process_image, image, index)
+                for index, image in enumerate(images)
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                pil_images.append(future.result())
 
-        for image in images:
-            img = Image.open(BytesIO(image))
-            exif = img.getexif()
-            for k in exif.keys():
-                if k != 0x0112:
-                    exif[k] = (
-                        None  # If I don't set it to None first (or print it) the del fails for some reason.
-                    )
-                del exif[k]
+        pil_images.sort(key=lambda x: x[1])
+        collage = create_collage([img for img, _ in pil_images])
 
-            img.info["exif"] = exif.tobytes()
-            # Rotate the image based on EXIF orientation data
-            ImageOps.exif_transpose(img)
-            if img.height > init_height:
-                new_width = int(img.width / img.height * init_height)
-                pil_images.append(img.resize((new_width, init_height), Image.LANCZOS))
-            else:
-                pil_images.append(img)
-
-        collage = create_collage(pil_images)
-
-        if collage.width > width_arg:
+        width = collage.width
+        height = collage.height
+        if width > width_arg:
             collage = collage.resize(
-                (width_arg, int(collage.height / collage.width * width_arg)),
+                (width_arg, int(height / width * width_arg)),
                 Image.LANCZOS,
             )
-        elif collage.height > height_arg:
+        elif height > height_arg:
             collage = collage.resize(
-                (int(collage.width / collage.height * height_arg), height_arg),
+                (int(width / height * height_arg), height_arg),
                 Image.LANCZOS,
             )
-        save_image("collages/" + output, collage, collage.width, collage.height)
+        save_image(output, collage, width, height)
 
         return time.time() - start
     except Exception as e:
-        print(e)
+        print(f"Error: {e}")
         return -1
 
 
@@ -167,12 +163,8 @@ if __name__ == "__main__":
         files.sort(key=lambda x: int(x.split("_")[1].split(".")[0]))
         images = [Image.open(os.path.join(folder_images, file)) for file in files]
     else:
-        images = [
-            Image.open("../test_images/1.jpg"),
-            Image.open("../test_images/2.jpg"),
-            Image.open("../test_images/3.jpg"),
-            Image.open("../test_images/4.jpg"),
-            Image.open("../test_images/5.jpg"),
-        ]
-    collage = create_collage(images)
-    save_image("outputs/collage.png", collage, collage.width, collage.height)
+        images = []
+        for i in range(1, 6):
+            with open(f"../test_images/{i}.jpg", "rb") as f:
+                images.append(f.read())
+        print(f"{make_collage(images, 'collage.png')} seconds")

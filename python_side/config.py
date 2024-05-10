@@ -2,6 +2,7 @@ from PIL.Image import Image as ImageType
 from PIL import Image
 from typing import List, Tuple
 import io
+import os.path
 
 
 def save_with_fpng(filepath: str, image: ImageType, width: int, height: int) -> None:
@@ -56,7 +57,9 @@ try:
 except ImportError:
     pass
 
-
 width_arg = 5000
 height_arg = 5000
 init_height = 500
+is_docker = os.path.isfile("/.dockerenv")
+collages_path = "/app/collages" if is_docker else "../collages"
+temporary_dir = "/tmp/collages" if is_docker else "../tmp/collages"

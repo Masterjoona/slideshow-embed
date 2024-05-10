@@ -11,32 +11,35 @@ import (
 	"time"
 )
 
-func GetLongVideoId(videoUrl string) (string, error) {
+func GetLongVideoId(videoUrl string) (string, string, error) {
 	if !validateURL(videoUrl) {
-		return "", errors.New("invalid URL")
+		return "", "", errors.New("invalid URL")
 	}
 
 	matches := longLinkRe.FindStringSubmatch(videoUrl)
 	if len(matches) > 1 {
-		return matches[1], nil
+		return matches[1], matches[2], nil
 	}
 
 	matches = shortLinkRe.FindStringSubmatch(videoUrl)
 	if len(matches) > 1 {
 		resp, err := http.Head("https://vm.tiktok.com/" + matches[1])
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 
 		defer resp.Body.Close()
 
 		finalUrl := resp.Request.URL.String()
 		if strings.Contains(finalUrl, "@") {
-			return longLinkRe.FindStringSubmatch(finalUrl)[1], nil
+			matches = longLinkRe.FindStringSubmatch(finalUrl)
+			if len(matches) > 1 {
+				return matches[1], matches[2], nil
+			}
 		}
 	}
 
-	return "", errors.New("failed to extract the video id")
+	return "", "", errors.New("failed to extract the video id")
 }
 
 func downloadImage(url string) ([]byte, error) {
