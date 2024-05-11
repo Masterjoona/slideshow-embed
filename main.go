@@ -39,6 +39,9 @@ func main() {
 		r.GET(PathSlide, HandleFancySlideshowRequest)
 		r.GET("/slide-:id", HandleDirectFile("slide"))
 	}
+	if Downloader {
+		r.GET(PathDownloader, HandleDownloader)
+	}
 
 	r.Run(Port)
 }

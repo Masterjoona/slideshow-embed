@@ -134,6 +134,8 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 		filename = "video-" + videoId + ".mp4"
 	case PathSlide:
 		filename = "slide-" + videoId + ".mp4"
+	case PathDownloader:
+		return tiktokData, false
 	}
 
 	if _, err := os.Stat("collages/" + filename); err != nil {
@@ -259,4 +261,25 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 	)
 
 	UpdateLocalStats()
+}
+
+func HandleDownloader(c *gin.Context) {
+	tiktokData, skip, err := processRequest(c, false, false)
+	if skip {
+		return
+	}
+	if err != nil {
+		HandleError(c, err.Error())
+		return
+	}
+	details := tiktokData.Details
+	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorites + " | 👀 " + details.Views
+	renderTemplate(c, "images.html", gin.H{
+		"authorName": tiktokData.Author,
+		"caption":    tiktokData.Caption,
+		"details":    detailsString,
+		"imageLinks": tiktokData.ImageLinks,
+		"imageUrl":   tiktokData.ImageLinks[0],
+		"soundUrl":   tiktokData.SoundLink,
+	})
 }

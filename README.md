@@ -10,13 +10,14 @@ Embedding video tiktoks is also supported.
 | Env var | Default Value | Description                                   |
 |---------------------|---------------|-----------------------------------------------|
 | `DOMAIN`            | none          | The domain where it will serve  |
-| `PORT`              | 4232          | What port it is on |
+| `PORT`              | 4232          | The port where it will serve  |
 | `PUBLIC`            | false         | If the index page is public  |
-| `LIMIT_PUBLIC_AMOUNT` | 0           | How many collages are linked on the index. 0 is unlimited |
+| `LIMIT_PUBLIC_AMOUNT` | 0           | How many links are linked on the index. 0 is unlimited |
 | `FFMPEG`            | false         | collages with sound  |
-| `FANCY_SLIDESHOW`   | false         | will make a video slideshow instead of a collage with sound like above. This can and will make requests take a lot longer. |
+| `FANCY_SLIDESHOW`   | false         | enables video slideshow path, it slides the images with audio. This can and will make requests take a lot longer. |
 | `INSTALL_IDS`       | none          | if you have acquired a tiktok install ids, you can put them here. comma separated |
 | `DEVICE_IDS`        | 7351044760062330401 | tiktok device id, no need to change. comma separated |
+| `DOWNLOADER` | false | enables the downloader path. |
 
 ### Docker compose
 Clone this repo and `cd` into it. edit the compose file for path for the collages. You can also the uncommenn the build tag if you want to scrape ttsave.app instead of relying on the api endpoint.
@@ -26,7 +27,7 @@ docker compose build && docker compose up -d
 ```
 
 ### cli
-you probably dont want to do this
+you probably dont want to do this since you need to run 2 things at once.
 
 <details>
 <summary> add fpng_py for fast png encoding</summary>
@@ -70,6 +71,7 @@ https://github.com/Masterjoona/slideshow-embed/assets/69722179/cb07845d-851d-4cc
 | /t?v=    | normal collage or embed a video tiktok | 
 | /s?v=    | collage with sound, i guess you can embed a video tiktok as well...                     |
 | /f?v=    | slides the images, same for this lol. The requests to this will take a long time to complete, so its better to open this in a browser and when it completes send it to discord.                     |
+| /d?v=    | show all images and a button download a zip of all images.                     |
 
 ## notes
 this is a beginner project so there might some insane design choices ![trolley](https://cdn.discordapp.com/emojis/1068825486265942056.webp?size=48&name=trolley&quality=lossless) 

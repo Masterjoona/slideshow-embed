@@ -40,6 +40,7 @@ func InitEnvs() {
 	rand.NewSource(time.Now().UnixNano())
 	Domain = addString(os.Getenv("DOMAIN"), "/", true)
 	Public = os.Getenv("PUBLIC") == "true"
+	Downloader = os.Getenv("DOWNLOADER") == "true"
 	IsffmpegInstalled = os.Getenv("FFMPEG") == "true"
 	FancySlideshow = os.Getenv("FANCY_SLIDESHOW") == "true"
 

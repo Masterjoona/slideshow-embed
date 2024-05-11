@@ -17,6 +17,7 @@ services:
       - PUBLIC=false
       - LIMIT_PUBLIC_AMOUNT=0
       - FFMPEG=false
+      - DOWNLOADER=false
       - GIN_MODE=release
     ports:
       - "4232:4232"

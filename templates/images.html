@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ .authorName }}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="og:site_name" content="TikTok embedder" />
+        <meta name="twitter:site_name" content="TikTok embedder" />
+        <meta
+            name="description"
+            content="{{ .details }}
+
+{{ .caption }}"
+        />
+        <meta property="og:image" content="{{ .imageUrl }} " />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="theme-color" content="#ee1d51" />
+        <style>
+            body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .links {
+                margin: 10px;
+            }
+
+            .image {
+                width: 100%;
+                max-width: 300px;
+                height: auto;
+            }
+
+            ul {
+                list-style-type: none;
+                padding: 0;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+            }
+
+            li {
+                margin: 10px;
+                flex: 0 0 calc(25% - 20px);
+                max-width: calc(25% - 20px);
+            }
+        </style>
+    </head>
+
+    <body>
+        <a href="tiktok.com" class="links" id="tiktok"> tiktok </a>
+        <a href="#" class="links" id="index"> index </a>
+        <p>{{ .details }}</p>
+        <p>{{ .caption }}</p>
+        <audio controls>
+            <source src="{{ .soundUrl }}" type="audio/mpeg" />
+            Your browser does not support the audio element.
+        </audio>
+        <button>Download images</button>
+        <ul id="imagesList"></ul>
+        <a id="links" style="display: none" data-links="{{ .imageLinks }}"></a>
+        <script type="module">
+            import { downloadZip } from "https://cdn.jsdelivr.net/npm/client-zip/index.js";
+            document
+                .querySelector("button")
+                .addEventListener("click", downloadImagesZip);
+            const imageLinks = document
+                .getElementById("links")
+                .getAttribute("data-links")
+                .slice(1, -1)
+                .split(" ");
+
+            const imagesList = document.getElementById("imagesList");
+            const imageBuffers = [];
+            let imageIndex = 1;
+
+            async function processImage(imageLink) {
+                const li = document.createElement("li");
+                const img = document.createElement("img");
+                img.className = "image";
+
+                try {
+                    const res = await fetch(imageLink);
+                    if (!res.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    const arrayBuffer = await res.arrayBuffer();
+                    const file = new File([arrayBuffer], `${imageIndex}.jpg`, {
+                        type: "image/jpeg",
+                    });
+                    imageBuffers.push(file);
+
+                    const imageUrl = URL.createObjectURL(file);
+                    img.src = imageUrl;
+                    li.appendChild(img);
+                    imagesList.appendChild(li);
+                    imageIndex++;
+                } catch (error) {
+                    console.error("Error fetching image:", error);
+                }
+            }
+
+            async function processImagesSequentially(imageLinks) {
+                for (const imageLink of imageLinks) {
+                    await processImage(imageLink);
+                }
+            }
+
+            processImagesSequentially(imageLinks).catch((error) => {
+                console.error("Error processing images:", error);
+            });
+
+            async function downloadImagesZip() {
+                const blob = await downloadZip(imageBuffers).blob();
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download =
+                    document.title.split("@")[1].slice(0, -1) + ".zip";
+                link.click();
+                link.remove();
+            }
+        </script>
+        <script>
+            const tiktok = document.getElementById("tiktok");
+            tiktok.href = location.search.split("=")[1];
+            const index = document.getElementById("index");
+            index.href = location.origin;
+        </script>
+    </body>
+</html>

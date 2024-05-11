@@ -17,6 +17,7 @@ const (
 	PathCollage      = "/t"
 	PathCollageSound = "/s"
 	PathSlide        = "/f"
+	PathDownloader   = "/d"
 )
 
 var (
@@ -41,6 +42,7 @@ var (
 var (
 	Domain             string
 	Port               string
+	Downloader         bool
 	TemporaryDirectory = Ternary(isDocker(), "/tmp", "tmp")
 	LocalStats         Stats
 	InstallIds         []string
