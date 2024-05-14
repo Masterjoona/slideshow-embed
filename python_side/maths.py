@@ -12,7 +12,7 @@ def linear_partition(
 ) -> List[List[ImageType]]:
     min_l = len(sequence) - 1
     if num_rows > min_l:
-        #return [[img_list[i]] for i in range(min_l + 1)]
+        # return [[img_list[i]] for i in range(min_l + 1)]
         new_answer = []
         for i in range(min_l + 1):
             new_answer.append(img_list[i])
@@ -28,10 +28,10 @@ def linear_partition(
         # ] + answer
         new_answer = []
         start = solution[min_l - 1][num_rows]
-        
+
         for i in range(start + 1, min_l + 1):
             new_answer.append(img_list[i])
-            
+
         answer = [new_answer] + answer
         min_l = start
         num_rows = num_rows - 1
@@ -58,12 +58,9 @@ def linear_partition_table(sequence: List[int], num_rows: int) -> List[List[int]
     for _ in range(num_elements - 1):
         solution.append([0] * (num_rows - 1))
 
-    for index in range(num_elements):
-        #table[index][0] = sequence[index] + (table[index - 1][0] if index else 0)
-        if index:
-            table[index][0] = sequence[index] + table[index - 1][0]
-        else:
-            table[index][0] = sequence[index]
+    table[0][0] = sequence[0]
+    for index in range(1, num_elements):
+        table[index][0] = sequence[index] + table[index - 1][0]
 
     for col_idx in range(num_rows):
         table[0][col_idx] = sequence[0]

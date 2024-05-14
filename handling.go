@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/gin-gonic/gin"
@@ -147,9 +148,14 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 		return SimplifiedData{}, true
 	}
 
+	if IsAwemeBeingRendered(videoId) {
+		HandleError(c, "This video is currently being rendered, please try again later.")
+		return SimplifiedData{}, true
+	}
+
 	width, height, err := GetVideoDimensions("collages/" + filename)
 	if err != nil {
-		HandleError(c, "Couldn't get video dimensions. The video might still be rendering...")
+		HandleError(c, "Couldn't get video dimensions.")
 		return SimplifiedData{}, true
 	}
 	handleVideoDiscordEmbed(c, tiktokData, Domain+filename, width, height)
@@ -245,22 +251,32 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		return
 	}
 
-	videoWidth, videoHeight, err := tiktokData.MakeVideoSlideshow()
-	if err != nil {
-		println(err.Error())
-		HandleError(c, "Couldn't generate video")
-		return
-	}
+	AddAwemeToRendering(tiktokData.VideoID)
+	var wg sync.WaitGroup
 
-	handleVideoDiscordEmbed(
-		c,
-		tiktokData,
-		Domain+"slide-"+tiktokData.VideoID+".mp4",
-		videoWidth,
-		videoHeight,
-	)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		videoWidth, videoHeight, err := tiktokData.MakeVideoSlideshow()
+		if err != nil {
+			println(err.Error())
+			HandleError(c, "Couldn't generate video")
+			return
+		}
 
-	UpdateLocalStats()
+		handleVideoDiscordEmbed(
+			c,
+			tiktokData,
+			Domain+"slide-"+tiktokData.VideoID+".mp4",
+			videoWidth,
+			videoHeight,
+		)
+
+		UpdateLocalStats()
+		RemoveAwemeFromRendering(tiktokData.VideoID)
+	}()
+
+	wg.Wait()
 }
 
 func HandleDownloader(c *gin.Context) {

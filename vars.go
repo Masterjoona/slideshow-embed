@@ -31,6 +31,7 @@ var (
 )
 
 var PythonServer = "http://" + Ternary(isDocker(), "photo_collager", "localhost") + ":9700"
+var CurrentlyRenderingAwemes = make(map[string]struct{})
 
 var (
 	longLinkRe     = regexp.MustCompile(`https:\/\/(?:www.)?(?:vxtiktok|tiktok|tiktxk|)\.com\/(@.{2,32})\/(?:photo|video)\/(\d+)`)

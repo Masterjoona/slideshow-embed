@@ -77,7 +77,7 @@ func UpdateLocalStats() {
 		count++
 	}
 	countString := strconv.Itoa(count)
-	if LimitPublicAmount > 0 && len(fileLinks) > LimitPublicAmount {
+	if LimitPublicAmount > -1 && len(fileLinks) > LimitPublicAmount {
 		fileLinks = fileLinks[:LimitPublicAmount]
 		countString += fmt.Sprintf(" (limited to %d)", LimitPublicAmount)
 	}
@@ -146,4 +146,17 @@ func GenerateRandomHex() string {
 		b.WriteByte(hexChars[rand.Intn(len(hexChars))])
 	}
 	return b.String()
+}
+
+func IsAwemeBeingRendered(id string) bool {
+	_, ok := CurrentlyRenderingAwemes[id]
+	return ok
+}
+
+func AddAwemeToRendering(id string) {
+	CurrentlyRenderingAwemes[id] = struct{}{}
+}
+
+func RemoveAwemeFromRendering(id string) {
+	delete(CurrentlyRenderingAwemes, id)
 }

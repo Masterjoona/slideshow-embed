@@ -12,7 +12,7 @@ Embedding video tiktoks is also supported.
 | `DOMAIN`            | none          | The domain where it will serve  |
 | `PORT`              | 4232          | The port where it will serve  |
 | `PUBLIC`            | false         | If the index page is public  |
-| `LIMIT_PUBLIC_AMOUNT` | 0           | How many links are linked on the index. 0 is unlimited |
+| `LIMIT_PUBLIC_AMOUNT` | -1           | How many links are linked on the index. -1 is unlimited. set to 0 and public to true to only display stats |
 | `FFMPEG`            | false         | collages with sound  |
 | `FANCY_SLIDESHOW`   | false         | enables video slideshow path, it slides the images with audio. This can and will make requests take a lot longer. |
 | `INSTALL_IDS`       | none          | if you have acquired a tiktok install ids, you can put them here. comma separated |
