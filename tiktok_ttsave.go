@@ -121,6 +121,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 			Author:  author,
 			Caption: caption,
 			Details: stats,
+			VideoID: videoId,
 			Video:   SimplifiedVideo{Url: video, Width: width, Height: height},
 		}, nil
 
@@ -130,6 +131,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 		Author:     author,
 		Caption:    caption,
 		Details:    stats,
+		VideoID:    videoId,
 		SoundLink:  getMediaLink(data, false),
 		ImageLinks: slideLinks,
 		Video:      SimplifiedVideo{},

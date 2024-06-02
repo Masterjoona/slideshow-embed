@@ -66,6 +66,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 			Author:  author,
 			Caption: caption,
 			Details: stats,
+			VideoID: videoId,
 			Video: SimplifiedVideo{
 				Url:    videoUrl,
 				Width:  width,
@@ -77,6 +78,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 		Author:     author,
 		Caption:    caption,
 		Details:    stats,
+		VideoID:    videoId,
 		SoundLink:  data.MusicInfo.Play,
 		ImageLinks: data.Images,
 		Video:      SimplifiedVideo{},
