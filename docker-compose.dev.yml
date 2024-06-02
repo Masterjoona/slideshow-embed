@@ -3,17 +3,14 @@ services:
     build:
       dockerfile: ./docker/tiktok_embedder/Dockerfile
     args:
-      - build_tags=scrape
+      - build_tags=tikwm
     container_name: tiktok_embedder
     environment:
       # trailing slash will be added automatically if not present
       # same for leading colon for PORT
-      #  comma separated list of ids
-      #- INSTALL_IDS=your install id if you have gotten one from somewhere
-      #- DEVICE_IDS= you can use default or your own
       - DOMAIN=https://tt.yourdomain.tld
       - PORT=4232
-      - FANCY_SLIDESHOW=false
+      - FANCY_SLIDESHOW=false # do not use, it's broken
       - PUBLIC=false
       - LIMIT_PUBLIC_AMOUNT=0
       - FFMPEG=false

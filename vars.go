@@ -32,6 +32,7 @@ var (
 
 var PythonServer = "http://" + Ternary(isDocker(), "photo_collager", "localhost") + ":9700"
 var CurrentlyRenderingAwemes = make(map[string]struct{})
+var RecentTiktokReqs = NewCache(20)
 
 var (
 	longLinkRe     = regexp.MustCompile(`https:\/\/(?:www.)?(?:vxtiktok|tiktok|tiktxk|)\.com\/(@.{2,32})\/(?:photo|video)\/(\d+)`)
@@ -46,8 +47,6 @@ var (
 	Downloader         bool
 	TemporaryDirectory = Ternary(isDocker(), "/tmp", "tmp")
 	LocalStats         Stats
-	InstallIds         []string
-	DeviceIds          []string
 	LimitPublicAmount  int
 	Public             bool
 	IsffmpegInstalled  bool

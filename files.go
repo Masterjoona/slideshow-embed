@@ -69,3 +69,33 @@ func GetVideoDimensions(filename string) (string, string, error) {
 	dimensions := strings.Split(string(out), "x")
 	return dimensions[0], dimensions[1], nil
 }
+
+func GetVideoDimensionsFromUrl(videoURL string) (width, height string, err error) {
+	cmd := exec.Command(
+		"ffprobe",
+		"-v",
+		"error",
+		"-select_streams",
+		"v:0",
+		"-show_entries",
+		"stream=width,height",
+		"-of",
+		"csv=s=x:p=0",
+		videoURL,
+	)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return "0", "0", err
+	}
+
+	dimensions := strings.Split(string(output), "x")
+	if len(dimensions) != 2 {
+		return "0", "0", fmt.Errorf("unexpected output format")
+	}
+
+	fmt.Sscanf(dimensions[0], "%s", &width)
+	fmt.Sscanf(dimensions[1], "%s", &height)
+
+	return width, height, nil
+}

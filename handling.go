@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
 	"text/template"
 
 	"github.com/gin-gonic/gin"
@@ -105,17 +104,24 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 		}
 		return SimplifiedData{}, true
 	}
-
-	tiktokData, err := FetchTiktokData(videoId)
-	if err != nil {
-		HandleError(c, "Couldn't get the tiktok")
-		return SimplifiedData{}, true
+	var tiktokData SimplifiedData
+	if cachedData, ok := RecentTiktokReqs.Get(videoId); ok {
+		tiktokData = cachedData.(SimplifiedData)
+	} else {
+		tiktokData, err := FetchTiktokData(videoId)
+		if err != nil {
+			println(err.Error())
+			HandleError(c, "Couldn't get the tiktok")
+			return SimplifiedData{}, true
+		}
+		RecentTiktokReqs.Put(videoId, tiktokData)
 	}
+
 	if !strings.Contains(tiktokData.Author, uniqueUserId) {
 		tiktokData.Caption += "\n\ntiktok returned a different user, is the post available?"
 	}
 
-	if tiktokData.IsVideo {
+	if tiktokData.Video.Url != "" {
 		handleVideoDiscordEmbed(
 			c,
 			tiktokData,
@@ -125,7 +131,6 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 		)
 		return SimplifiedData{}, true
 	}
-
 	var filename string
 	path := c.Request.URL.Path
 	switch path {
@@ -252,11 +257,7 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 	}
 
 	AddAwemeToRendering(tiktokData.VideoID)
-	var wg sync.WaitGroup
-
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
 		videoWidth, videoHeight, err := tiktokData.MakeVideoSlideshow()
 		if err != nil {
 			println(err.Error())
@@ -275,8 +276,7 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		UpdateLocalStats()
 		RemoveAwemeFromRendering(tiktokData.VideoID)
 	}()
-
-	wg.Wait()
+	HandleError(c, "This slideshow was sent to be rendered, please try again later.")
 }
 
 func HandleDownloader(c *gin.Context) {

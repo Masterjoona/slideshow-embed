@@ -1,4 +1,4 @@
-//go:build scrape
+//go:build ttsave && !tikwm
 
 package main
 
@@ -8,12 +8,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os/exec"
 	"regexp"
 	"strings"
 )
 
-const Scraping = true
+const Scraping = "ttsave"
 
 func getHash(url string) string {
 	reversed := ReverseString(url)
@@ -96,36 +95,6 @@ func getSlideLinks(body *string) []string {
 	return slideLinks
 }
 
-func getVideoDimensionsFromUrl(videoURL string) (width, height string, err error) {
-	cmd := exec.Command(
-		"ffprobe",
-		"-v",
-		"error",
-		"-select_streams",
-		"v:0",
-		"-show_entries",
-		"stream=width,height",
-		"-of",
-		"csv=s=x:p=0",
-		videoURL,
-	)
-
-	output, err := cmd.Output()
-	if err != nil {
-		return "0", "0", err
-	}
-
-	dimensions := strings.Split(string(output), "x")
-	if len(dimensions) != 2 {
-		return "0", "0", fmt.Errorf("unexpected output format")
-	}
-
-	fmt.Sscanf(dimensions[0], "%s", &width)
-	fmt.Sscanf(dimensions[1], "%s", &height)
-
-	return width, height, nil
-}
-
 func FetchTiktokData(videoId string) (SimplifiedData, error) {
 	url := "https://www.tiktok.com/@placeholder/video/" + videoId
 	hash := getHash(url)
@@ -144,7 +113,7 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 	if len(slideLinks) == 0 {
 		// must be a video?
 		video := getMediaLink(data, true)
-		width, height, err := getVideoDimensionsFromUrl(video)
+		width, height, err := GetVideoDimensionsFromUrl(video)
 		if err != nil {
 			return SimplifiedData{}, err
 		}
@@ -152,7 +121,6 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 			Author:  author,
 			Caption: caption,
 			Details: stats,
-			IsVideo: true,
 			Video:   SimplifiedVideo{Url: video, Width: width, Height: height},
 		}, nil
 
@@ -164,7 +132,6 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 		Details:    stats,
 		SoundLink:  getMediaLink(data, false),
 		ImageLinks: slideLinks,
-		IsVideo:    false,
 		Video:      SimplifiedVideo{},
 	}, nil
 }

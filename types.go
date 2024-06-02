@@ -15,7 +15,6 @@ type SimplifiedData struct {
 	ImageBuffers [][]byte
 	SoundLink    string
 	SoundBuffer  []byte
-	IsVideo      bool
 	Video        SimplifiedVideo
 }
 

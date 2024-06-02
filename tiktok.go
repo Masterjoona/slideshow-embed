@@ -1,45 +1,39 @@
-//go:build !scrape
+//go:build !tikwm && !ttsave
 
 package main
 
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
 
-const Scraping = false
+const Scraping = "false"
 
-func getVideoDetails(aweme Aweme) Counts {
+func (t *TiktokHTMLScript) getVideoDetails() Counts {
 	return Counts{
-		Likes:     FormatLargeNumbers(strconv.Itoa(aweme.Statistics.DiggCount)),
-		Comments:  FormatLargeNumbers(strconv.Itoa(aweme.Statistics.CommentCount)),
-		Shares:    FormatLargeNumbers(strconv.Itoa(aweme.Statistics.ShareCount)),
-		Views:     FormatLargeNumbers(strconv.Itoa(aweme.Statistics.PlayCount)),
-		Favorites: FormatLargeNumbers(strconv.Itoa(aweme.Statistics.CollectCount)),
+		Likes:     FormatLargeNumbers(strconv.Itoa(t.Stats.DiggCount)),
+		Comments:  FormatLargeNumbers(strconv.Itoa(t.Stats.CommentCount)),
+		Shares:    FormatLargeNumbers(strconv.Itoa(t.Stats.ShareCount)),
+		Views:     FormatLargeNumbers(strconv.Itoa(t.Stats.PlayCount)),
+		Favorites: FormatLargeNumbers(t.Stats.CollectCount),
 	}
 }
 
 func FetchTiktokData(videoId string) (SimplifiedData, error) {
-	queryString := buildQueryUrl(videoId)
-	apiResponse, err := fetch(queryString)
+	postAweme, err := fetch("https://tiktok.com/@placeholder/video/" + videoId)
 	if err != nil {
-	    // fetch again, sometimes empty resp and then not empty resp.
-		apiResponse, err = fetch(queryString)
-		if err != nil {
-			return SimplifiedData{}, err
-		}
+		return SimplifiedData{}, err
 	}
-	postAweme := apiResponse.AwemeList[0]
-
-	isVideo := !strings.Contains(postAweme.Video.PlayAddr.URLList[0], "music")
+	videoUrl := postAweme.Video.DownloadAddr
+	isVideo := !strings.Contains(videoUrl, "music")
 	imageLinks := []string{}
 	if !isVideo {
-		imageLinks = getImageLinks(postAweme)
+		imageLinks = postAweme.getImageLinks()
 	}
 	return SimplifiedData{
 		Author: EscapeString(
@@ -47,26 +41,25 @@ func FetchTiktokData(videoId string) (SimplifiedData, error) {
 		) + " (@" + postAweme.Author.UniqueID + ")",
 		Caption:    postAweme.Desc, // + "\n\n" + postAweme.Music.Title + " - " + postAweme.Music.Author + "🎵"
 		VideoID:    videoId,
-		Details:    getVideoDetails(postAweme),
+		Details:    postAweme.getVideoDetails(),
 		ImageLinks: imageLinks,
-		SoundLink:  postAweme.Music.PlayURL.URI,
-		IsVideo:    isVideo,
+		SoundLink:  postAweme.Music.PlayURL,
 		Video: SimplifiedVideo{
-			Url:    postAweme.Video.PlayAddr.URLList[0],
+			Url:    videoUrl,
 			Width:  strconv.Itoa(postAweme.Video.Width),
 			Height: strconv.Itoa(postAweme.Video.Height),
 		},
 	}, nil
 }
 
-func fetch(apiURL string) (TikTokAPIResponse, error) {
+func fetch(apiURL string) (TiktokHTMLScript, error) {
 	client := &http.Client{
 		Timeout: time.Second * 10,
 	}
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		fmt.Println("Error creating request:", err)
-		return TikTokAPIResponse{}, err
+		return TiktokHTMLScript{}, err
 	}
 
 	req.Header.Set("accept-language", "fi-FI,fi;q=0.9,en-US;q=0.8,en;q=0.7")
@@ -85,60 +78,34 @@ func fetch(apiURL string) (TikTokAPIResponse, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
-		return TikTokAPIResponse{}, err
+		return TiktokHTMLScript{}, err
 	}
 	defer resp.Body.Close()
 
-	var responseStruct TikTokAPIResponse
-	err = json.NewDecoder(resp.Body).Decode(&responseStruct)
+	textByte, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error decoding JSON:", err)
-		println(apiURL)
-		return TikTokAPIResponse{}, err
+		fmt.Println("Error reading response body:", err)
+		return TiktokHTMLScript{}, err
 	}
 
-	return responseStruct, nil
+	text := string(textByte)
+	text = strings.Split(text, `"itemStruct":`)[1]
+	text = strings.Split(text, `},"shareMeta":`)[0]
+	fmt.Println(text)
+	var responseScript TiktokHTMLScript
+	err = json.Unmarshal([]byte(text), &responseScript)
+	if err != nil {
+		fmt.Println("Error unmarshalling script:", err)
+		return TiktokHTMLScript{}, err
+	}
+	return responseScript, nil
 }
 
-func getImageLinks(aweme Aweme) []string {
-	imageLinks := make([]string, 0, len(aweme.ImagePostInfo.Images))
-	for _, image := range aweme.ImagePostInfo.Images {
-		var url string
-		if aweme.ImagePostInfo.Images[0].BitrateImages != nil {
-			url = image.BitrateImages[0].BitrateImage.URLList[1]
-		} else {
-			url = image.Thumbnail.URLList[1]
-		}
-		imageLinks = append(imageLinks, url)
+func (t *TiktokHTMLScript) getImageLinks() []string {
+	images := t.ImagePost.Images
+	imageLinks := make([]string, 0, len(images))
+	for _, image := range images {
+		imageLinks = append(imageLinks, image.ImageURL.URLList[0])
 	}
-
 	return imageLinks
-}
-
-func setParam(key, value string) string {
-	return key + "=" + value + "&"
-}
-
-func getNextId(ids []string) string {
-	return ids[rand.Intn(len(ids))]
-}
-
-func buildQueryUrl(videoId string) string {
-	query := "https://api22-normal-c-alisg.tiktokv.com/aweme/v1/feed/?"
-	query += setParam("iid", getNextId(InstallIds))
-	query += setParam(
-		"device_id",
-		getNextId(DeviceIds),
-		//strconv.FormatInt(randomBigInt(7250000000000000000, 7351147085025500000), 10),
-	)
-
-	// https://github.com/Evil0ctal/Douyin_TikTok_Download_API
-	query += setParam("channel", "googleplay")
-	query += setParam("app_name", "musical_ly")
-	query += setParam("version_code", "300904")
-	query += setParam("device_platform", "android")
-	query += setParam("device_type", "SM-ASUS_Z01QD")
-	query += setParam("os_version", "9")
-
-	return query + setParam("aweme_id", videoId)
 }
