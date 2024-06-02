@@ -108,7 +108,7 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 	if cachedData, ok := RecentTiktokReqs.Get(videoId); ok {
 		tiktokData = cachedData.(SimplifiedData)
 	} else {
-		tiktokData, err := FetchTiktokData(videoId)
+		tiktokData, err = FetchTiktokData(videoId)
 		if err != nil {
 			println(err.Error())
 			HandleError(c, "Couldn't get the tiktok")
