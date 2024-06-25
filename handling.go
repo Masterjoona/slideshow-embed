@@ -255,28 +255,17 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		UpdateLocalStats()
 		return
 	}
-
 	AddAwemeToRendering(tiktokData.VideoID)
 	go func() {
-		videoWidth, videoHeight, err := tiktokData.MakeVideoSlideshow()
+		_, _, err := tiktokData.MakeVideoSlideshow()
 		if err != nil {
 			println(err.Error())
-			HandleError(c, "Couldn't generate video")
 			return
 		}
-
-		handleVideoDiscordEmbed(
-			c,
-			tiktokData,
-			Domain+"slide-"+tiktokData.VideoID+".mp4",
-			videoWidth,
-			videoHeight,
-		)
-
 		UpdateLocalStats()
 		RemoveAwemeFromRendering(tiktokData.VideoID)
 	}()
-	HandleError(c, "This slideshow was sent to be rendered, please try again later.")
+	HandleError(c, "This slideshow was sent to be rendered, please request again in some time!")
 }
 
 func HandleDownloader(c *gin.Context) {
