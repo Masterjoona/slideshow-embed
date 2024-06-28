@@ -1,5 +1,3 @@
-//go:build tikwm && !ttsave
-
 package main
 
 import (
@@ -10,7 +8,6 @@ import (
 	"strings"
 )
 
-const Scraping = "tikwm"
 const baseUrl = "https://tikwm.com"
 
 func fetchTikwm(videoId string) (TikWmResp, error) {
@@ -40,7 +37,7 @@ func fetchTikwm(videoId string) (TikWmResp, error) {
 	return tikWmResp, nil
 }
 
-func FetchTiktokData(videoId string) (SimplifiedData, error) {
+func FetchTiktokDataTikWm(videoId string) (SimplifiedData, error) {
 	tikWmApiResp, err := fetchTikwm(videoId)
 	data := tikWmApiResp.Data
 	if err != nil {

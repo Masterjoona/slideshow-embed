@@ -2,8 +2,6 @@ services:
   tiktok_embdedder:
     build:
       dockerfile: ./docker/tiktok_embedder/Dockerfile
-    args:
-      - build_tags=tikwm
     container_name: tiktok_embedder
     environment:
       # trailing slash will be added automatically if not present
@@ -16,6 +14,7 @@ services:
       - FFMPEG=false
       - DOWNLOADER=false
       - GIN_MODE=release
+      #- TIKTOK_PROVIDER=tikwm # set this if tiktok api is broken
     ports:
       - "4232:4232"
     networks:

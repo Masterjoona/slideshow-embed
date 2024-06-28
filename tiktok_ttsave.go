@@ -1,5 +1,3 @@
-//go:build ttsave && !tikwm
-
 package main
 
 import (
@@ -95,7 +93,7 @@ func getSlideLinks(body *string) []string {
 	return slideLinks
 }
 
-func FetchTiktokData(videoId string) (SimplifiedData, error) {
+func FetchTiktokDataTTSave(videoId string) (SimplifiedData, error) {
 	url := "https://www.tiktok.com/@placeholder/video/" + videoId
 	hash := getHash(url)
 

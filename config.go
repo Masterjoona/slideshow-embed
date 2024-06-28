@@ -33,6 +33,9 @@ func InitEnvs() {
 	Downloader = os.Getenv("DOWNLOADER") == "true"
 	IsffmpegInstalled = os.Getenv("FFMPEG") == "true"
 	FancySlideshow = os.Getenv("FANCY_SLIDESHOW") == "true"
+	TiktokProvider = os.Getenv("TIKTOK_PROVIDER")
+
+	SetTiktokTiktokProvider(TiktokProvider)
 
 	LimitPublicAmount, _ = strconv.Atoi(os.Getenv("LIMIT_PUBLIC_AMOUNT"))
 

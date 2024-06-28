@@ -121,7 +121,7 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 		tiktokData.Caption += "\n\ntiktok returned a different user, is the post available?"
 	}
 
-	if tiktokData.Video.Url != "" {
+	if len(tiktokData.ImageLinks) == 0 && tiktokData.Video.Url != "" {
 		handleVideoDiscordEmbed(
 			c,
 			tiktokData,

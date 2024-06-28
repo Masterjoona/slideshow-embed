@@ -51,4 +51,5 @@ var (
 	Public             bool
 	IsffmpegInstalled  bool
 	FancySlideshow     bool
+	TiktokProvider     string
 )

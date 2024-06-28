@@ -79,7 +79,7 @@ func UpdateLocalStats() {
 	countString := strconv.Itoa(count)
 	if LimitPublicAmount > -1 && len(fileLinks) > LimitPublicAmount {
 		fileLinks = fileLinks[:LimitPublicAmount]
-		countString += fmt.Sprintf(" (limited to %d)", LimitPublicAmount)
+		countString += fmt.Sprintf(" (listing %d)", LimitPublicAmount)
 	}
 
 	bytes, err := GetDirectorySize("collages")

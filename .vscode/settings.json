@@ -1,6 +1,3 @@
 {
-    "python.analysis.typeCheckingMode": "basic",
-    "gopls": {
-        "build.buildFlags": ["-tags=tikwm"]
-    }
+    "python.analysis.typeCheckingMode": "basic"
 }

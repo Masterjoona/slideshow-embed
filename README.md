@@ -14,8 +14,9 @@ Embedding video tiktoks is also supported.
 | `PUBLIC`            | false         | If the index page is public  |
 | `LIMIT_PUBLIC_AMOUNT` | -1           | How many links are linked on the index. -1 is unlimited. set to 0 and public to true to only display stats |
 | `FFMPEG`            | false         | collages with sound  |
-| `FANCY_SLIDESHOW`   | false         | borked do not use, will fix sometime - enables video slideshow path, it slides the images with audio. This can and will make requests take a lot longer. |
+| `FANCY_SLIDESHOW`   | false         | enables video slideshow path, it slides the images with audio. This can and will make requests take a lot longer. |
 | `DOWNLOADER` | false | enables the downloader path. |
+| `TIKTOK_PROVIDER` | api | Set the provider for data, either tikwm or ttsave otherwise it will default to tiktoks own api. |
 
 ### Docker compose
 Clone this repo and `cd` into it. edit the compose file for path for the collages. Leave the build arg as tikwm or change it to ttsave. I would have to proxy the videos if i were to use urls in tiktoks html. 
@@ -69,7 +70,7 @@ https://github.com/Masterjoona/slideshow-embed/assets/69722179/cb07845d-851d-4cc
 |----------|----------------------------------------|
 | /t?v=    | normal collage or embed a video tiktok | 
 | /s?v=    | collage with sound, i guess you can embed a video tiktok as well...                     |
-| /f?v=    | borked - slides the images, same for this lol. The requests to this will take a long time to complete, so its better to open this in a browser and when it completes send it to discord.                     |
+| /f?v=    | slides the images, same for this lol. The requests to this will take a long time to complete, so its better to open this in a browser and when it completes send it to discord.                     |
 | /d?v=    | show all images and a button download a zip of all images.                     |
 
 ## notes

@@ -15,7 +15,7 @@ func main() {
 
 	println("Starting server on port " + Port)
 	println("Domain: " + Domain)
-	println("Scraping: " + Scraping)
+	println("Provider: " + TiktokProvider)
 	println("Public: " + strconv.FormatBool(Public))
 	println("Limit public amount: " + strconv.Itoa(LimitPublicAmount))
 	println("Sound route: " + strconv.FormatBool(IsffmpegInstalled))
