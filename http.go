@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -42,7 +44,7 @@ func GetLongVideoId(videoUrl string) (string, string, error) {
 	return "", "", errors.New("failed to extract the video id")
 }
 
-func downloadImage(url string) ([]byte, error) {
+func downloadMedia(url string) ([]byte, error) {
 	url = EscapeString(url)
 
 	client := &http.Client{
@@ -61,22 +63,23 @@ func downloadImage(url string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	if !strings.Contains(resp.Header.Get("Content-Type"), "image") {
+	if !strings.Contains(resp.Header.Get("Content-Type"), "image") && !strings.Contains(resp.Header.Get("Content-Type"), "video") {
 		/*
 			thats weird?
 			https://www.tiktok.com/@f3l1xfromvenus/photo/7360247887340637472
 			some image had
 			{ "code": 4404,"error": "fail to get resource"}
 		*/
-		return nil, errors.New("tiktok returned a non-image response")
+		println(url)
+		return nil, errors.New("tiktok returned a non-media response")
 	}
 
-	imageBytes, err := io.ReadAll(resp.Body)
+	mediaBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	return imageBytes, nil
+	return mediaBytes, nil
 }
 
 func (t *SimplifiedData) DownloadImages() int {
@@ -89,7 +92,7 @@ func (t *SimplifiedData) DownloadImages() int {
 		wg.Add(1)
 		go func(url string, index int) {
 			defer wg.Done()
-			if imgBytes, err := downloadImage(url); err == nil {
+			if imgBytes, err := downloadMedia(url); err == nil {
 				indexedImages = append(indexedImages, ImageWithIndex{Bytes: imgBytes, Index: index})
 			} else {
 				println("error downloading image %s: %v\n", url, err)
@@ -136,4 +139,49 @@ func (t *SimplifiedData) DownloadSound() error {
 	}
 
 	return nil
+}
+
+func (t *SimplifiedData) DownloadVideoAndSubtitles(lang string) error {
+	url := SubtitlesHost + "subtitle_id=02981317794434464&target_language=" + lang + "&item_id=" + t.VideoID
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("User-Agent", UserAgent)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	var subtitlesResp SubtitlesResp
+	err = json.Unmarshal(bodyText, &subtitlesResp)
+	if err != nil {
+		return err
+	}
+	subtitles := subtitlesResp.WebvttSubtitle
+	if subtitles == "" {
+		return errors.New("no subtitles found")
+	}
+
+	err = CreateDirectory(TemporaryDirectory + "/collages/" + t.VideoID)
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(TemporaryDirectory+"/collages/"+t.VideoID+"/subtitles.vtt", []byte(subtitles), 0644)
+	if err != nil {
+		return err
+	}
+
+	videoUrl := t.Video.Url
+	videoBytes, err := downloadMedia(videoUrl)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(TemporaryDirectory+"/collages/"+t.VideoID+"/video.mp4", videoBytes, 0644)
 }

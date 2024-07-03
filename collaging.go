@@ -257,3 +257,33 @@ func (t *SimplifiedData) MakeVideoSlideshow() (string, string, error) {
 	os.RemoveAll(TemporaryDirectory + "/collages/" + videoId)
 	return videoWidth, videoHeight, nil
 }
+
+func (t *SimplifiedData) MakeVideoSubtitles(lang string) (string, string, error) {
+	cmd := exec.Command(
+		"ffmpeg",
+		"-i",
+		TemporaryDirectory+"/collages/"+t.VideoID+"/video.mp4",
+		"-vf",
+		"subtitles="+TemporaryDirectory+"/collages/"+t.VideoID+"/subtitles.vtt",
+		"-c:v",
+		"libx264",
+		"-preset",
+		"veryfast",
+		"-crf",
+		"27",
+		"-c:a",
+		"copy",
+		"collages/subs-"+lang+"-"+t.VideoID+".mp4",
+	)
+
+	err := cmd.Run()
+	if err != nil {
+		return "", "", err
+	}
+	videoWidth, videoHeight, err := GetVideoDimensions("collages/subs-" + lang + "-" + t.VideoID + ".mp4")
+	if err != nil {
+		return "", "", err
+	}
+	os.RemoveAll(TemporaryDirectory + "/collages/" + t.VideoID)
+	return videoWidth, videoHeight, nil
+}

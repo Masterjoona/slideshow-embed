@@ -12,7 +12,7 @@ RUN --mount=type=cache,target="/root/.cache/go-build" go build -ldflags "-s -w"
 
 FROM alpine:latest
 
-RUN apk --no-cache add ffmpeg
+RUN apk --no-cache add ffmpeg font-noto font-noto-cjk font-awesome font-noto-extra
 
 WORKDIR /app
 

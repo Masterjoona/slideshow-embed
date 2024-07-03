@@ -95,6 +95,7 @@ func HandleDirectFile(fileType string) func(c *gin.Context) {
 
 func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 	tiktokURL := c.Query("v")
+	subLang := c.Query("lang")
 	uniqueUserId, videoId, err := GetLongVideoId(tiktokURL)
 	if err != nil {
 		if err.Error() == "invalid URL" {
@@ -121,7 +122,7 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 		tiktokData.Caption += "\n\ntiktok returned a different user, is the post available?"
 	}
 
-	if len(tiktokData.ImageLinks) == 0 && tiktokData.Video.Url != "" {
+	if len(tiktokData.ImageLinks) == 0 && tiktokData.Video.Url != "" && subLang == "" {
 		handleVideoDiscordEmbed(
 			c,
 			tiktokData,
@@ -140,6 +141,8 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 		filename = "video-" + videoId + ".mp4"
 	case PathSlide:
 		filename = "slide-" + videoId + ".mp4"
+	case PathSubs:
+		filename = "subs-" + subLang + "-" + videoId + ".mp4"
 	case PathDownloader:
 		return tiktokData, false
 	}
@@ -173,7 +176,7 @@ func processRequest(c *gin.Context, collageImages bool, downloadSound bool) (Sim
 		return tiktokData, true, nil
 	}
 	failedImageCount := tiktokData.DownloadImages()
-	if failedImageCount == len(tiktokData.ImageLinks) {
+	if failedImageCount == len(tiktokData.ImageLinks) && collageImages {
 		println("all images failed to download")
 		return SimplifiedData{}, false, errors.New("all images failed to download")
 	}
@@ -287,4 +290,38 @@ func HandleDownloader(c *gin.Context) {
 		"imageUrl":   tiktokData.ImageLinks[0],
 		"soundUrl":   tiktokData.SoundLink,
 	})
+}
+
+func HandleSubtitleVideo(c *gin.Context) {
+	tiktokData, skip, err := processRequest(c, false, false)
+	if skip {
+		return
+	}
+	if err != nil {
+		HandleError(c, err.Error())
+		return
+	}
+	subLang := c.Query("lang")
+	if subLang == "" {
+		HandleError(c, "No language provided")
+		return
+	}
+
+	AddAwemeToRendering(tiktokData.VideoID)
+	go func() {
+		err = tiktokData.DownloadVideoAndSubtitles(subLang)
+		if err != nil {
+			println(err.Error())
+			return
+		}
+
+		_, _, err := tiktokData.MakeVideoSubtitles(subLang)
+		if err != nil {
+			println(err.Error())
+			return
+		}
+		UpdateLocalStats()
+		RemoveAwemeFromRendering(tiktokData.VideoID)
+	}()
+	HandleError(c, "This video was sent to be subtitled, please request again in some time!")
 }

@@ -18,6 +18,9 @@ const (
 	PathCollageSound = "/s"
 	PathSlide        = "/f"
 	PathDownloader   = "/d"
+	PathSubs         = "/subs"
+
+	SubtitlesHost = "https://api16-normal-c-useast2a.tiktokv.com/tiktok/cla/subtitle_translation/get/v1/?"
 )
 
 var (
@@ -51,5 +54,6 @@ var (
 	Public             bool
 	IsffmpegInstalled  bool
 	FancySlideshow     bool
+	Subtitler          bool
 	TiktokProvider     string
 )

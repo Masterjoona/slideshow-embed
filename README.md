@@ -17,6 +17,7 @@ Embedding video tiktoks is also supported.
 | `FANCY_SLIDESHOW`   | false         | enables video slideshow path, it slides the images with audio. This can and will make requests take a lot longer. |
 | `DOWNLOADER` | false | enables the downloader path. |
 | `TIKTOK_PROVIDER` | api | Set the provider for data, either tikwm or ttsave otherwise it will default to tiktoks own api. |
+| `SUBTITLER` | false | burn the auto generated subtitles into the video. |
 
 ### Docker compose
 Clone this repo and `cd` into it. edit the compose file for path for the collages. Leave the build arg as tikwm or change it to ttsave. I would have to proxy the videos if i were to use urls in tiktoks html. 
@@ -72,6 +73,7 @@ https://github.com/Masterjoona/slideshow-embed/assets/69722179/cb07845d-851d-4cc
 | /s?v=    | collage with sound, i guess you can embed a video tiktok as well...                     |
 | /f?v=    | slides the images, same for this lol. The requests to this will take a long time to complete, so its better to open this in a browser and when it completes send it to discord.                     |
 | /d?v=    | show all images and a button download a zip of all images.                     |
+| /subs?v=link&lang=en | burn the subtitles into a video                    |
 
 ## notes
 this is a beginner project so there might some insane design choices ![trolley](https://cdn.discordapp.com/emojis/1068825486265942056.webp?size=48&name=trolley&quality=lossless) 

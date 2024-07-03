@@ -13,6 +13,7 @@ services:
       - LIMIT_PUBLIC_AMOUNT=0
       - FFMPEG=false
       - DOWNLOADER=false
+      - SUBTITLER=false
       - GIN_MODE=release
       #- TIKTOK_PROVIDER=tikwm # set this if tiktok api is broken
     ports:

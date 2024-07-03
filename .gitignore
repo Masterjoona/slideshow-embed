@@ -8,3 +8,4 @@ meow.exe
 *.zip
 __pycache__
 docker-compose.yml
+*.json
