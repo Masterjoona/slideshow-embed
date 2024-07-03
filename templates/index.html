@@ -44,6 +44,7 @@
                 <option value="s">Sound collage</option>
                 <option value="f">Slideshow</option>
                 <option value="d">Download all</option>
+                <option value="subs">Burn subs</option>
             </select>
             <input type="text" id="tiktok-link" placeholder="Tiktok link" />
             <button id="go" onclick="newCollage()">go</button>
@@ -59,6 +60,19 @@
                         !link.startsWith("https://")
                     ) {
                         link = "https://www." + link;
+                    }
+                    if (type === "subs") {
+                        const resp = prompt(
+                            "Enter language code (en, fi, ...)"
+                        );
+                        if (resp === null) return;
+                        location.href =
+                            location.origin +
+                            "/subs?v=" +
+                            link +
+                            "&lang=" +
+                            resp;
+                        return;
                     }
                     location.href = location.origin + "/" + type + "?v=" + link;
                 }
