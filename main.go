@@ -41,7 +41,7 @@ func main() {
 
 	if Subtitler {
 		r.GET(PathSubs, HandleSubtitleVideo)
-		r.GET("/subs-:id", HandleDirectFile("subtitled"))
+		r.GET("/subs-:id", HandleDirectFile("subs"))
 	}
 
 	r.Run(Port)
