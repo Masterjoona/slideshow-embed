@@ -42,8 +42,6 @@ import concurrent.futures
 # got idea from https://medium.com/@jtreitz/the-algorithm-for-a-perfectly-balanced-photo-gallery-914c94a5d8af
 
 
-
-
 def process_image(image: bytes, index: int):
     img = Image.open(BytesIO(image))
     height = img.height
@@ -118,7 +116,9 @@ def make_collage(images: List[bytes], output: str) -> float:
     try:
         if len(images) == 1:
             image = Image.open(BytesIO(images[0]))
-            save_image(output, image, image.width, image.height)
+            save_image(
+                output, image, ensure_even(image.width), ensure_even(image.height), True
+            )
             return time.time() - start
 
         pil_images = []
@@ -145,7 +145,7 @@ def make_collage(images: List[bytes], output: str) -> float:
                 (int(width / height * height_arg), height_arg),
                 Image.LANCZOS,
             )
-        save_image(output, collage, width, height)
+        save_image(output, collage, width, height, False)
 
         return time.time() - start
     except Exception as e:

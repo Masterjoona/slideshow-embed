@@ -69,15 +69,39 @@ func (t *SimplifiedData) MakeCollageWithAudio(filetype string) (string, string, 
 		return "", "", err
 	}
 
-	out, err := exec.Command("ffmpeg", "-loop", "1", "-framerate", "1", "-i", "collages/collage-"+videoId+".png", "-i", audioFileName, "-map", "0", "-map", "1:a", "-c:v", "libx264", "-preset", "ultrafast", "-tune", "stillimage", "-vf", "fps=1,format=yuv420p", "-c:a", "copy", "-shortest", "collages/video-"+videoId+".mp4").
-		Output()
+	cmd := exec.Command(
+		"ffmpeg",
+		"-loop",
+		"1",
+		"-framerate",
+		"1",
+		"-i",
+		"collages/collage-"+videoId+".png",
+		"-i",
+		audioFileName,
+		"-map",
+		"0",
+		"-map",
+		"1:a",
+		"-c:v",
+		"libx264",
+		"-preset",
+		"ultrafast",
+		"-tune",
+		"stillimage",
+		"-vf",
+		"fps=1,format=yuv420p",
+		"-c:a",
+		"copy",
+		"-shortest",
+		"collages/video-"+videoId+".mp4",
+	)
+	//(cmd.String())
+	err = cmd.Run()
 	if err != nil {
-		fmt.Println(err)
-		fmt.Println(string(out))
+		fmt.Println(err.Error())
 		return "", "", err
 	}
-
-	fmt.Println(string(out))
 	os.Remove(audioFileName)
 
 	videoWidth, videoHeight, err := GetVideoDimensions("collages/" + filetype + "-" + videoId + ".mp4")

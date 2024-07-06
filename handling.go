@@ -307,13 +307,16 @@ func HandleSubtitleVideo(c *gin.Context) {
 		return
 	}
 
+	err = tiktokData.DownloadVideoAndSubtitles(subLang)
+	if err != nil {
+		errorMsg := "Couldn't download video with subtitles. Only translations are available. e.g if the non-translated subtitles are in English, you can only get translations in other languages."
+		// This is due to tiktok goofery
+		HandleError(c, errorMsg)
+		return
+	}
+
 	AddAwemeToRendering(tiktokData.VideoID)
 	go func() {
-		err = tiktokData.DownloadVideoAndSubtitles(subLang)
-		if err != nil {
-			println(err.Error())
-			return
-		}
 
 		_, _, err := tiktokData.MakeVideoSubtitles(subLang)
 		if err != nil {
