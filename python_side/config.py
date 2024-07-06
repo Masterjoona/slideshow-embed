@@ -5,17 +5,11 @@ import io
 import os.path
 
 
-def save_with_fpng(
-    filepath: str, image: ImageType, width: int, height: int, resize: bool
-) -> None:
+def save_with_fpng(filepath: str, image: ImageType, width: int, height: int) -> None:
     fpng_py.fpng_encode_image_to_file(filepath, image.tobytes(), width, height)  # type: ignore
 
 
-def save_with_pillow(
-    filepath: str, image: ImageType, width: int, height: int, resize: bool
-) -> None:
-    if resize:
-        image = image.resize((width, height), Image.LANCZOS)
+def save_with_pillow(filepath: str, image: ImageType, width: int, height: int) -> None:
     image.save(filepath)
 
 

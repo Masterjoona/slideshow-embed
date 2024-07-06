@@ -69,8 +69,6 @@ def resize_images(images: List[bytes], output: str) -> float:
 
     for index, image in enumerate(images):
         cover = resize_contain(image, (to_width, to_heigth))
-        save_image(
-            f"{temporary_dir}/{output}/{index}.png", cover, to_width, to_heigth, False
-        )
+        save_image(f"{temporary_dir}/{output}/{index}.png", cover, to_width, to_heigth)
 
     return time.time() - start
