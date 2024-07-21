@@ -12,7 +12,7 @@ import (
 
 const Scraping = "ttsave"
 
-func getHash(url string) string {
+func _(url string) string {
 	reversed := ReverseString(url)
 
 	base64Encoded := base64.StdEncoding.EncodeToString([]byte(reversed))
@@ -24,10 +24,10 @@ func getHash(url string) string {
 	return ReverseString(hashString)
 }
 
-func fetchTTSave(tiktokUrl, mode, hash string) (*string, error) {
+func fetchTTSave(tiktokUrl string) (*string, error) {
 	client := &http.Client{}
-	var data = strings.NewReader(fmt.Sprintf(`{"id":"%s","hash":"%s","mode":"%s","locale":"en","loading_indicator_url":"https://ttsave.app/images/slow-down.gif","unlock_url":"https://ttsave.app/en/unlock"}`, tiktokUrl, hash, mode))
-	req, err := http.NewRequest("POST", "https://api.ttsave.app/", data)
+	var data = strings.NewReader(fmt.Sprintf(`{"language_id":"1","query":"%s"}`, tiktokUrl))
+	req, err := http.NewRequest("POST", "https://ttsave.app/download", data)
 	if err != nil {
 		return nil, err
 	}
@@ -95,9 +95,8 @@ func getSlideLinks(body *string) []string {
 
 func FetchTiktokDataTTSave(videoId string) (SimplifiedData, error) {
 	url := "https://www.tiktok.com/@placeholder/video/" + videoId
-	hash := getHash(url)
 
-	data, err := fetchTTSave(url, "video", hash)
+	data, err := fetchTTSave(url)
 	if err != nil {
 		return SimplifiedData{}, err
 	}

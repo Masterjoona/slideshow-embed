@@ -52,3 +52,8 @@ func (c *Cache) Put(key string, value interface{}) {
 	elem := c.order.PushFront(item)
 	c.items[key] = elem
 }
+
+func (c *Cache) Flush() {
+	c.items = make(map[string]*list.Element)
+	c.order = list.New()
+}

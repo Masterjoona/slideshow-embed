@@ -3,6 +3,7 @@ package main
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -43,6 +44,13 @@ func main() {
 		r.GET(PathSubs, HandleSubtitleVideo)
 		r.GET("/subs-:id", HandleDirectFile("subs"))
 	}
+
+	go func() {
+		for {
+			RecentTiktokReqs.Flush()
+			time.Sleep(5 * time.Minute)
+		}
+	}()
 
 	r.Run(Port)
 }
