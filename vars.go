@@ -19,6 +19,7 @@ const (
 	PathSlide        = "/f"
 	PathDownloader   = "/d"
 	PathSubs         = "/subs"
+	PathJson         = "/json"
 
 	SubtitlesHost = "https://api16-normal-c-useast2a.tiktokv.com/tiktok/cla/subtitle_translation/get/v1/?"
 )

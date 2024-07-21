@@ -21,6 +21,9 @@
             .links {
                 margin: 10px;
             }
+            p {
+                max-width: 50%;
+            }
         </style>
         <a href="tiktok.com" class="links" id="tiktok"> tiktok </a>
         <a href="#" class="links" id="index"> index </a>
@@ -36,6 +39,7 @@
             tiktok.href = location.search.split("=")[1];
             const index = document.getElementById("index");
             index.href = location.origin;
+            document.querySelector("body > img").height = innerHeight / 1.5;
         </script>
     </body>
 </html>

@@ -44,6 +44,9 @@
                 flex: 0 0 calc(25% - 20px);
                 max-width: calc(25% - 20px);
             }
+            p {
+                max-width: 50%;
+            }
         </style>
     </head>
 
@@ -61,9 +64,6 @@
         <a id="links" style="display: none" data-links="{{ .imageLinks }}"></a>
         <script type="module">
             import { downloadZip } from "https://cdn.jsdelivr.net/npm/client-zip/index.js";
-            document
-                .querySelector("button")
-                .addEventListener("click", downloadImagesZip);
             const imageLinks = document
                 .getElementById("links")
                 .getAttribute("data-links")
@@ -119,12 +119,16 @@
                 link.click();
                 link.remove();
             }
+            document
+                .querySelector("button")
+                .addEventListener("click", downloadImagesZip);
         </script>
         <script>
             const tiktok = document.getElementById("tiktok");
             tiktok.href = location.search.split("=")[1];
             const index = document.getElementById("index");
             index.href = location.origin;
+            document.querySelector("body > img").height = innerHeight / 1.5;
         </script>
     </body>
 </html>

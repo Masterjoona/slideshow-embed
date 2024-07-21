@@ -28,6 +28,8 @@ func main() {
 	r.GET(PathCollage, HandleRequest)
 	r.GET("/collage-:id", HandleDirectFile("collage"))
 
+	r.GET(PathJson, HandleJsonRequest)
+
 	if IsffmpegInstalled {
 		r.GET(PathCollageSound, HandleSoundCollageRequest)
 		r.GET("/video-:id", HandleDirectFile("video"))

@@ -21,6 +21,9 @@
             .links {
                 margin: 10px;
             }
+            p {
+                max-width: 50%;
+            }
         </style>
         <a href="tiktok.com" class="links" id="tiktok"> tiktok </a>
         <a href="#" class="links" id="index"> index </a>
@@ -43,7 +46,8 @@
             const index = document.getElementById("index");
             index.href = location.origin;
             video = document.getElementsByTagName("video")[0];
-            video.height = window.innerHeight;
+            video.height = window.innerHeight / 1.7;
+            video.width = window.innerWidth / 1.7;
         </script>
     </body>
 </html>
