@@ -45,8 +45,6 @@ func GetLongVideoId(videoUrl string) (string, string, error) {
 }
 
 func downloadMedia(url string) ([]byte, error) {
-	url = EscapeString(url)
-
 	client := &http.Client{
 		Timeout: time.Second * 4,
 	}

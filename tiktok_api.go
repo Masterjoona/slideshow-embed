@@ -31,10 +31,8 @@ func FetchTiktokDataTiktokAPI(videoId string) (SimplifiedData, error) {
 		imageLinks = postAweme.getImageLinks()
 	}
 	return SimplifiedData{
-		Author: EscapeString(
-			postAweme.Author.Nickname,
-		) + " (@" + postAweme.Author.UniqueID + ")",
-		Caption:    postAweme.Desc, // + "\n\n" + postAweme.Music.Title + " - " + postAweme.Music.Author + "🎵"
+		Author:     postAweme.Author.Nickname + " (@" + postAweme.Author.UniqueID + ")",
+		Caption:    postAweme.Desc,
 		VideoID:    videoId,
 		Details:    postAweme.getVideoDetails(),
 		ImageLinks: imageLinks,
@@ -48,11 +46,9 @@ func FetchTiktokDataTiktokAPI(videoId string) (SimplifiedData, error) {
 }
 
 func fetch(awemeId string) (Aweme, error) {
-	const maxAttempts = 3
-
 	client := &http.Client{}
 	req, err := http.NewRequest("OPTIONS", "https://api22-normal-c-alisg.tiktokv.com/aweme/v1/feed/?aweme_id="+awemeId, nil)
-	// yes, options is correct, it actually returns the data
+	// yes, options is correct, it actually returns data (most of the time)
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return Aweme{}, err
@@ -60,7 +56,7 @@ func fetch(awemeId string) (Aweme, error) {
 
 	req.Header.Set("user-agent", UserAgent)
 
-	for attempts := 1; attempts <= maxAttempts; attempts++ {
+	for attempts := 1; attempts <= maxRetryCountTTApi; attempts++ {
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Println("Error sending request:", err)
@@ -77,8 +73,8 @@ func fetch(awemeId string) (Aweme, error) {
 		var response TikTokAPIResponse
 		err = json.Unmarshal(textByte, &response)
 		if err != nil {
-			fmt.Printf("Error unmarshalling (attempt %d/%d): %v\n", attempts, maxAttempts, err)
-			if attempts == maxAttempts {
+			fmt.Printf("Error unmarshalling (attempt %d/%d): %v\n", attempts, maxRetryCountTTApi, err)
+			if attempts == maxRetryCountTTApi {
 				return Aweme{}, err
 			}
 			continue
@@ -86,7 +82,7 @@ func fetch(awemeId string) (Aweme, error) {
 		return response.AwemeList[0], nil
 	}
 
-	return Aweme{}, fmt.Errorf("failed to unmarshal response after %d attempts", maxAttempts)
+	return Aweme{}, fmt.Errorf("failed to unmarshal response after %d attempts", maxRetryCountTTApi)
 }
 
 func (t *Aweme) getImageLinks() []string {

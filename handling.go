@@ -115,6 +115,7 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 			HandleError(c, "Couldn't get the tiktok")
 			return SimplifiedData{}, true
 		}
+		tiktokData.DecodeStrings()
 		RecentTiktokReqs.Put(videoId, tiktokData)
 	}
 

@@ -38,6 +38,8 @@ var PythonServer = "http://" + Ternary(isDocker(), "photo_collager", "localhost"
 var CurrentlyRenderingAwemes = make(map[string]struct{})
 var RecentTiktokReqs = NewCache(20)
 
+const maxRetryCountTTApi = 5
+
 var (
 	longLinkRe     = regexp.MustCompile(`https:\/\/(?:www.)?(?:vxtiktok|tiktok|tiktxk|)\.com\/(@.{2,32})\/(?:photo|video)\/(\d+)`)
 	shortLinkRe    = regexp.MustCompile(`https:\/\/.{1,3}\.(?:(?:vx|)tikt(?:x|o)k)\.com/(?:.{1,2}/|)(.{5,12})`)

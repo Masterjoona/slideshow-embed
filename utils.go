@@ -30,12 +30,27 @@ func validateURL(url string) bool {
 	return true
 }
 
-func EscapeString(input string) string {
+func UrlDecodeString(input string) string {
 	decoded, err := url.QueryUnescape(input)
 	if err != nil {
 		return input
 	}
 	return decoded
+}
+
+func UrlDecodeStrings(input []string) []string {
+	for i, str := range input {
+		input[i] = UrlDecodeString(str)
+	}
+	return input
+}
+
+func (sData *SimplifiedData) DecodeStrings() {
+	sData.Author = UrlDecodeString(sData.Author)
+	sData.Caption = UrlDecodeString(sData.Caption)
+	sData.Video.Url = UrlDecodeString(sData.Video.Url)
+	sData.SoundLink = UrlDecodeString(sData.SoundLink)
+	sData.ImageLinks = UrlDecodeStrings(sData.ImageLinks)
 }
 
 func SplitURLAndIndex(URL string) (string, string, bool) {
