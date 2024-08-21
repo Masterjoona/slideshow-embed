@@ -107,7 +107,7 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 	}
 	var tiktokData SimplifiedData
 	if cachedData, ok := RecentTiktokReqs.Get(videoId); ok {
-		tiktokData = cachedData.(SimplifiedData)
+		tiktokData = cachedData
 	} else {
 		tiktokData, err = FetchTiktokData(videoId)
 		if err != nil {
@@ -220,7 +220,10 @@ func HandleJsonRequest(c *gin.Context) {
 }
 
 func HandleVideoProxy(c *gin.Context) {
-	tiktokData, _ := preProcessTikTokRequest(c)
+	tiktokData, skip := preProcessTikTokRequest(c)
+	if skip {
+		return
+	}
 	if tiktokData.Video.Width == "" {
 		HandleError(c, "This is not a video tiktok")
 		return

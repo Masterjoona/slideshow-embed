@@ -14,7 +14,7 @@ type Cache struct {
 
 type Item struct {
 	key   string
-	value interface{}
+	value SimplifiedData
 }
 
 func NewCache(capacity int) *Cache {
@@ -25,15 +25,15 @@ func NewCache(capacity int) *Cache {
 	}
 }
 
-func (c *Cache) Get(key string) (interface{}, bool) {
+func (c *Cache) Get(key string) (SimplifiedData, bool) {
 	if elem, found := c.items[key]; found {
 		c.order.MoveToFront(elem)
 		return elem.Value.(*Item).value, true
 	}
-	return nil, false
+	return SimplifiedData{}, false
 }
 
-func (c *Cache) Put(key string, value interface{}) {
+func (c *Cache) Put(key string, value SimplifiedData) {
 	if elem, found := c.items[key]; found {
 		c.order.MoveToFront(elem)
 		elem.Value.(*Item).value = value
