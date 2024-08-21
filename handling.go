@@ -123,11 +123,15 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 		tiktokData.Caption += "\n\ntiktok returned a different user, is the post available?"
 	}
 	path := c.Request.URL.Path
-	if len(tiktokData.ImageLinks) == 0 && tiktokData.Video.Url != "" && subLang == "" && path != PathJson {
+	if len(tiktokData.ImageLinks) == 0 &&
+		tiktokData.Video.Url != "" &&
+		subLang == "" &&
+		path != PathJson &&
+		path != PathVideoProxy {
 		handleVideoDiscordEmbed(
 			c,
 			tiktokData,
-			tiktokData.Video.Url,
+			Domain+VideoProxyNoSlash+"?v="+tiktokURL,
 			tiktokData.Video.Width,
 			tiktokData.Video.Height,
 		)
@@ -149,6 +153,8 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 		tiktokData.SoundBuffer = nil
 		c.JSON(200, tiktokData)
 		return SimplifiedData{}, true
+	case PathVideoProxy:
+		return tiktokData, false
 	case PathDownloader:
 		return tiktokData, false
 	}
@@ -211,6 +217,15 @@ func processRequest(c *gin.Context, collageImages bool, downloadSound bool) (Sim
 
 func HandleJsonRequest(c *gin.Context) {
 	_, _ = preProcessTikTokRequest(c)
+}
+
+func HandleVideoProxy(c *gin.Context) {
+	tiktokData, _ := preProcessTikTokRequest(c)
+	if tiktokData.Video.Width == "" {
+		HandleError(c, "This is not a video tiktok")
+		return
+	}
+	c.Redirect(302, tiktokData.Video.Url)
 }
 
 func HandleRequest(c *gin.Context) {
