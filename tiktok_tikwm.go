@@ -60,10 +60,11 @@ func FetchTiktokDataTikWm(videoId string) (SimplifiedData, error) {
 		}
 
 		return SimplifiedData{
-			Author:  author,
-			Caption: caption,
-			Details: stats,
-			VideoID: videoId,
+			Author:    author,
+			Caption:   caption,
+			Details:   stats,
+			VideoID:   videoId,
+			SoundLink: data.MusicInfo.Play,
 			Video: SimplifiedVideo{
 				Url:    videoUrl,
 				Width:  width,

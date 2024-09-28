@@ -74,13 +74,8 @@ func getData(body *string) (string, string, Counts, error) {
 	}, nil
 }
 
-func getMediaLink(body *string, video bool) string {
-	if video {
-		match := VideoSrcLinkRe.FindStringSubmatch(*body)
-		return match[1]
-	}
-	match := AudioSrcRe.FindStringSubmatch(*body)
-	return match[1]
+func getMediaLinks(body *string) (string, string) {
+	return VideoSrcLinkRe.FindStringSubmatch(*body)[1], AudioSrcRe.FindStringSubmatch(*body)[1]
 }
 
 func getSlideLinks(body *string) []string {
@@ -107,19 +102,21 @@ func FetchTiktokDataTTSave(videoId string) (SimplifiedData, error) {
 		return SimplifiedData{}, err
 	}
 
+	videoSrc, audioSrc := getMediaLinks(data)
 	if len(slideLinks) == 0 {
 		// must be a video?
-		video := getMediaLink(data, true)
-		width, height, err := GetVideoDimensionsFromUrl(video)
+
+		width, height, err := GetVideoDimensionsFromUrl(videoSrc)
 		if err != nil {
 			return SimplifiedData{}, err
 		}
 		return SimplifiedData{
-			Author:  author,
-			Caption: caption,
-			Details: stats,
-			VideoID: videoId,
-			Video:   SimplifiedVideo{Url: video, Width: width, Height: height},
+			Author:    author,
+			Caption:   caption,
+			Details:   stats,
+			VideoID:   videoId,
+			SoundLink: audioSrc,
+			Video:     SimplifiedVideo{Url: videoSrc, Width: width, Height: height},
 		}, nil
 
 	}
@@ -129,7 +126,7 @@ func FetchTiktokDataTTSave(videoId string) (SimplifiedData, error) {
 		Caption:    caption,
 		Details:    stats,
 		VideoID:    videoId,
-		SoundLink:  getMediaLink(data, false),
+		SoundLink:  audioSrc,
 		ImageLinks: slideLinks,
 		Video:      SimplifiedVideo{},
 	}, nil
