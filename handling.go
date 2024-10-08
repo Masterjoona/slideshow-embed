@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -30,9 +29,13 @@ func HandleError(c *gin.Context, errorMsg string) {
 	})
 }
 
+func generateDetailsString(details Counts) string {
+	return fmt.Sprintf("❤️ %s | 💬 %s | 🔁 %s | ⭐ %s | 👀 %s",
+		details.Likes, details.Comments, details.Shares, details.Favorites, details.Views)
+}
+
 func handleDiscordEmbed(c *gin.Context, tiktokData SimplifiedData, imageUrl string) {
-	details := tiktokData.Details
-	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorites + " | 👀 " + details.Views
+	detailsString := generateDetailsString(tiktokData.Details)
 	renderTemplate(c, "discord.html", gin.H{
 		"authorName": tiktokData.Author,
 		"caption":    tiktokData.Caption,
@@ -48,8 +51,7 @@ func handleVideoDiscordEmbed(
 	width string,
 	height string,
 ) {
-	details := tiktokData.Details
-	detailsString := "❤️" + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorites + " | 👀 " + details.Views
+	detailsString := generateDetailsString(tiktokData.Details)
 	renderTemplate(c, "video.html", gin.H{
 		"authorName": strings.Split(tiktokData.Author, "(@")[0],
 		"details":    detailsString,
@@ -93,9 +95,31 @@ func HandleDirectFile(fileType string) func(c *gin.Context) {
 	}
 }
 
-func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
+func HandleDownloader(c *gin.Context) {
+	tiktokData, errored := getTiktokData(c, "", false)
+	if errored {
+		return
+	}
+
+	detailsString := generateDetailsString(tiktokData.Details)
+
+	if tiktokData.Video.Width != "" {
+		handleVideoDiscordEmbed(c, tiktokData, tiktokData.Video.Url, tiktokData.Video.Width, tiktokData.Video.Height)
+		return
+	}
+
+	renderTemplate(c, "images.html", gin.H{
+		"authorName": tiktokData.Author,
+		"caption":    tiktokData.Caption,
+		"details":    detailsString,
+		"imageLinks": tiktokData.ImageLinks,
+		"imageUrl":   tiktokData.ImageLinks[0],
+		"soundUrl":   tiktokData.SoundLink,
+	})
+}
+
+func getTiktokData(c *gin.Context, filePrefix string, isVideo bool) (SimplifiedData, bool) {
 	tiktokURL := c.Query("v")
-	subLang := c.Query("lang")
 	uniqueUserId, videoId, err := GetLongVideoId(tiktokURL)
 	if err != nil {
 		if err.Error() == "invalid URL" {
@@ -105,7 +129,9 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 		}
 		return SimplifiedData{}, true
 	}
+
 	var tiktokData SimplifiedData
+
 	if cachedData, ok := RecentTiktokReqs.Get(videoId); ok {
 		tiktokData = cachedData
 	} else {
@@ -122,108 +148,73 @@ func preProcessTikTokRequest(c *gin.Context) (SimplifiedData, bool) {
 	if !strings.Contains(tiktokData.Author, uniqueUserId) {
 		tiktokData.Caption += "\n\ntiktok returned a different user, is the post available?"
 	}
-	path := c.Request.URL.Path
-	if len(tiktokData.ImageLinks) == 0 &&
-		tiktokData.Video.Url != "" &&
-		subLang == "" &&
-		path != PathJson &&
-		path != PathVideoProxy {
-		handleVideoDiscordEmbed(
-			c,
-			tiktokData,
-			Domain+VideoProxyNoSlash+"?v="+tiktokURL,
-			tiktokData.Video.Width,
-			tiktokData.Video.Height,
-		)
-		return SimplifiedData{}, true
-	}
-	var filename string
 
-	switch path {
-	case PathCollage:
-		filename = "collage-" + videoId + ".png"
-	case PathCollageSound:
-		filename = "video-" + videoId + ".mp4"
-	case PathSlide:
-		filename = "slide-" + videoId + ".mp4"
-	case PathSubs:
-		filename = "subs-" + subLang + "-" + videoId + ".mp4"
-	case PathJson:
-		tiktokData.ImageBuffers = nil
-		tiktokData.SoundBuffer = nil
-		c.JSON(200, tiktokData)
-		return SimplifiedData{}, true
-	case PathVideoProxy:
-		return tiktokData, false
-	case PathDownloader:
-		return tiktokData, false
-	}
+	hasFile := filePrefix != ""
 
-	if _, err := os.Stat("collages/" + filename); err != nil {
-		return tiktokData, false
-	}
+	if hasFile {
+		if tiktokData.Video.Width != "" && filePrefix[1] != 'u' {
+			handleVideoDiscordEmbed(c, tiktokData, tiktokData.Video.Url, tiktokData.Video.Width, tiktokData.Video.Height)
+			return SimplifiedData{}, true
+		}
 
-	if path == PathCollage {
-		handleDiscordEmbed(c, tiktokData, Domain+filename)
-		return SimplifiedData{}, true
-	}
+		var fileExt string
 
-	if IsAwemeBeingRendered(videoId) {
-		HandleError(c, "This video is currently being rendered, please try again later.")
-		return SimplifiedData{}, true
-	}
-
-	width, height, err := GetVideoDimensions("collages/" + filename)
-	if err != nil {
-		HandleError(c, "Couldn't get video dimensions.")
-		return SimplifiedData{}, true
-	}
-	handleVideoDiscordEmbed(c, tiktokData, Domain+filename, width, height)
-	return SimplifiedData{}, true
-}
-
-func processRequest(c *gin.Context, collageImages bool, downloadSound bool) (SimplifiedData, bool, error) {
-	tiktokData, skip := preProcessTikTokRequest(c)
-	if skip {
-		return tiktokData, true, nil
-	}
-	failedImageCount := tiktokData.DownloadImages()
-	if failedImageCount == len(tiktokData.ImageLinks) && collageImages {
-		println("all images failed to download")
-		return SimplifiedData{}, false, errors.New("all images failed to download")
-	}
-	if failedImageCount > 0 {
-		tiktokData.Caption += fmt.Sprintf("\n\nFailed to download %d images", failedImageCount)
-	}
-
-	if downloadSound {
-		err := tiktokData.DownloadSound()
-		if err != nil {
-			return SimplifiedData{}, false, err
+		if filePrefix[0] == 'c' {
+			fileExt = ".png"
+		} else {
+			fileExt = ".mp4"
+		}
+		fileName := fmt.Sprintf("%s-%s%s", filePrefix, videoId, fileExt)
+		tiktokData.FileName = fileName
+		if checkExistingFile(fileName) {
+			if isVideo {
+				if IsAwemeBeingRendered(videoId) {
+					HandleError(c, "This video is being rendered, please request again in some time!")
+					return SimplifiedData{}, true
+				}
+				width, height, err := GetVideoDimensions("collages/" + fileName)
+				if err != nil {
+					println(err.Error())
+					HandleError(c, "Couldn't get video dimensions")
+					return SimplifiedData{}, true
+				}
+				handleVideoDiscordEmbed(c, tiktokData, Domain+fileName, width, height)
+			} else {
+				handleDiscordEmbed(c, tiktokData, Domain+fileName)
+			}
+			return SimplifiedData{}, true
+		}
+		tiktokData.DownloadImages()
+		if isVideo {
+			tiktokData.DownloadSound()
 		}
 	}
 
-	if !collageImages {
-		return tiktokData, false, nil
-	}
+	return tiktokData, false
+}
 
-	err := tiktokData.MakeCollage()
-	if err != nil {
-		return SimplifiedData{}, false, err
+func checkExistingFile(fileName string) bool {
+	filename := fmt.Sprintf("collages/%s", fileName)
+	if _, err := os.Stat(filename); err == nil {
+		return true
 	}
-
-	return tiktokData, false, nil
+	return false
 }
 
 func HandleJsonRequest(c *gin.Context) {
-	_, _ = preProcessTikTokRequest(c)
+	tiktokData, errored := getTiktokData(c, "", false)
+	if !errored {
+		c.JSON(200, tiktokData)
+	}
 }
 
+// not really a proxy but whatever
 func HandleVideoProxy(c *gin.Context) {
-	tiktokData, skip := preProcessTikTokRequest(c)
-	if skip {
+	tiktokData, errored := getTiktokData(c, "", false)
+	if errored {
 		return
 	}
+
 	if tiktokData.Video.Width == "" {
 		HandleError(c, "This is not a video tiktok")
 		return
@@ -232,25 +223,19 @@ func HandleVideoProxy(c *gin.Context) {
 }
 
 func HandleRequest(c *gin.Context) {
-	tiktokData, skip, err := processRequest(c, true, false)
-	if skip {
+	tiktokData, errored := getTiktokData(c, "collage", false)
+	if errored {
 		return
 	}
-	if err != nil {
-		HandleError(c, err.Error())
-		return
-	}
-	handleDiscordEmbed(c, tiktokData, Domain+"collage-"+tiktokData.VideoID+".png")
+	tiktokData.MakeCollage()
+
+	handleDiscordEmbed(c, tiktokData, Domain+tiktokData.FileName)
 	UpdateLocalStats()
 }
 
 func HandleSoundCollageRequest(c *gin.Context) {
-	tiktokData, skip, err := processRequest(c, true, true)
-	if skip {
-		return
-	}
-	if err != nil {
-		HandleError(c, err.Error())
+	tiktokData, errored := getTiktokData(c, "video", true)
+	if errored {
 		return
 	}
 
@@ -261,91 +246,59 @@ func HandleSoundCollageRequest(c *gin.Context) {
 		return
 	}
 
-	handleVideoDiscordEmbed(c, tiktokData, Domain+"video-"+tiktokData.VideoID+".mp4", width, height)
+	handleVideoDiscordEmbed(c, tiktokData, Domain+tiktokData.FileName, width, height)
 	UpdateLocalStats()
 }
 
 func HandleFancySlideshowRequest(c *gin.Context) {
-	tiktokData, skip, err := processRequest(c, false, true)
-	if skip {
-		return
-	}
-	if err != nil {
-		HandleError(c, err.Error())
+	tiktokData, errored := getTiktokData(c, "slide", true)
+	if errored {
 		return
 	}
 
-	if len(tiktokData.ImageBuffers) == 1 {
-		width, height, err := tiktokData.MakeCollageWithAudio("slide")
-		if err != nil {
-			println(err.Error())
-			HandleError(c, "Couldn't generate video")
-			return
-		}
-		handleVideoDiscordEmbed(c, tiktokData, Domain+"slide-"+tiktokData.VideoID+".mp4", width, height)
-		UpdateLocalStats()
+	if len(tiktokData.ImageLinks) == 1 {
+		c.Redirect(302, PathCollageSound+"?v="+c.Query("v"))
 		return
 	}
+
 	AddAwemeToRendering(tiktokData.VideoID)
+
 	go func() {
 		_, _, err := tiktokData.MakeVideoSlideshow()
 		if err != nil {
 			println(err.Error())
 			return
 		}
+
 		UpdateLocalStats()
 		RemoveAwemeFromRendering(tiktokData.VideoID)
 	}()
+
 	HandleError(c, "This slideshow was sent to be rendered, please request again in some time!")
 }
 
-func HandleDownloader(c *gin.Context) {
-	tiktokData, skip, err := processRequest(c, false, false)
-	if skip {
-		return
-	}
-	if err != nil {
-		HandleError(c, err.Error())
-		return
-	}
-	details := tiktokData.Details
-	detailsString := "❤️ " + details.Likes + " | 💬 " + details.Comments + " | 🔁 " + details.Shares + " | ⭐ " + details.Favorites + " | 👀 " + details.Views
-	renderTemplate(c, "images.html", gin.H{
-		"authorName": tiktokData.Author,
-		"caption":    tiktokData.Caption,
-		"details":    detailsString,
-		"imageLinks": tiktokData.ImageLinks,
-		"imageUrl":   tiktokData.ImageLinks[0],
-		"soundUrl":   tiktokData.SoundLink,
-	})
-}
-
 func HandleSubtitleVideo(c *gin.Context) {
-	tiktokData, skip, err := processRequest(c, false, false)
-	if skip {
-		return
-	}
-	if err != nil {
-		HandleError(c, err.Error())
-		return
-	}
 	subLang := c.Query("lang")
 	if subLang == "" {
 		HandleError(c, "No language provided")
 		return
 	}
 
-	err = tiktokData.DownloadVideoAndSubtitles(subLang)
+	tiktokData, errored := getTiktokData(c, "subs-"+subLang, true)
+	if errored {
+		return
+	}
+
+	err := tiktokData.DownloadVideoAndSubtitles(subLang)
 	if err != nil {
-		errorMsg := "Couldn't download video with subtitles. Only translations are available. e.g if the non-translated subtitles are in English, you can only get translations in other languages."
 		// This is due to tiktok goofery
+		errorMsg := "Couldn't download video with subtitles. Only translations are available. e.g if the non-translated subtitles are in English, you can only get translations in other languages."
 		HandleError(c, errorMsg)
 		return
 	}
 
 	AddAwemeToRendering(tiktokData.VideoID)
 	go func() {
-
 		_, _, err := tiktokData.MakeVideoSubtitles(subLang)
 		if err != nil {
 			println(err.Error())
@@ -354,5 +307,6 @@ func HandleSubtitleVideo(c *gin.Context) {
 		UpdateLocalStats()
 		RemoveAwemeFromRendering(tiktokData.VideoID)
 	}()
+
 	HandleError(c, "This video was sent to be subtitled, please request again in some time!")
 }

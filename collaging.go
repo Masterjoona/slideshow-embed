@@ -259,7 +259,7 @@ func (t *SimplifiedData) MakeVideoSlideshow() (string, string, error) {
 		"yuv420p",
 		"-t",
 		strVideoLength,
-		"collages/slide-"+videoId+".mp4",
+		"collages/"+t.FileName,
 	)
 	/*
 		println(cmd.String())
@@ -304,7 +304,7 @@ func (t *SimplifiedData) MakeVideoSubtitles(lang string) (string, string, error)
 	if err != nil {
 		return "", "", err
 	}
-	videoWidth, videoHeight, err := GetVideoDimensions("collages/subs-" + lang + "-" + t.VideoID + ".mp4")
+	videoWidth, videoHeight, err := GetVideoDimensions("collages/" + t.FileName)
 	if err != nil {
 		return "", "", err
 	}

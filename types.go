@@ -16,6 +16,7 @@ type SimplifiedData struct {
 	SoundLink    string
 	SoundBuffer  []byte
 	Video        SimplifiedVideo
+	FileName     string
 }
 
 type Counts struct {
