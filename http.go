@@ -68,7 +68,6 @@ func downloadMedia(url string) ([]byte, error) {
 			some image had
 			{ "code": 4404,"error": "fail to get resource"}
 		*/
-		println(url)
 		return nil, errors.New("tiktok returned a non-media response")
 	}
 
@@ -84,7 +83,7 @@ func (t *SimplifiedData) DownloadImages() int {
 	var wg sync.WaitGroup
 	var indexedImages []ImageWithIndex
 
-	var failedCount int // Max images in a tiktok is 35, so we can expect fails to be <=35
+	var failedCount int
 
 	for i, link := range t.ImageLinks {
 		wg.Add(1)
@@ -93,7 +92,7 @@ func (t *SimplifiedData) DownloadImages() int {
 			if imgBytes, err := downloadMedia(url); err == nil {
 				indexedImages = append(indexedImages, ImageWithIndex{Bytes: imgBytes, Index: index})
 			} else {
-				println("error downloading image %s: %v\n", url, err)
+				println("error downloading image on: %v\n", t.VideoID, err)
 				failedCount += 1
 			}
 		}(link, i)
