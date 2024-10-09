@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"text/template"
 
@@ -87,7 +86,7 @@ func HandleDirectFile(fileType string) func(c *gin.Context) {
 			return
 		}
 		filename := fmt.Sprintf("collages/%s-%s", fileType, id)
-		if _, err := os.Stat(filename); err != nil {
+		if _, err := GetFileSize(filename); err != nil {
 			HandleError(c, "File not found")
 			return
 		}
@@ -166,13 +165,14 @@ func getTiktokData(c *gin.Context, filePrefix string, isVideo bool) (SimplifiedD
 		}
 		fileName := fmt.Sprintf("%s-%s%s", filePrefix, videoId, fileExt)
 		tiktokData.FileName = fileName
-		if checkExistingFile(fileName) {
+		filePath := "collages/" + fileName
+		if _, err := GetFileSize(filePath); err == nil {
 			if isVideo {
 				if IsAwemeBeingRendered(videoId) {
 					HandleError(c, "This video is being rendered, please request again in some time!")
 					return SimplifiedData{}, true
 				}
-				width, height, err := GetVideoDimensions("collages/" + fileName)
+				width, height, err := GetVideoDimensions(filePath)
 				if err != nil {
 					println(err.Error())
 					HandleError(c, "Couldn't get video dimensions")
@@ -191,14 +191,6 @@ func getTiktokData(c *gin.Context, filePrefix string, isVideo bool) (SimplifiedD
 	}
 
 	return tiktokData, false
-}
-
-func checkExistingFile(fileName string) bool {
-	filename := fmt.Sprintf("collages/%s", fileName)
-	if _, err := os.Stat(filename); err == nil {
-		return true
-	}
-	return false
 }
 
 func HandleJsonRequest(c *gin.Context) {
@@ -237,6 +229,11 @@ func HandleSoundCollageRequest(c *gin.Context) {
 	tiktokData, errored := getTiktokData(c, "video", true)
 	if errored {
 		return
+	}
+
+	collageFilePath := "collages/collage-" + tiktokData.VideoID + ".png"
+	if _, err := GetFileSize(collageFilePath); err != nil {
+		tiktokData.MakeCollage()
 	}
 
 	width, height, err := tiktokData.MakeCollageWithAudio("video")

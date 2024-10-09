@@ -56,7 +56,7 @@ func fetch(awemeId string) (Aweme, error) {
 
 	req.Header.Set("user-agent", UserAgent)
 
-	for attempts := 1; attempts <= maxRetryCountTTApi; attempts++ {
+	for attempts := 1; attempts <= MaxRetriesForTiktokAPI; attempts++ {
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Println("Error sending request:", err)
@@ -73,8 +73,8 @@ func fetch(awemeId string) (Aweme, error) {
 		var response TikTokAPIResponse
 		err = json.Unmarshal(textByte, &response)
 		if err != nil {
-			fmt.Printf("Error unmarshalling (attempt %d/%d): %v\n", attempts, maxRetryCountTTApi, err)
-			if attempts == maxRetryCountTTApi {
+			fmt.Printf("Error unmarshalling (attempt %d/%d): %v\n", attempts, MaxRetriesForTiktokAPI, err)
+			if attempts == MaxRetriesForTiktokAPI {
 				return Aweme{}, err
 			}
 			continue
@@ -82,7 +82,7 @@ func fetch(awemeId string) (Aweme, error) {
 		return response.AwemeList[0], nil
 	}
 
-	return Aweme{}, fmt.Errorf("failed to unmarshal response after %d attempts", maxRetryCountTTApi)
+	return Aweme{}, fmt.Errorf("failed to unmarshal response after %d attempts", MaxRetriesForTiktokAPI)
 }
 
 func (t *Aweme) getImageLinks() []string {

@@ -39,7 +39,7 @@ func GetDirectorySize(dirPath string) (int64, error) {
 func GetFileSize(filePath string) (int64, error) {
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 	return fileInfo.Size(), nil
 }

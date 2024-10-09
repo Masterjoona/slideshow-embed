@@ -14,16 +14,17 @@ const (
 
 	UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
-	PathCollage       = "/t"
-	PathCollageSound  = "/s"
-	PathSlide         = "/f"
-	PathDownloader    = "/d"
-	PathSubs          = "/subs"
-	PathJson          = "/json"
-	PathVideoProxy    = "/vproxy"
-	VideoProxyNoSlash = "vproxy"
+	PathCollage      = "/t"
+	PathCollageSound = "/s"
+	PathSlide        = "/f"
+	PathDownloader   = "/d"
+	PathSubs         = "/subs"
+	PathJson         = "/json"
+	PathVideoProxy   = "/vproxy"
 
 	SubtitlesHost = "https://api16-normal-c-useast2a.tiktokv.com/tiktok/cla/subtitle_translation/get/v1/?"
+
+	MaxRetriesForTiktokAPI = 5
 )
 
 var (
@@ -36,12 +37,11 @@ var (
 	ErrorImagesIndex = 0
 )
 
-var PythonServer = "http://" + Ternary(isDocker(), "photo_collager", "localhost") + ":9700"
+var fileSize, _ = GetFileSize("/.dockerenv")
+var isDocker = fileSize > -1
+var PythonServer = "http://" + Ternary(isDocker, "photo_collager", "localhost") + ":9700"
 var CurrentlyRenderingAwemes = make(map[string]struct{})
 var RecentTiktokReqs = NewCache(20)
-
-const maxRetryCountTTApi = 5
-
 var (
 	longLinkRe     = regexp.MustCompile(`https:\/\/(?:www.)?(?:vxtiktok|tiktok|tiktxk|)\.com\/(@.{2,32})\/(?:photo|video)\/(\d+)`)
 	shortLinkRe    = regexp.MustCompile(`https:\/\/.{1,3}\.(?:(?:vx|)tikt(?:x|o)k)\.com/(?:.{1,2}/|)(.{5,12})`)
@@ -53,7 +53,7 @@ var (
 	Domain             string
 	Port               string
 	Downloader         bool
-	TemporaryDirectory = Ternary(isDocker(), "/tmp", "tmp")
+	TemporaryDirectory = Ternary(isDocker, "/tmp", "tmp")
 	LocalStats         Stats
 	LimitPublicAmount  int
 	Public             bool

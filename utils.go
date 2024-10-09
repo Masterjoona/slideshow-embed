@@ -111,11 +111,6 @@ func UpdateLocalStats() {
 	}
 }
 
-func isDocker() bool {
-	_, err := os.Stat("/.dockerenv")
-	return !os.IsNotExist(err)
-}
-
 func Ternary(cond bool, a, b string) string {
 	if cond {
 		return a
