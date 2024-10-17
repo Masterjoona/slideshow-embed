@@ -51,6 +51,7 @@ func main() {
 	go func() {
 		for {
 			RecentTiktokReqs.Flush()
+			ShortURLCache.Flush()
 			time.Sleep(5 * time.Minute)
 		}
 	}()

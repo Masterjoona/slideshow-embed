@@ -25,6 +25,9 @@ func GetLongVideoId(videoUrl string) (string, string, error) {
 
 	matches = shortLinkRe.FindStringSubmatch(videoUrl)
 	if len(matches) > 1 {
+		if cachedInfo, ok := ShortURLCache.Get(matches[1]); ok {
+			return cachedInfo.VideoId, cachedInfo.UniqueUserId, nil
+		}
 		resp, err := http.Head("https://vm.tiktok.com/" + matches[1])
 		if err != nil {
 			return "", "", err
@@ -36,6 +39,7 @@ func GetLongVideoId(videoUrl string) (string, string, error) {
 		if strings.Contains(finalUrl, "@") {
 			matches = longLinkRe.FindStringSubmatch(finalUrl)
 			if len(matches) > 1 {
+				ShortURLCache.Put(matches[2], ShortLinkInfo{VideoId: matches[2], UniqueUserId: matches[1]})
 				return matches[1], matches[2], nil
 			}
 		}

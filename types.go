@@ -42,3 +42,8 @@ type Stats struct {
 	FileCount string
 	TotalSize string
 }
+
+type ShortLinkInfo struct {
+	VideoId      string
+	UniqueUserId string
+}
