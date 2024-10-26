@@ -1,4 +1,4 @@
-package main
+package files
 
 import (
 	"fmt"
@@ -6,6 +6,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+)
+
+const (
+	KB = 1 << 10
+	MB = 1 << 20
+	GB = 1 << 30
 )
 
 func CreateDirectory(directory string) error {

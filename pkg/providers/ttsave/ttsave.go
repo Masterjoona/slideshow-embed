@@ -1,28 +1,18 @@
-package main
+package ttsave
 
 import (
-	"crypto/md5"
-	"encoding/base64"
 	"fmt"
 	"io"
+	provider_util "meow/pkg/providers/util"
+	"meow/pkg/types"
+	"meow/pkg/util"
 	"net/http"
 	"regexp"
 	"strings"
 )
 
-const Scraping = "ttsave"
-
-func _(url string) string {
-	reversed := ReverseString(url)
-
-	base64Encoded := base64.StdEncoding.EncodeToString([]byte(reversed))
-
-	hash := md5.Sum([]byte(base64Encoded))
-
-	hashString := fmt.Sprintf("%x", hash)
-
-	return ReverseString(hashString)
-}
+var AudioSrcRe = regexp.MustCompile(`<a href="(.*)" onclick="bdl\(this, event\)" type="audio`)
+var VideoSrcLinkRe = regexp.MustCompile(`<a href="(.*)" onclick="bdl\(this, event\)" rel`)
 
 func fetchTTSave(tiktokUrl string) (*string, error) {
 	client := &http.Client{}
@@ -46,11 +36,11 @@ func fetchTTSave(tiktokUrl string) (*string, error) {
 	return &text, nil
 }
 
-func getData(body *string) (string, string, Counts, error) {
+func getData(body *string) (string, string, types.Counts, error) {
 	authorRe := regexp.MustCompile(`mb-2">(.*)</a>`)
 	match := authorRe.FindStringSubmatch(*body)
 	if len(match) == 0 {
-		return "", "", Counts{}, fmt.Errorf("could not find author")
+		return "", "", types.Counts{}, fmt.Errorf("could not find author")
 	}
 	author := match[1]
 
@@ -65,7 +55,7 @@ func getData(body *string) (string, string, Counts, error) {
 	countRe := regexp.MustCompile(`text-gray-500">(.*)</span>`)
 	matches := countRe.FindAllStringSubmatch(*body, -1)
 
-	return author, caption, Counts{
+	return author, caption, types.Counts{
 		Views:     matches[0][1],
 		Likes:     matches[1][1],
 		Comments:  matches[2][1],
@@ -88,46 +78,36 @@ func getSlideLinks(body *string) []string {
 	return slideLinks
 }
 
-func FetchTiktokDataTTSave(videoId string) (SimplifiedData, error) {
+func FetchTiktok(videoId string) (types.TiktokInfo, error) {
 	url := "https://www.tiktok.com/@placeholder/video/" + videoId
 
 	data, err := fetchTTSave(url)
 	if err != nil {
-		return SimplifiedData{}, err
+		return types.TiktokInfo{}, err
 	}
 
 	slideLinks := getSlideLinks(data)
 	author, caption, stats, err := getData(data)
 	if err != nil {
-		return SimplifiedData{}, err
+		return types.TiktokInfo{}, err
 	}
 
 	videoSrc, audioSrc := getMediaLinks(data)
-	if len(slideLinks) == 0 {
-		// must be a video?
 
-		width, height, err := GetVideoDimensionsFromUrl(videoSrc)
-		if err != nil {
-			return SimplifiedData{}, err
-		}
-		return SimplifiedData{
-			Author:    author,
-			Caption:   caption,
-			Details:   stats,
-			VideoID:   videoId,
-			SoundLink: audioSrc,
-			Video:     SimplifiedVideo{Url: videoSrc, Width: width, Height: height},
-		}, nil
+	videoUrl := util.Ternary(len(slideLinks) == 0, "", videoSrc)
+	dimensions := provider_util.GetDimensionsOrNil(videoUrl, videoUrl != "")
 
-	}
-
-	return SimplifiedData{
+	return types.TiktokInfo{
 		Author:     author,
 		Caption:    caption,
 		Details:    stats,
 		VideoID:    videoId,
 		SoundLink:  audioSrc,
 		ImageLinks: slideLinks,
-		Video:      SimplifiedVideo{},
+		Video: types.SimplifiedVideo{
+			Url:    videoUrl,
+			Width:  dimensions.Width,
+			Height: dimensions.Height,
+		},
 	}, nil
 }

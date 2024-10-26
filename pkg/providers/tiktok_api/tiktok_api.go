@@ -1,48 +1,56 @@
-package main
+package tiktok_api
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"meow/pkg/types"
+	"meow/pkg/util"
+	"meow/pkg/vars"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-func (a *Aweme) getVideoDetails() Counts {
-	return Counts{
-		Likes:     FormatLargeNumbers(strconv.Itoa(a.Statistics.DiggCount)),
-		Comments:  FormatLargeNumbers(strconv.Itoa(a.Statistics.CommentCount)),
-		Shares:    FormatLargeNumbers(strconv.Itoa(a.Statistics.ShareCount)),
-		Views:     FormatLargeNumbers(strconv.Itoa(a.Statistics.PlayCount)),
-		Favorites: FormatLargeNumbers(strconv.Itoa(a.Statistics.CollectCount)),
-	}
-}
+const maxRetries = 5
 
-func FetchTiktokDataTiktokAPI(videoId string) (SimplifiedData, error) {
+func FetchTikok(videoId string) (types.TiktokInfo, error) {
 	postAweme, err := fetch(videoId)
 	if err != nil {
-		return SimplifiedData{}, err
+		return types.TiktokInfo{}, err
 	}
+
 	videoUrl := postAweme.Video.PlayAddr.URLList[0]
 	isVideo := !strings.Contains(videoUrl, "music")
 	imageLinks := []string{}
+
 	if !isVideo {
 		imageLinks = postAweme.getImageLinks()
 	}
-	return SimplifiedData{
+
+	return types.TiktokInfo{
 		Author:     postAweme.Author.Nickname + " (@" + postAweme.Author.UniqueID + ")",
 		Caption:    postAweme.Desc,
 		VideoID:    videoId,
 		Details:    postAweme.getVideoDetails(),
 		ImageLinks: imageLinks,
 		SoundLink:  postAweme.Music.PlayURL.URI,
-		Video: SimplifiedVideo{
+		Video: types.SimplifiedVideo{
 			Url:    videoUrl,
 			Width:  strconv.Itoa(postAweme.Video.Width),
 			Height: strconv.Itoa(postAweme.Video.Height),
 		},
 	}, nil
+}
+
+func (a *Aweme) getVideoDetails() types.Counts {
+	return types.Counts{
+		Likes:     util.FormatLargeNumbers(strconv.Itoa(a.Statistics.DiggCount)),
+		Comments:  util.FormatLargeNumbers(strconv.Itoa(a.Statistics.CommentCount)),
+		Shares:    util.FormatLargeNumbers(strconv.Itoa(a.Statistics.ShareCount)),
+		Views:     util.FormatLargeNumbers(strconv.Itoa(a.Statistics.PlayCount)),
+		Favorites: util.FormatLargeNumbers(strconv.Itoa(a.Statistics.CollectCount)),
+	}
 }
 
 func fetch(awemeId string) (Aweme, error) {
@@ -54,9 +62,9 @@ func fetch(awemeId string) (Aweme, error) {
 		return Aweme{}, err
 	}
 
-	req.Header.Set("user-agent", UserAgent)
+	req.Header.Set("user-agent", vars.UserAgent)
 
-	for attempts := 1; attempts <= MaxRetriesForTiktokAPI; attempts++ {
+	for attempts := 1; attempts <= maxRetries; attempts++ {
 		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Println("Error sending request:", err)
@@ -73,8 +81,8 @@ func fetch(awemeId string) (Aweme, error) {
 		var response TikTokAPIResponse
 		err = json.Unmarshal(textByte, &response)
 		if err != nil {
-			fmt.Printf("Error unmarshalling (attempt %d/%d): %v\n", attempts, MaxRetriesForTiktokAPI, err)
-			if attempts == MaxRetriesForTiktokAPI {
+			fmt.Printf("Error unmarshalling (attempt %d/%d): %v\n", attempts, maxRetries, err)
+			if attempts == maxRetries {
 				return Aweme{}, err
 			}
 			continue
@@ -82,7 +90,7 @@ func fetch(awemeId string) (Aweme, error) {
 		return response.AwemeList[0], nil
 	}
 
-	return Aweme{}, fmt.Errorf("failed to unmarshal response after %d attempts", MaxRetriesForTiktokAPI)
+	return Aweme{}, fmt.Errorf("failed to unmarshal response after %d attempts", maxRetries)
 }
 
 func (t *Aweme) getImageLinks() []string {

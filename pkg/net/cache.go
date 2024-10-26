@@ -1,19 +1,8 @@
-package main
+package net
 
-import "container/list"
-
-// chatgpt code guh too lazy
-
-type Cache[T any] struct {
-	capacity int
-	items    map[string]*list.Element
-	order    *list.List
-}
-
-type Item[T any] struct {
-	key   string
-	value T
-}
+import (
+	"container/list"
+)
 
 func NewCache[T any](capacity int) *Cache[T] {
 	return &Cache[T]{

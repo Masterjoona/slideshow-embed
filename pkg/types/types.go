@@ -1,12 +1,13 @@
-package main
+package types
 
 type SimplifiedVideo struct {
+	Buffer []byte
 	Url    string
 	Width  string
 	Height string
 }
 
-type SimplifiedData struct {
+type TiktokInfo struct {
 	Author       string
 	Caption      string
 	VideoID      string
@@ -25,25 +26,4 @@ type Counts struct {
 	Shares    string
 	Views     string
 	Favorites string
-}
-
-type ImageWithIndex struct {
-	Bytes []byte
-	Index int
-}
-
-type FileLink struct {
-	Name string
-	Path string
-}
-
-type Stats struct {
-	FilePaths []FileLink
-	FileCount string
-	TotalSize string
-}
-
-type ShortLinkInfo struct {
-	VideoId      string
-	UniqueUserId string
 }

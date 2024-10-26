@@ -1,8 +1,11 @@
-package main
+package tikwm
 
 import (
 	"encoding/json"
 	"io"
+	provider_util "meow/pkg/providers/util"
+	"meow/pkg/types"
+	"meow/pkg/util"
 	"net/http"
 	"strconv"
 	"strings"
@@ -37,48 +40,39 @@ func fetchTikwm(videoId string) (TikWmResp, error) {
 	return tikWmResp, nil
 }
 
-func FetchTiktokDataTikWm(videoId string) (SimplifiedData, error) {
+func FetchTiktok(videoId string) (types.TiktokInfo, error) {
 	tikWmApiResp, err := fetchTikwm(videoId)
 	data := tikWmApiResp.Data
+
 	if err != nil {
-		return SimplifiedData{}, err
+		return types.TiktokInfo{}, err
 	}
-	stats := Counts{
-		Likes:     FormatLargeNumbers(strconv.Itoa(data.DiggCount)),
-		Comments:  FormatLargeNumbers(strconv.Itoa(data.CommentCount)),
-		Shares:    FormatLargeNumbers(strconv.Itoa(data.ShareCount)),
-		Views:     FormatLargeNumbers(strconv.Itoa(data.PlayCount)),
-		Favorites: FormatLargeNumbers(strconv.Itoa(data.CollectCount)),
+
+	stats := types.Counts{
+		Likes:     util.FormatLargeNumbers(strconv.Itoa(data.DiggCount)),
+		Comments:  util.FormatLargeNumbers(strconv.Itoa(data.CommentCount)),
+		Shares:    util.FormatLargeNumbers(strconv.Itoa(data.ShareCount)),
+		Views:     util.FormatLargeNumbers(strconv.Itoa(data.PlayCount)),
+		Favorites: util.FormatLargeNumbers(strconv.Itoa(data.CollectCount)),
 	}
+
 	author := data.Author.Nickname + " (@" + data.Author.UniqueID + ")"
 	caption := data.Title
-	if data.Duration != 0 {
-		videoUrl := data.Play
-		width, height, err := GetVideoDimensionsFromUrl(videoUrl)
-		if err != nil {
-			return SimplifiedData{}, err
-		}
 
-		return SimplifiedData{
-			Author:    author,
-			Caption:   caption,
-			Details:   stats,
-			VideoID:   videoId,
-			SoundLink: data.MusicInfo.Play,
-			Video: SimplifiedVideo{
-				Url:    videoUrl,
-				Width:  width,
-				Height: height,
-			},
-		}, nil
-	}
-	return SimplifiedData{
+	videoUrl := util.Ternary(data.Duration != 0, data.Play, "")
+	dimensions := provider_util.GetDimensionsOrNil(videoUrl, data.Duration != 0)
+
+	return types.TiktokInfo{
 		Author:     author,
 		Caption:    caption,
 		Details:    stats,
 		VideoID:    videoId,
 		SoundLink:  data.MusicInfo.Play,
-		ImageLinks: data.Images,
-		Video:      SimplifiedVideo{},
+		ImageLinks: util.Ternary(data.Duration == 0, data.Images, nil),
+		Video: types.SimplifiedVideo{
+			Url:    videoUrl,
+			Width:  dimensions.Width,
+			Height: dimensions.Height,
+		},
 	}, nil
 }

@@ -1,10 +1,12 @@
-package main
+package media
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
 	"io"
+	"meow/pkg/config"
+	"meow/pkg/files"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -33,10 +35,11 @@ func multiImagePostServer(urlPath, videoId string, images *[][]byte) error {
 	writer.Close()
 
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", PythonServer+urlPath, form)
+	req, err := http.NewRequest("POST", config.PythonServer+urlPath, form)
 	if err != nil {
 		return err
 	}
+
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	resp, err := client.Do(req)
 	if err != nil {
@@ -57,14 +60,13 @@ func multiImagePostServer(urlPath, videoId string, images *[][]byte) error {
 	return nil
 }
 
-func (t *SimplifiedData) MakeCollage() error {
-	return multiImagePostServer("/collage", t.VideoID, &t.ImageBuffers)
+func MakeCollage(videoId string, imgBuffers *[][]byte) error {
+	return multiImagePostServer("/collage", videoId, imgBuffers)
 }
 
-func (t *SimplifiedData) MakeCollageWithAudio(filetype string) (string, string, error) {
-	videoId := t.VideoID
+func MakeCollageWithAudio(videoId string, soundBuffer []byte, filetype string) (string, string, error) {
 	audioFileName := "audio-" + videoId + ".mp3"
-	err := os.WriteFile(audioFileName, t.SoundBuffer, 0644)
+	err := os.WriteFile(audioFileName, soundBuffer, 0644)
 	if err != nil {
 		return "", "", err
 	}
@@ -104,7 +106,7 @@ func (t *SimplifiedData) MakeCollageWithAudio(filetype string) (string, string, 
 	}
 	os.Remove(audioFileName)
 
-	videoWidth, videoHeight, err := GetVideoDimensions("collages/" + filetype + "-" + videoId + ".mp4")
+	videoWidth, videoHeight, err := files.GetVideoDimensions("collages/" + filetype + "-" + videoId + ".mp4")
 	if err != nil {
 		return "", "", err
 	}
@@ -133,19 +135,18 @@ func resizeImages(images *[][]byte, videoId string) error {
 	return nil
 }
 
-func (t *SimplifiedData) MakeVideoSlideshow() (string, string, error) {
-	videoId := t.VideoID
-	err := CreateDirectory(TemporaryDirectory + "/collages/" + videoId)
+func MakeVideoSlideshow(videoId, fileName string, soundBuffer []byte, imgBuffers *[][]byte) (string, string, error) {
+	err := files.CreateDirectory(config.TemporaryDirectory + "/collages/" + videoId)
 	if err != nil {
 		return "", "", err
 	}
 
-	err = os.WriteFile(TemporaryDirectory+"/collages/"+videoId+"/audio.mp3", t.SoundBuffer, 0644)
+	err = os.WriteFile(config.TemporaryDirectory+"/collages/"+videoId+"/audio.mp3", soundBuffer, 0644)
 	if err != nil {
 		return "", "", err
 	}
 
-	err = resizeImages(&t.ImageBuffers, videoId)
+	err = resizeImages(imgBuffers, videoId)
 	if err != nil {
 		return "0", "0", err
 	}
@@ -159,14 +160,14 @@ func (t *SimplifiedData) MakeVideoSlideshow() (string, string, error) {
 		offset             float64 = 3.25
 	)
 
-	imageInputFiles, err := os.ReadDir(TemporaryDirectory + "/collages/" + videoId)
+	imageInputFiles, err := os.ReadDir(config.TemporaryDirectory + "/collages/" + videoId)
 	if err != nil {
 		println("Error reading image files")
 		return "0", "0", err
 	}
 	imageInputFiles = imageInputFiles[:len(imageInputFiles)-1]
 
-	audioLength, err := getAudioLength(TemporaryDirectory + "/collages/" + videoId)
+	audioLength, err := getAudioLength(config.TemporaryDirectory + "/collages/" + videoId)
 	if err != nil {
 		fmt.Println(err)
 		audioLength = strconv.FormatFloat(3.5*float64(len(imageInputFiles)), 'f', 2, 64)
@@ -187,7 +188,7 @@ func (t *SimplifiedData) MakeVideoSlideshow() (string, string, error) {
 		ffmpegInput += fmt.Sprintf(
 			"-loop 1 -t %.2f -i %s/collages/%s/%s ",
 			imageDuration,
-			TemporaryDirectory,
+			config.TemporaryDirectory,
 			videoId,
 			imageInputFiles[i].Name(),
 		)
@@ -207,7 +208,7 @@ func (t *SimplifiedData) MakeVideoSlideshow() (string, string, error) {
 	ffmpegInput += fmt.Sprintf(
 		"-loop 1 -t %.2f -i %s/collages/%s/%s ",
 		lastImageTime,
-		TemporaryDirectory,
+		config.TemporaryDirectory,
 		videoId,
 		imageInputFiles[len(imageInputFiles)-1].Name(),
 	)
@@ -217,7 +218,7 @@ func (t *SimplifiedData) MakeVideoSlideshow() (string, string, error) {
 		len(imageInputFiles),
 	)
 
-	ffmpegInput += "-stream_loop -1 -i " + TemporaryDirectory + "/collages/" + videoId + "/audio.mp3" + " -y"
+	ffmpegInput += "-stream_loop -1 -i " + config.TemporaryDirectory + "/collages/" + videoId + "/audio.mp3" + " -y"
 
 	for i := 1; i <= len(imageInputFiles); i++ {
 		if i == 1 {
@@ -259,7 +260,7 @@ func (t *SimplifiedData) MakeVideoSlideshow() (string, string, error) {
 		"yuv420p",
 		"-t",
 		strVideoLength,
-		"collages/"+t.FileName,
+		"collages/"+fileName,
 	)
 	/*
 		println(cmd.String())
@@ -273,22 +274,22 @@ func (t *SimplifiedData) MakeVideoSlideshow() (string, string, error) {
 		//fmt.Println(stdBuffer.String())
 		return "0", "0", err
 	}
-	videoWidth, videoHeight, err := GetVideoDimensions("collages/slide-" + videoId + ".mp4")
+	videoWidth, videoHeight, err := files.GetVideoDimensions("collages/slide-" + videoId + ".mp4")
 	if err != nil {
 		println("Error getting video dimensions")
 		return "", "", err
 	}
-	os.RemoveAll(TemporaryDirectory + "/collages/" + videoId)
+	os.RemoveAll(config.TemporaryDirectory + "/collages/" + videoId)
 	return videoWidth, videoHeight, nil
 }
 
-func (t *SimplifiedData) MakeVideoSubtitles(lang string) (string, string, error) {
+func MakeVideoSubtitles(videoId, fileName, lang string) (string, string, error) {
 	cmd := exec.Command(
 		"ffmpeg",
 		"-i",
-		TemporaryDirectory+"/collages/"+t.VideoID+"/video.mp4",
+		config.TemporaryDirectory+"/collages/"+videoId+"/video.mp4",
 		"-vf",
-		"subtitles="+TemporaryDirectory+"/collages/"+t.VideoID+"/subtitles.vtt",
+		"subtitles="+config.TemporaryDirectory+"/collages/"+videoId+"/subtitles.vtt",
 		"-c:v",
 		"libx264",
 		"-preset",
@@ -297,17 +298,17 @@ func (t *SimplifiedData) MakeVideoSubtitles(lang string) (string, string, error)
 		"27",
 		"-c:a",
 		"copy",
-		"collages/subs-"+lang+"-"+t.VideoID+".mp4",
+		"collages/subs-"+lang+"-"+videoId+".mp4",
 	)
 
 	err := cmd.Run()
 	if err != nil {
 		return "", "", err
 	}
-	videoWidth, videoHeight, err := GetVideoDimensions("collages/" + t.FileName)
+	videoWidth, videoHeight, err := files.GetVideoDimensions("collages/" + fileName)
 	if err != nil {
 		return "", "", err
 	}
-	os.RemoveAll(TemporaryDirectory + "/collages/" + t.VideoID)
+	os.RemoveAll(config.TemporaryDirectory + "/collages/" + videoId)
 	return videoWidth, videoHeight, nil
 }

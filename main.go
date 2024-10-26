@@ -1,7 +1,11 @@
-// go:build scrape
 package main
 
 import (
+	"meow/pkg/config"
+	"meow/pkg/handler"
+	"meow/pkg/net"
+	"meow/pkg/providers"
+	"meow/pkg/vars"
 	"strconv"
 	"time"
 
@@ -9,52 +13,52 @@ import (
 )
 
 func main() {
-	InitEnvs()
-	if Domain == "" {
+	config.InitEnvs()
+	if config.Domain == "" {
 		panic("You have not specified a Domain!")
 	}
 
-	println("Starting server on port " + Port)
-	println("Domain: " + Domain)
-	println("Provider: " + TiktokProvider)
-	println("Public: " + strconv.FormatBool(Public))
-	println("Limit public amount: " + strconv.Itoa(LimitPublicAmount))
-	println("Sound route: " + strconv.FormatBool(IsffmpegInstalled))
-	println("Fancy Slideshow: " + strconv.FormatBool(FancySlideshow))
+	println("Starting server on port " + config.Port)
+	println("Domain: " + config.Domain)
+	println("Provider: " + config.TiktokProvider)
+	println("Public: " + strconv.FormatBool(config.Public))
+	println("Limit public amount: " + strconv.Itoa(config.LimitPublicAmount))
+	println("Sound route: " + strconv.FormatBool(config.IsffmpegInstalled))
+	println("Fancy Slideshow: " + strconv.FormatBool(config.FancySlideshow))
 
 	r := gin.Default()
-	r.GET("/", HandleIndex)
+	r.GET("/", handler.HandleIndex)
 
-	r.GET(PathCollage, HandleRequest)
-	r.GET("/collage-:id", HandleDirectFile("collage"))
+	r.GET(vars.PathCollage, handler.HandleRequest)
+	r.GET("/collage-:id", handler.HandleDirectFile("collage"))
 
-	r.GET(PathJson, HandleJsonRequest)
-	r.GET(PathVideoProxy, HandleVideoProxy)
+	r.GET(vars.PathJson, handler.HandleJsonRequest)
+	r.GET(vars.PathVideoProxy+"/:id", handler.HandleVideoProxy)
 
-	if IsffmpegInstalled {
-		r.GET(PathCollageSound, HandleSoundCollageRequest)
-		r.GET("/video-:id", HandleDirectFile("video"))
+	if config.IsffmpegInstalled {
+		r.GET(vars.PathCollageSound, handler.HandleSoundCollageRequest)
+		r.GET("/video-:id", handler.HandleDirectFile("video"))
 	}
-	if IsffmpegInstalled && FancySlideshow {
-		r.GET(PathSlide, HandleFancySlideshowRequest)
-		r.GET("/slide-:id", HandleDirectFile("slide"))
+	if config.IsffmpegInstalled && config.FancySlideshow {
+		r.GET(vars.PathSlide, handler.HandleFancySlideshowRequest)
+		r.GET("/slide-:id", handler.HandleDirectFile("slide"))
 	}
-	if Downloader {
-		r.GET(PathDownloader, HandleDownloader)
+	if config.Downloader {
+		r.GET(vars.PathDownloader, handler.HandleDownloader)
 	}
 
-	if Subtitler {
-		r.GET(PathSubs, HandleSubtitleVideo)
-		r.GET("/subs-:id", HandleDirectFile("subs"))
+	if config.Subtitler {
+		r.GET(vars.PathSubs, handler.HandleSubtitleVideo)
+		r.GET("/subs-:id", handler.HandleDirectFile("subs"))
 	}
 
 	go func() {
 		for {
-			RecentTiktokReqs.Flush()
-			ShortURLCache.Flush()
+			providers.RecentTiktokReqs.Flush()
+			net.ShortURLCache.Flush()
 			time.Sleep(5 * time.Minute)
 		}
 	}()
 
-	r.Run(Port)
+	r.Run(config.Port)
 }

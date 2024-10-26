@@ -1,17 +1,27 @@
-package main
+package net
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"meow/pkg/config"
+	"meow/pkg/files"
+	"meow/pkg/vars"
 	"net/http"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 )
+
+var ShortURLCache = NewCache[ShortLinkInfo](20)
+var longLinkRe = regexp.MustCompile(`https:\/\/(?:www.)?(?:vxtiktok|tiktok|tiktxk|)\.com\/(@.{2,32})\/(?:photo|video)\/(\d+)`)
+var shortLinkRe = regexp.MustCompile(`https:\/\/.{1,3}\.(?:(?:vx|)tikt(?:x|o)k)\.com/(?:.{1,2}/|)(.{5,12})`)
+
+var tmpDir = config.TemporaryDirectory + "/collages/"
 
 func GetLongVideoId(videoUrl string) (string, string, error) {
 	if !validateURL(videoUrl) {
@@ -48,7 +58,7 @@ func GetLongVideoId(videoUrl string) (string, string, error) {
 	return "", "", errors.New("failed to extract the video id")
 }
 
-func downloadMedia(url string) ([]byte, error) {
+func DownloadMedia(url string) ([]byte, error) {
 	client := &http.Client{
 		Timeout: time.Second * 4,
 	}
@@ -57,7 +67,7 @@ func downloadMedia(url string) ([]byte, error) {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", UserAgent)
+	req.Header.Set("User-Agent", vars.UserAgent)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -83,21 +93,21 @@ func downloadMedia(url string) ([]byte, error) {
 	return mediaBytes, nil
 }
 
-func (t *SimplifiedData) DownloadImages() int {
+func DownloadImages(videoId string, imgLinks []string) [][]byte {
 	var wg sync.WaitGroup
 	var indexedImages []ImageWithIndex
 
-	var failedCount int
+	// var failedCount int
 
-	for i, link := range t.ImageLinks {
+	for i, link := range imgLinks {
 		wg.Add(1)
 		go func(url string, index int) {
 			defer wg.Done()
-			if imgBytes, err := downloadMedia(url); err == nil {
+			if imgBytes, err := DownloadMedia(url); err == nil {
 				indexedImages = append(indexedImages, ImageWithIndex{Bytes: imgBytes, Index: index})
 			} else {
-				println("error downloading image on: %v\n", t.VideoID, err)
-				failedCount += 1
+				println("error downloading image on: %v\n", videoId, err)
+				// failedCount += 1
 			}
 		}(link, i)
 	}
@@ -107,48 +117,50 @@ func (t *SimplifiedData) DownloadImages() int {
 		return indexedImages[i].Index < indexedImages[j].Index
 	})
 
-	t.ImageBuffers = make([][]byte, 0, len(indexedImages))
+	imageBuffers := make([][]byte, 0, len(indexedImages))
+
 	for _, img := range indexedImages {
-		t.ImageBuffers = append(t.ImageBuffers, img.Bytes)
+		imageBuffers = append(imageBuffers, img.Bytes)
 	}
-	return failedCount
+
+	return imageBuffers //, failedCount
 }
 
-func (t *SimplifiedData) DownloadSound() error {
-	req, err := http.NewRequest("GET", t.SoundLink, nil)
+func DownloadSound(soundLink string) ([]byte, error) {
+	req, err := http.NewRequest("GET", soundLink, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	req.Header.Set("User-Agent", UserAgent)
+	req.Header.Set("User-Agent", vars.UserAgent)
 	req.Header.Set("range", "bytes=0-")
 	req.Header.Set("referer", "https://www.tiktok.com/")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("Error making the request:", err)
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusPartialContent {
-		return errors.New("failed to fetch the audio")
+		return nil, errors.New("failed to fetch the audio")
 	}
 
-	t.SoundBuffer, err = io.ReadAll(resp.Body)
+	soundBuffer, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return soundBuffer, nil
 }
 
-func (t *SimplifiedData) DownloadVideoAndSubtitles(lang string) error {
-	url := SubtitlesHost + "subtitle_id=02981317794434464&target_language=" + lang + "&item_id=" + t.VideoID
+func DownloadVideoAndSubtitles(videoId, videoUrl, lang string) error {
+	url := vars.SubtitlesHost + "subtitle_id=02981317794434464&target_language=" + lang + "&item_id=" + videoId
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("User-Agent", UserAgent)
+	req.Header.Set("User-Agent", vars.UserAgent)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -170,19 +182,20 @@ func (t *SimplifiedData) DownloadVideoAndSubtitles(lang string) error {
 		return errors.New("no subtitles found")
 	}
 
-	err = CreateDirectory(TemporaryDirectory + "/collages/" + t.VideoID)
+	videoTmpDir := tmpDir + videoId
+
+	err = files.CreateDirectory(videoTmpDir)
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(TemporaryDirectory+"/collages/"+t.VideoID+"/subtitles.vtt", []byte(subtitles), 0644)
+	err = os.WriteFile(videoTmpDir+"/subtitles.vtt", []byte(subtitles), 0644)
 	if err != nil {
 		return err
 	}
 
-	videoUrl := t.Video.Url
-	videoBytes, err := downloadMedia(videoUrl)
+	videoBytes, err := DownloadMedia(videoUrl)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(TemporaryDirectory+"/collages/"+t.VideoID+"/video.mp4", videoBytes, 0644)
+	return os.WriteFile(videoTmpDir+"/video.mp4", videoBytes, 0644)
 }

@@ -1,29 +1,31 @@
-package main
+package config
 
 import (
 	"math/rand"
+	"meow/pkg/files"
+	"meow/pkg/util"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
-func addString(s string, r string, trailing bool) string {
-	if (trailing && !strings.HasSuffix(s, r)) || (!trailing && !strings.HasPrefix(s, r)) {
-		if trailing {
-			return s + r
-		}
-		return r + s
-	}
-	return s
-}
+var (
+	Domain             string
+	Port               string
+	Downloader         bool
+	TemporaryDirectory = util.Ternary(isDocker, "/tmp", "tmp")
+	LocalStats         Stats
+	LimitPublicAmount  int
+	Public             bool
+	IsffmpegInstalled  bool
+	FancySlideshow     bool
+	Subtitler          bool
+	TiktokProvider     string
 
-func checkEnvOrDefault(env string, def string) string {
-	if val := os.Getenv(env); val != "" {
-		return val
-	}
-	return def
-}
+	fileSize, _  = files.GetFileSize("/.dockerenv")
+	isDocker     = fileSize > -1
+	PythonServer = "http://" + util.Ternary(isDocker, "photo_collager", "localhost") + ":9700"
+)
 
 func InitEnvs() {
 	rand.NewSource(time.Now().UnixNano())
@@ -35,8 +37,6 @@ func InitEnvs() {
 	FancySlideshow = os.Getenv("FANCY_SLIDESHOW") == "true"
 	Subtitler = os.Getenv("SUBTITLER") == "true"
 	TiktokProvider = os.Getenv("TIKTOK_PROVIDER")
-
-	SetTiktokTiktokProvider(TiktokProvider)
 
 	LimitPublicAmount, _ = strconv.Atoi(os.Getenv("LIMIT_PUBLIC_AMOUNT"))
 
