@@ -19,17 +19,22 @@ import (
 func renderTemplate(c *gin.Context, filename string, data gin.H) {
 	tmpl, err := template.ParseFiles("templates/" + filename)
 	if err != nil {
-		HandleError(c, err.Error())
+		msg := fmt.Sprintf("Couldn't parse template: %s", filename)
+		HandleError(c, msg, err)
 		return
 	}
 
 	err = tmpl.Execute(c.Writer, data)
 	if err != nil {
-		HandleError(c, err.Error())
+		msg := fmt.Sprintf("Couldn't execute template: %s", filename)
+		HandleError(c, msg, err)
 	}
 }
 
-func HandleError(c *gin.Context, errorMsg string) {
+func HandleError(c *gin.Context, errorMsg string, err error) {
+	if err != nil {
+		println(err.Error())
+	}
 	renderTemplate(c, "error.html", gin.H{
 		"error":           errorMsg,
 		"error_image_url": ErrorImage(),
@@ -88,12 +93,12 @@ func HandleDirectFile(fileType string) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		if id == "" {
-			HandleError(c, "No id provided")
+			HandleError(c, "No id provided", nil)
 			return
 		}
 		filename := fmt.Sprintf("collages/%s-%s", fileType, id)
 		if _, err := files.GetFileSize(filename); err != nil {
-			HandleError(c, "File not found")
+			HandleError(c, "File not found", nil)
 			return
 		}
 		c.File(filename)
@@ -133,9 +138,9 @@ func getTiktokData(c *gin.Context, filePrefix string, isVideo bool) (types.Tikto
 	uniqueUserId, videoId, err := net.GetLongVideoId(tiktokURL)
 	if err != nil {
 		if err.Error() == "invalid URL" {
-			HandleError(c, "link: "+tiktokURL+" is invalid")
+			HandleError(c, "link: "+tiktokURL+" is invalid", nil)
 		} else {
-			HandleError(c, "Couldn't get tiktok")
+			HandleError(c, "Couldn't get tiktok", err)
 		}
 		return types.TiktokInfo{}, true
 	}
@@ -143,8 +148,7 @@ func getTiktokData(c *gin.Context, filePrefix string, isVideo bool) (types.Tikto
 	t, err := providers.FetchTiktokData(videoId)
 
 	if err != nil {
-		println(err.Error())
-		HandleError(c, "Couldn't get the tiktok")
+		HandleError(c, "Couldn't get the tiktok", err)
 		return types.TiktokInfo{}, true
 	}
 
@@ -172,15 +176,14 @@ func getTiktokData(c *gin.Context, filePrefix string, isVideo bool) (types.Tikto
 		if _, err := files.GetFileSize(filePath); err == nil {
 			if isVideo {
 				if isAwemeBeingRendered(videoId) {
-					HandleError(c, "This video is being rendered, please request again in some time!")
+					HandleError(c, "This video is being rendered, please request again in some time!", nil)
 					return types.TiktokInfo{}, true
 				}
 
 				width, height, err := files.GetVideoDimensions(filePath)
 
 				if err != nil {
-					println(err.Error())
-					HandleError(c, "Couldn't get video dimensions")
+					HandleError(c, "Couldn't get video dimensions", nil)
 					return types.TiktokInfo{}, true
 				}
 
@@ -201,8 +204,7 @@ func getTiktokData(c *gin.Context, filePrefix string, isVideo bool) (types.Tikto
 		if isVideo {
 			t.SoundBuffer, err = net.DownloadSound(t.SoundLink)
 			if err != nil {
-				println(err.Error())
-				HandleError(c, "Couldn't download sound")
+				HandleError(c, "Couldn't download sound", err)
 				return types.TiktokInfo{}, true
 			}
 		}
@@ -222,13 +224,13 @@ func HandleJsonRequest(c *gin.Context) {
 func HandleVideoProxy(c *gin.Context) {
 	idStr := c.Param("id")
 	if idStr == "" {
-		HandleError(c, "No id provided")
+		HandleError(c, "No id provided", nil)
 		return
 	}
 
 	_, err := strconv.Atoi(idStr)
 	if err != nil {
-		HandleError(c, "Invalid id")
+		HandleError(c, "Invalid id", nil)
 		return
 	}
 
@@ -237,7 +239,7 @@ func HandleVideoProxy(c *gin.Context) {
 		var err error
 		t, err = providers.FetchTiktokData(idStr)
 		if err != nil {
-			HandleError(c, "Couldn't fetch TikTok data")
+			HandleError(c, "Couldn't fetch TikTok data", err)
 			return
 		}
 	}
@@ -255,7 +257,11 @@ func HandleRequest(c *gin.Context) {
 		return
 	}
 
-	t.MakeCollage()
+	err := t.MakeCollage()
+	if err != nil {
+		HandleError(c, "Couldn't generate collage", err)
+		return
+	}
 
 	handleDiscordEmbed(c, t, config.Domain+t.FileName)
 	config.UpdateLocalStats()
@@ -269,13 +275,16 @@ func HandleSoundCollageRequest(c *gin.Context) {
 
 	collageFilePath := "collages/collage-" + t.VideoID + ".png"
 	if _, err := files.GetFileSize(collageFilePath); err != nil {
-		t.MakeCollage()
+		err := t.MakeCollage()
+		if err != nil {
+			HandleError(c, "Couldn't generate collage", err)
+			return
+		}
 	}
 
 	width, height, err := t.MakeCollageWithAudio("video")
 	if err != nil {
-		println(err.Error())
-		HandleError(c, "Couldn't generate video")
+		HandleError(c, "Couldn't generate video", err)
 		return
 	}
 
@@ -313,13 +322,13 @@ func HandleFancySlideshowRequest(c *gin.Context) {
 		removeAwemeFromRendering(t.VideoID)
 	}()
 
-	HandleError(c, "This slideshow was sent to be rendered, please request again in some time!")
+	HandleError(c, "This slideshow was sent to be rendered, please request again in some time!", nil)
 }
 
 func HandleSubtitleVideo(c *gin.Context) {
 	subLang := c.Query("lang")
 	if subLang == "" {
-		HandleError(c, "No language provided")
+		HandleError(c, "No language provided", nil)
 		return
 	}
 
@@ -332,7 +341,7 @@ func HandleSubtitleVideo(c *gin.Context) {
 	if err != nil {
 		// This is due to tiktok goofery
 		errorMsg := "Couldn't download video with subtitles. Only translations are available. e.g if the non-translated subtitles are in English, you can only get translations in other languages."
-		HandleError(c, errorMsg)
+		HandleError(c, errorMsg, err)
 		return
 	}
 
@@ -347,5 +356,5 @@ func HandleSubtitleVideo(c *gin.Context) {
 		removeAwemeFromRendering(t.VideoID)
 	}()
 
-	HandleError(c, "This video was sent to be subtitled, please request again in some time!")
+	HandleError(c, "This video was sent to be subtitled, please request again in some time!", nil)
 }
