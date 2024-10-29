@@ -235,7 +235,7 @@ func HandleVideoProxy(c *gin.Context) {
 	}
 
 	c.Header("Content-Type", "video/mp4")
-	c.Header("Content-Disposition", "inline; filename="+fmt.Sprintf("%s.mp4", t.VideoID))
+	c.Header("Content-Disposition", "inline; filename="+t.FileName)
 	c.Header("Content-Length", strconv.Itoa(len(t.Video.Buffer)))
 	c.Header("Accept-Ranges", "bytes")
 	c.Data(200, "video/mp4", t.Video.Buffer)
