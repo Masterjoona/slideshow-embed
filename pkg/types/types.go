@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 type SimplifiedVideo struct {
 	Buffer []byte
 	Url    string
@@ -26,4 +28,8 @@ type Counts struct {
 	Shares    string
 	Views     string
 	Favorites string
+}
+
+func (c *Counts) ToString() string {
+	return fmt.Sprintf("❤️ %s | 💬 %s | 🔁 %s | ⭐ %s | 👀 %s", c.Likes, c.Comments, c.Shares, c.Favorites, c.Views)
 }

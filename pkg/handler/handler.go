@@ -40,18 +40,11 @@ func HandleError(c *gin.Context, errorMsg string, err error) {
 		"error_image_url": ErrorImage(),
 	})
 }
-
-func generateDetailsString(details types.Counts) string {
-	return fmt.Sprintf("❤️ %s | 💬 %s | 🔁 %s | ⭐ %s | 👀 %s",
-		details.Likes, details.Comments, details.Shares, details.Favorites, details.Views)
-}
-
-func handleDiscordEmbed(c *gin.Context, tiktokData types.TiktokInfo, imageUrl string) {
-	detailsString := generateDetailsString(tiktokData.Details)
+func handleDiscordEmbed(c *gin.Context, t types.TiktokInfo, imageUrl string) {
 	renderTemplate(c, "discord.html", gin.H{
-		"authorName": tiktokData.Author,
-		"caption":    tiktokData.Caption,
-		"details":    detailsString,
+		"authorName": t.Author,
+		"caption":    t.Caption,
+		"details":    t.Details.ToString(),
 		"imageUrl":   imageUrl,
 	})
 }
@@ -61,10 +54,9 @@ func handleDiscordVideoEmbed(
 	t types.TiktokInfo,
 	videoUrl string,
 ) {
-	detailsString := generateDetailsString(t.Details)
 	renderTemplate(c, "video.html", gin.H{
 		"authorName": strings.Split(t.Author, "(@")[0],
-		"details":    detailsString,
+		"details":    t.Details.ToString(),
 		"caption":    t.Caption,
 		"videoUrl":   videoUrl,
 		"width":      t.Video.Width,
@@ -106,29 +98,27 @@ func HandleDirectFile(fileType string) func(c *gin.Context) {
 }
 
 func HandleDownloader(c *gin.Context) {
-	tiktokData, errored := getTiktokData(c, "", false)
+	t, errored := getTiktokData(c, "", false)
 	if errored {
 		return
 	}
 
-	detailsString := generateDetailsString(tiktokData.Details)
-
-	if tiktokData.Video.Width != "" {
+	if t.Video.Width != "" {
 		handleDiscordVideoEmbed(
 			c,
-			tiktokData,
-			vars.PathVideoProxy+"/"+tiktokData.VideoID,
+			t,
+			vars.PathVideoProxy+"/"+t.VideoID,
 		)
 		return
 	}
 
 	renderTemplate(c, "images.html", gin.H{
-		"authorName": tiktokData.Author,
-		"caption":    tiktokData.Caption,
-		"details":    detailsString,
-		"imageLinks": tiktokData.ImageLinks,
-		"imageUrl":   tiktokData.ImageLinks[0],
-		"soundUrl":   tiktokData.SoundLink,
+		"authorName": t.Author,
+		"caption":    t.Caption,
+		"details":    t.Details.ToString(),
+		"imageLinks": t.ImageLinks,
+		"imageUrl":   t.ImageLinks[0],
+		"soundUrl":   t.SoundLink,
 	})
 }
 
