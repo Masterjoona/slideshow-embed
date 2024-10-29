@@ -156,7 +156,6 @@ func getTiktokData(c *gin.Context, filePrefix string, isVideo bool) (types.Tikto
 
 	if hasFile {
 		if t.Video.Width != "" && filePrefix[1] != 'u' {
-			println("Returning early since its a video")
 			handleDiscordVideoEmbed(
 				c,
 				t,
@@ -233,23 +232,21 @@ func HandleVideoProxy(c *gin.Context) {
 		return
 	}
 
-	if t, ok := providers.RecentTiktokReqs.Get(idStr); ok {
-		if t.Video.Buffer == nil {
-			HandleError(c, "Video not found")
+	t, ok := providers.RecentTiktokReqs.Get(idStr)
+	if !ok {
+		var err error
+		t, err = providers.FetchTiktokData(idStr)
+		if err != nil {
+			HandleError(c, "Couldn't fetch TikTok data")
 			return
 		}
-
-		c.Header("Content-Type", "video/mp4")
-		if true {
-			c.Header("Content-Disposition", "attachment; filename="+fmt.Sprintf("%s.mp4", idStr))
-		}
-		c.Header("Content-Length", strconv.Itoa(len(t.Video.Buffer)))
-		c.Header("Accept-Ranges", "bytes")
-		c.Data(200, "video/mp4", t.Video.Buffer)
-		return
 	}
 
-	HandleError(c, "Video not found")
+	c.Header("Content-Type", "video/mp4")
+	c.Header("Content-Disposition", "inline; filename="+fmt.Sprintf("%s.mp4", t.VideoID))
+	c.Header("Content-Length", strconv.Itoa(len(t.Video.Buffer)))
+	c.Header("Accept-Ranges", "bytes")
+	c.Data(200, "video/mp4", t.Video.Buffer)
 }
 
 func HandleRequest(c *gin.Context) {

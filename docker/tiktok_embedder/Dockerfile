@@ -6,7 +6,8 @@ COPY go.mod go.mod
 COPY go.sum go.sum
 RUN go mod download
 
-COPY *.go ./
+COPY pkg /app/pkg
+COPY main.go /app/main.go
 ENV GOCACHE=/root/.cache/go-build
 RUN --mount=type=cache,target="/root/.cache/go-build" go build -ldflags "-s -w"
 

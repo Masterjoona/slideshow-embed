@@ -10,21 +10,21 @@ import (
 )
 
 var (
-	Domain             string
-	Port               string
-	Downloader         bool
-	TemporaryDirectory = util.Ternary(isDocker, "/tmp", "tmp")
-	LocalStats         Stats
-	LimitPublicAmount  int
-	Public             bool
-	IsffmpegInstalled  bool
-	FancySlideshow     bool
-	Subtitler          bool
-	TiktokProvider     string
+	Domain            string
+	Port              string
+	Downloader        bool
+	LocalStats        Stats
+	LimitPublicAmount int
+	Public            bool
+	IsffmpegInstalled bool
+	FancySlideshow    bool
+	Subtitler         bool
+	TiktokProvider    string
 
-	fileSize, _  = files.GetFileSize("/.dockerenv")
-	isDocker     = fileSize > -1
-	PythonServer = "http://" + util.Ternary(isDocker, "photo_collager", "localhost") + ":9700"
+	fileSize, _        = files.GetFileSize("/.dockerenv")
+	isDocker           = fileSize > -1
+	TemporaryDirectory = util.Ternary(isDocker, "/tmp", "tmp")
+	PythonServer       = "http://" + util.Ternary(isDocker, "photo_collager", "localhost") + ":9700"
 )
 
 func InitEnvs() {
