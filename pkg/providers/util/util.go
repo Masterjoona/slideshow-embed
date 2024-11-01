@@ -2,20 +2,23 @@ package util
 
 import (
 	"meow/pkg/files"
-	"meow/pkg/util"
+	"meow/pkg/types"
 )
 
-type VideoDimensions struct {
-	Width  string
-	Height string
-	Err    error
-}
+func GetDimensionsOrNil(videoUrl string, check bool) (types.SimplifiedVideo, error) {
+	println(videoUrl, check)
+	if !check {
+		return types.SimplifiedVideo{}, nil
+	}
 
-func GetDimensionsOrNil(videoUrl string, check bool) VideoDimensions {
-	return util.Ternary(check,
-		func() VideoDimensions {
-			width, height, err := files.GetVideoDimensionsFromUrl(videoUrl)
-			return VideoDimensions{Width: width, Height: height, Err: err}
-		}(),
-		VideoDimensions{})
+	width, height, err := files.GetVideoDimensions(videoUrl)
+	if err != nil {
+		return types.SimplifiedVideo{}, err
+	}
+
+	return types.SimplifiedVideo{
+		Width:  width,
+		Height: height,
+		Url:    videoUrl,
+	}, nil
 }

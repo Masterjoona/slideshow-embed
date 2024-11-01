@@ -14,6 +14,7 @@ import (
 
 func main() {
 	config.InitEnvs()
+	providers.MakeMap()
 	if config.Domain == "" {
 		panic("You have not specified a Domain!")
 	}
@@ -21,10 +22,13 @@ func main() {
 	println("Starting server on port " + config.Port)
 	println("Domain: " + config.Domain)
 	println("Provider: " + config.TiktokProvider)
+	println("Fallback Provider: " + strconv.FormatBool(config.FallbackProvider))
 	println("Public: " + strconv.FormatBool(config.Public))
 	println("Limit public amount: " + strconv.Itoa(config.LimitPublicAmount))
 	println("Sound route: " + strconv.FormatBool(config.IsffmpegInstalled))
 	println("Fancy Slideshow: " + strconv.FormatBool(config.FancySlideshow))
+	println("Subtitler: " + strconv.FormatBool(config.Subtitler))
+	println("Downloader: " + strconv.FormatBool(config.Downloader))
 
 	r := gin.Default()
 	r.GET("/", handler.HandleIndex)

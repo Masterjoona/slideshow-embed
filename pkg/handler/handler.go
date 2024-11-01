@@ -135,7 +135,7 @@ func getTiktokData(c *gin.Context, filePrefix string, isVideo bool) (types.Tikto
 		return types.TiktokInfo{}, true
 	}
 
-	t, err := providers.FetchTiktokData(videoId)
+	t, err := providers.FetchTiktok(videoId)
 
 	if err != nil {
 		HandleError(c, "Couldn't get the tiktok", err)
@@ -227,7 +227,7 @@ func HandleVideoProxy(c *gin.Context) {
 	t, ok := providers.RecentTiktokReqs.Get(idStr)
 	if !ok {
 		var err error
-		t, err = providers.FetchTiktokData(idStr)
+		t, err = providers.FetchTiktok(idStr)
 		if err != nil {
 			HandleError(c, "Couldn't fetch TikTok data", err)
 			return

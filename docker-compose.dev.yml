@@ -1,39 +1,40 @@
 services:
-  tiktok_embdedder:
-    build:
-      dockerfile: ./docker/tiktok_embedder/Dockerfile
-    container_name: tiktok_embedder
-    environment:
-      # trailing slash will be added automatically if not present
-      # same for leading colon for PORT
-      - DOMAIN=https://tt.yourdomain.tld
-      - PORT=4232
-      - FANCY_SLIDESHOW=false # do not use, it's broken
-      - PUBLIC=false
-      - LIMIT_PUBLIC_AMOUNT=0
-      - FFMPEG=false
-      - DOWNLOADER=false
-      - SUBTITLER=false
-      - GIN_MODE=release
-      #- TIKTOK_PROVIDER=tikwm # set this if tiktok api is broken
-    ports:
-      - "4232:4232"
-    networks:
-      - tiktok_network
-    volumes:
-      - your path:/app/collages
-      - /tmp/collages:/tmp/collages
+    tiktok_embdedder:
+        build:
+            dockerfile: ./docker/tiktok_embedder/Dockerfile
+        container_name: tiktok_embedder
+        environment:
+            # trailing slash will be added automatically if not present
+            # same for leading colon for PORT
+            - DOMAIN=https://tt.yourdomain.tld
+            - PORT=4232
+            - FANCY_SLIDESHOW=false # do not use, it's broken
+            - PUBLIC=false
+            - LIMIT_PUBLIC_AMOUNT=0
+            - FFMPEG=false
+            - DOWNLOADER=false
+            - SUBTITLER=false
+            - GIN_MODE=release
+            #- TIKTOK_PROVIDER=tikwm # | ttsave | playerapi | tiktok
+            #- FALLBACK_PROVIDER=false # if a provider fails, try the next one
+        ports:
+            - "4232:4232"
+        networks:
+            - tiktok_network
+        volumes:
+            - your path:/app/collages
+            - /tmp/collages:/tmp/collages
 
-  photo_collager:
-    build:
-      dockerfile: ./docker/photo_collager/Dockerfile
-    container_name: photo_collager
-    networks:
-      - tiktok_network
-    volumes:
-      - your path:/app/collages
-      - /tmp/collages:/tmp/collages
+    photo_collager:
+        build:
+            dockerfile: ./docker/photo_collager/Dockerfile
+        container_name: photo_collager
+        networks:
+            - tiktok_network
+        volumes:
+            - your path:/app/collages
+            - /tmp/collages:/tmp/collages
 
 networks:
-  tiktok_network:
-    driver: bridge
+    tiktok_network:
+        driver: bridge

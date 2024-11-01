@@ -20,6 +20,7 @@ var (
 	FancySlideshow    bool
 	Subtitler         bool
 	TiktokProvider    string
+	FallbackProvider  bool
 
 	fileSize, _        = files.GetFileSize("/.dockerenv")
 	isDocker           = fileSize > -1
@@ -37,6 +38,7 @@ func InitEnvs() {
 	FancySlideshow = os.Getenv("FANCY_SLIDESHOW") == "true"
 	Subtitler = os.Getenv("SUBTITLER") == "true"
 	TiktokProvider = os.Getenv("TIKTOK_PROVIDER")
+	FallbackProvider = os.Getenv("FALLBACK_PROVIDER") == "true"
 
 	LimitPublicAmount, _ = strconv.Atoi(os.Getenv("LIMIT_PUBLIC_AMOUNT"))
 

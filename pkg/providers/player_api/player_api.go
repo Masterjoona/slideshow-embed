@@ -4,95 +4,109 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	provider_util "meow/pkg/providers/util"
 	"meow/pkg/types"
 	"meow/pkg/util"
 	"meow/pkg/vars"
 	"net/http"
-	"strconv"
 )
 
 func FetchTikok(videoId string) (types.TiktokInfo, error) {
-	_, _, err := fetch(videoId)
+	data, err := fetchList(videoId)
 	if err != nil {
 		return types.TiktokInfo{}, err
 	}
 
-	return types.TiktokInfo{}, nil
+	singleItemData, err := fetchSingle(videoId)
+	if err != nil {
+		return types.TiktokInfo{}, err
+	}
+
+	isVideo := singleItemData.VideoInfo.Meta.Duration != 0
+	author := data.Author.Nickname + " (@" + data.Author.UniqueID + ")"
+	videoInfo, err := provider_util.GetDimensionsOrNil(singleItemData.VideoInfo.URLList[0], isVideo)
+	if err != nil {
+		return types.TiktokInfo{}, err
+	}
+
+	return types.TiktokInfo{
+		Author:     author,
+		Caption:    data.Desc,
+		Details:    data.getItemDetails(),
+		VideoID:    videoId,
+		ImageLinks: singleItemData.getImageLinks(),
+		SoundLink:  data.Music.PlayURL,
+		Video:      videoInfo,
+	}, nil
 }
 
-func (a *GenericItem) getVideoDetails() types.Counts {
+func (i *GenericItem) getItemDetails() types.Counts {
 	return types.Counts{
-		Likes:     util.FormatLargeNumbers(strconv.Itoa(a.Stats.DiggCount)),
-		Comments:  util.FormatLargeNumbers(strconv.Itoa(a.Stats.CommentCount)),
-		Shares:    util.FormatLargeNumbers(strconv.Itoa(a.Stats.ShareCount)),
-		Views:     util.FormatLargeNumbers(strconv.Itoa(a.Stats.PlayCount)),
-		Favorites: util.FormatLargeNumbers(strconv.Itoa(a.Stats.CollectCount)),
+		Likes:     util.FormatLargeNumbers(i.StatsV2.DiggCount),
+		Comments:  util.FormatLargeNumbers(i.StatsV2.CommentCount),
+		Shares:    util.FormatLargeNumbers(i.StatsV2.ShareCount),
+		Views:     util.FormatLargeNumbers(i.StatsV2.PlayCount),
+		Favorites: util.FormatLargeNumbers(i.StatsV2.CollectCount),
 	}
 }
 
-func fetch(SingleItemId string) (GenericItem, ImageItem, error) {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "https://www.tiktok.com/api/related/item_list/?itemID="+SingleItemId, nil)
-	// tiktok also calls https://www.tiktok.com/player/api/v1/items?item_ids=
-	// but it misses some data like view and favorite count
+func fetchSingle(videoId string) (SingleItem, error) {
+	req, err := http.NewRequest("GET", "https://www.tiktok.com/player/api/v1/items?item_ids="+videoId, nil)
 	if err != nil {
-		fmt.Println("Error creating request:", err)
-		return GenericItem{}, ImageItem{}, err
+		return SingleItem{}, err
 	}
 
 	req.Header.Set("user-agent", vars.UserAgent)
 
-	resp, err := client.Do(req)
+	resp, err := vars.HttpClient.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
-		return GenericItem{}, ImageItem{}, err
+		return SingleItem{}, err
+	}
+	defer resp.Body.Close()
+
+	textByte, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		return SingleItem{}, err
+	}
+
+	var data SingleItemResp
+	err = json.Unmarshal(textByte, &data)
+	if err != nil {
+		return SingleItem{}, err
+	}
+
+	if len(data.Items) == 0 {
+		return SingleItem{}, fmt.Errorf("no items found")
+	}
+
+	return data.Items[0], nil
+}
+
+func fetchList(videoId string) (GenericItem, error) {
+	req, err := http.NewRequest("GET", "https://www.tiktok.com/api/related/item_list/?aid=1284&count=14&itemID="+videoId, nil)
+	if err != nil {
+		return GenericItem{}, err
+	}
+
+	req.Header.Set("user-agent", vars.UserAgent)
+
+	resp, err := vars.HttpClient.Do(req)
+	if err != nil {
+		return GenericItem{}, err
 	}
 	defer resp.Body.Close()
 
 	textByte, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		return GenericItem{}, ImageItem{}, err
+		return GenericItem{}, err
 	}
 
-	var raw map[string]interface{}
-	if err := json.Unmarshal([]byte(textByte), &raw); err != nil {
-		fmt.Println("Error unmarshaling:", err)
-		return GenericItem{}, ImageItem{}, err
+	var data ItemListResp
+	err = json.Unmarshal(textByte, &data)
+	if err != nil {
+		return GenericItem{}, err
 	}
 
-	if items, ok := raw["items"]; ok {
-		length := len(items.([]interface{}))
-		if length == 0 {
-			return GenericItem{}, ImageItem{}, fmt.Errorf("No items found")
-		}
-
-		if length == 1 {
-			var imageResp = PlayerAPIRespImage{}
-			if err := json.Unmarshal([]byte(textByte), &imageResp); err != nil {
-				fmt.Println("Error unmarshaling video item:", err)
-				return GenericItem{}, ImageItem{}, err
-			}
-			return GenericItem{}, imageResp.Items[0], nil
-		}
-
-		var videoResp = GenericResp{}
-		if err := json.Unmarshal([]byte(textByte), &videoResp); err != nil {
-			fmt.Println("Error unmarshaling video item:", err)
-			return GenericItem{}, ImageItem{}, err
-		}
-
-		return videoResp.ItemList[0], ImageItem{}, nil
-	}
-
-	return GenericItem{}, ImageItem{}, fmt.Errorf("No items found")
-}
-
-func (t *ImageItem) getImageLinks() []string {
-	images := t.ImagePostInfo.Images
-	imageLinks := make([]string, 0, len(images))
-	for _, image := range images {
-		imageLinks = append(imageLinks, image.DisplayImage.URLList[1])
-	}
-	return imageLinks
+	return data.ItemList[0], nil
 }

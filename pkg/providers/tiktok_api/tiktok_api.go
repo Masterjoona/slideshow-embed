@@ -54,27 +54,23 @@ func (a *Aweme) getVideoDetails() types.Counts {
 }
 
 func fetch(awemeId string) (Aweme, error) {
-	client := &http.Client{}
 	req, err := http.NewRequest("OPTIONS", "https://api22-normal-c-alisg.tiktokv.com/aweme/v1/feed/?aweme_id="+awemeId, nil)
-	// yes, options is correct, it actually returns data (most of the time)
+	// yes, options is correct, it actually works troll
 	if err != nil {
-		fmt.Println("Error creating request:", err)
 		return Aweme{}, err
 	}
 
 	req.Header.Set("user-agent", vars.UserAgent)
 
 	for attempts := 1; attempts <= maxRetries; attempts++ {
-		resp, err := client.Do(req)
+		resp, err := vars.HttpClient.Do(req)
 		if err != nil {
-			fmt.Println("Error sending request:", err)
 			return Aweme{}, err
 		}
 		defer resp.Body.Close()
 
 		textByte, err := io.ReadAll(resp.Body)
 		if err != nil {
-			fmt.Println("Error reading response body:", err)
 			return Aweme{}, err
 		}
 

@@ -6,6 +6,7 @@ import (
 	provider_util "meow/pkg/providers/util"
 	"meow/pkg/types"
 	"meow/pkg/util"
+	"meow/pkg/vars"
 	"net/http"
 	"regexp"
 	"strings"
@@ -15,14 +16,13 @@ var AudioSrcRe = regexp.MustCompile(`<a href="(.*)" onclick="bdl\(this, event\)"
 var VideoSrcLinkRe = regexp.MustCompile(`<a href="(.*)" onclick="bdl\(this, event\)" rel`)
 
 func fetchTTSave(tiktokUrl string) (*string, error) {
-	client := &http.Client{}
 	var data = strings.NewReader(fmt.Sprintf(`{"language_id":"1","query":"%s"}`, tiktokUrl))
 	req, err := http.NewRequest("POST", "https://ttsave.app/download", data)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("content-type", "application/json")
-	resp, err := client.Do(req)
+	resp, err := vars.HttpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,10 @@ func FetchTiktok(videoId string) (types.TiktokInfo, error) {
 	videoSrc, audioSrc := getMediaLinks(data)
 
 	videoUrl := util.Ternary(len(slideLinks) == 0, "", videoSrc)
-	dimensions := provider_util.GetDimensionsOrNil(videoUrl, videoUrl != "")
+	videoInfo, err := provider_util.GetDimensionsOrNil(videoUrl, videoUrl != "")
+	if err != nil {
+		return types.TiktokInfo{}, err
+	}
 
 	return types.TiktokInfo{
 		Author:     author,
@@ -104,10 +107,6 @@ func FetchTiktok(videoId string) (types.TiktokInfo, error) {
 		VideoID:    videoId,
 		SoundLink:  audioSrc,
 		ImageLinks: slideLinks,
-		Video: types.SimplifiedVideo{
-			Url:    videoUrl,
-			Width:  dimensions.Width,
-			Height: dimensions.Height,
-		},
+		Video:      videoInfo,
 	}, nil
 }

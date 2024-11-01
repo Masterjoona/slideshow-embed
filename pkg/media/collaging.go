@@ -7,6 +7,7 @@ import (
 	"io"
 	"meow/pkg/config"
 	"meow/pkg/files"
+	"meow/pkg/vars"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -34,14 +35,13 @@ func multiImagePostServer(urlPath, videoId string, images *[][]byte) error {
 
 	writer.Close()
 
-	client := &http.Client{}
 	req, err := http.NewRequest("POST", config.PythonServer+urlPath, form)
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	resp, err := client.Do(req)
+	resp, err := vars.HttpClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -276,7 +276,6 @@ func MakeVideoSlideshow(videoId, fileName string, soundBuffer []byte, imgBuffers
 	}
 	videoWidth, videoHeight, err := files.GetVideoDimensions("collages/slide-" + videoId + ".mp4")
 	if err != nil {
-		println("Error getting video dimensions")
 		return "", "", err
 	}
 	os.RemoveAll(config.TemporaryDirectory + "/collages/" + videoId)

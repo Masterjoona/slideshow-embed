@@ -3,7 +3,6 @@ package net
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"meow/pkg/config"
 	"meow/pkg/files"
@@ -14,7 +13,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 )
 
 var ShortURLCache = NewCache[ShortLinkInfo](20)
@@ -59,9 +57,6 @@ func GetLongVideoId(videoUrl string) (string, string, error) {
 }
 
 func DownloadMedia(url string) ([]byte, error) {
-	client := &http.Client{
-		Timeout: time.Second * 4,
-	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -69,7 +64,7 @@ func DownloadMedia(url string) ([]byte, error) {
 
 	req.Header.Set("User-Agent", vars.UserAgent)
 
-	resp, err := client.Do(req)
+	resp, err := vars.HttpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +132,6 @@ func DownloadSound(soundLink string) ([]byte, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Println("Error making the request:", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
