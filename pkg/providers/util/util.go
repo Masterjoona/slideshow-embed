@@ -6,7 +6,6 @@ import (
 )
 
 func GetDimensionsOrNil(videoUrl string, check bool) (types.SimplifiedVideo, error) {
-	println(videoUrl, check)
 	if !check {
 		return types.SimplifiedVideo{}, nil
 	}
