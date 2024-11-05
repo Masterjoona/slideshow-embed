@@ -150,6 +150,10 @@ func getTiktokData(c *gin.Context, filePrefix string, isVideo bool) (types.Tikto
 
 	if hasFile {
 		if t.Video.Width != "" && filePrefix[1] != 'u' {
+			if strings.HasSuffix(c.Request.URL.String(), ".mp4") {
+				c.Redirect(302, vars.PathVideoProxy+"/"+videoId)
+				return types.TiktokInfo{}, true
+			}
 			handleDiscordVideoEmbed(
 				c,
 				t,

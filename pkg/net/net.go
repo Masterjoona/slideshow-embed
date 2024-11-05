@@ -17,7 +17,7 @@ import (
 
 var ShortURLCache = NewCache[ShortLinkInfo](20)
 var longLinkRe = regexp.MustCompile(`https:\/\/(?:www.)?(?:vxtiktok|tiktok|tiktxk|)\.com\/(@.{2,32})\/(?:photo|video)\/(\d+)`)
-var shortLinkRe = regexp.MustCompile(`https:\/\/.{1,3}\.(?:(?:vx|)tikt(?:x|o)k)\.com/(?:.{1,2}/|)(.{5,12})`)
+var shortLinkRe = regexp.MustCompile(`https:\/\/.{1,3}\.(?:(?:vx|)tikt(?:x|o)k)\.com/(?:.{1,2}/|)(.{5,12})\/`)
 
 var tmpDir = config.TemporaryDirectory + "/collages/"
 
