@@ -24,30 +24,23 @@
             p {
                 max-width: 50%;
             }
+            video {
+                width: 20vw;
+                margin-top: 20px;
+            }
+
+            @media (max-width: 600px) {
+                video {
+                    width: 75vw;
+                }
+            }
         </style>
-        <a href="tiktok.com" class="links" id="tiktok"> tiktok </a>
-        <a href="#" class="links" id="index"> index </a>
+        <a href="{{.tiktokUrl}}" class="links" id="tiktok"> tiktok </a>
+        <a href="/" class="links" id="index"> index </a>
         <p>{{ .details }}</p>
         <p>{{ .caption }}</p>
-        <video
-            controls
-            autoplay
-            loop
-            muted
-            playsinline
-            width="{{ .width }}"
-            height="{{ .height }}"
-        >
+        <video controls autoplay loop muted playsinline>
             <source src="{{ .videoUrl }}" type="video/mp4" />
         </video>
-        <script>
-            const tiktok = document.getElementById("tiktok");
-            tiktok.href = location.search.split("=")[1];
-            const index = document.getElementById("index");
-            index.href = location.origin;
-            video = document.getElementsByTagName("video")[0];
-            video.height = window.innerHeight / 1.7;
-            video.width = window.innerWidth / 1.7;
-        </script>
     </body>
 </html>

@@ -54,7 +54,8 @@ func fetchAndCache(videoId string, fetcher func(string) (types.TiktokInfo, error
 	if data.Video.Url != "" {
 		data.FileName = fmt.Sprintf("%s.mp4", videoId)
 		if err := data.DownloadVideo(); err != nil {
-			fmt.Println("Failed to download video")
+			fmt.Println("Failed to download video", err)
+			return types.TiktokInfo{}, err
 		}
 	}
 

@@ -15,7 +15,7 @@ import (
 const maxRetries = 5
 
 func FetchTikok(videoId string) (types.TiktokInfo, error) {
-	postAweme, err := fetch(videoId)
+	postAweme, err := FetchTiktokAPI(videoId)
 	if err != nil {
 		return types.TiktokInfo{}, err
 	}
@@ -53,7 +53,7 @@ func (a *Aweme) getVideoDetails() types.Counts {
 	}
 }
 
-func fetch(awemeId string) (Aweme, error) {
+func FetchTiktokAPI(awemeId string) (Aweme, error) {
 	req, err := http.NewRequest("OPTIONS", "https://api22-normal-c-alisg.tiktokv.com/aweme/v1/feed/?aweme_id="+awemeId, nil)
 	// yes, options is correct, it actually works troll
 	if err != nil {

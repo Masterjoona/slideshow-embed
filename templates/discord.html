@@ -25,21 +25,14 @@
                 max-width: 50%;
             }
         </style>
-        <a href="tiktok.com" class="links" id="tiktok"> tiktok </a>
-        <a href="#" class="links" id="index"> index </a>
+        <a href="{{.tiktokUrl}}" class="links" id="tiktok"> tiktok </a>
+        <a href="/" class="links" id="index"> index </a>
         <p>{{ .details }}</p>
         <p>{{ .caption }}</p>
         <img
             src="{{ .imageUrl }}"
             alt="{{ .authorName }} Image - {{ .caption }}"
-            style="max-width: 100%; margin-top: 20px"
+            style="width: 75vw; margin-top: 20px"
         />
-        <script>
-            const tiktok = document.getElementById("tiktok");
-            tiktok.href = location.search.split("=")[1];
-            const index = document.getElementById("index");
-            index.href = location.origin;
-            document.querySelector("body > img").height = innerHeight / 1.5;
-        </script>
     </body>
 </html>

@@ -9,3 +9,4 @@ meow.exe
 __pycache__
 docker-compose.yml
 *.json
+testing

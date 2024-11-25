@@ -286,9 +286,9 @@ func MakeVideoSubtitles(videoId, fileName, lang string) (string, string, error) 
 	cmd := exec.Command(
 		"ffmpeg",
 		"-i",
-		config.TemporaryDirectory+"/collages/"+videoId+"/video.mp4",
+		config.TmpCollageDir+videoId+"/video.mp4",
 		"-vf",
-		"subtitles="+config.TemporaryDirectory+"/collages/"+videoId+"/subtitles.vtt",
+		"subtitles="+config.TmpCollageDir+videoId+"/subtitles.vtt",
 		"-c:v",
 		"libx264",
 		"-preset",
@@ -297,7 +297,7 @@ func MakeVideoSubtitles(videoId, fileName, lang string) (string, string, error) 
 		"27",
 		"-c:a",
 		"copy",
-		"collages/subs-"+lang+"-"+videoId+".mp4",
+		"collages/"+fileName,
 	)
 
 	err := cmd.Run()

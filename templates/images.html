@@ -51,8 +51,8 @@
     </head>
 
     <body>
-        <a href="tiktok.com" class="links" id="tiktok"> tiktok </a>
-        <a href="#" class="links" id="index"> index </a>
+        <a href="{{.tiktokUrl}}class" ="links" id="tiktok"> tiktok </a>
+        <a href="/" class="links" id="index"> index </a>
         <p>{{ .details }}</p>
         <p>{{ .caption }}</p>
         <audio controls>
@@ -133,12 +133,6 @@
             document
                 .querySelector("button")
                 .addEventListener("click", downloadImagesZip);
-
-            const tiktok = document.getElementById("tiktok");
-            tiktok.href = location.search.split("=")[1];
-            const index = document.getElementById("index");
-            index.href = location.origin;
-            document.querySelector("body > img").height = innerHeight / 1.5;
         </script>
     </body>
 </html>

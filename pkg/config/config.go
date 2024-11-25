@@ -19,12 +19,14 @@ var (
 	IsffmpegInstalled bool
 	FancySlideshow    bool
 	Subtitler         bool
+	TestProviders     bool
 	TiktokProvider    string
 	FallbackProvider  bool
 
 	fileSize, _        = files.GetFileSize("/.dockerenv")
 	isDocker           = fileSize > -1
 	TemporaryDirectory = util.Ternary(isDocker, "/tmp", "tmp")
+	TmpCollageDir      = TemporaryDirectory + "/collages/"
 	PythonServer       = "http://" + util.Ternary(isDocker, "photo_collager", "localhost") + ":9700"
 )
 
@@ -39,6 +41,7 @@ func InitEnvs() {
 	Subtitler = os.Getenv("SUBTITLER") == "true"
 	TiktokProvider = os.Getenv("TIKTOK_PROVIDER")
 	FallbackProvider = os.Getenv("FALLBACK_PROVIDER") == "true"
+	TestProviders = os.Getenv("TEST_PROVIDERS") == "true"
 
 	LimitPublicAmount, _ = strconv.Atoi(os.Getenv("LIMIT_PUBLIC_AMOUNT"))
 

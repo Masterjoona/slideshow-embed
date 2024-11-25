@@ -12,12 +12,12 @@ import (
 )
 
 func FetchTikok(videoId string) (types.TiktokInfo, error) {
-	data, err := fetchList(videoId)
+	data, err := FetchListAPI(videoId)
 	if err != nil {
 		return types.TiktokInfo{}, err
 	}
 
-	singleItemData, err := fetchSingle(videoId)
+	singleItemData, err := FetchSingleAPI(videoId)
 	if err != nil {
 		return types.TiktokInfo{}, err
 	}
@@ -50,8 +50,12 @@ func (i *GenericItem) getItemDetails() types.Counts {
 	}
 }
 
-func fetchSingle(videoId string) (SingleItem, error) {
-	req, err := http.NewRequest("GET", "https://www.tiktok.com/player/api/v1/items?item_ids="+videoId, nil)
+func FetchSingleAPI(videoId string) (SingleItem, error) {
+	req, err := http.NewRequest(
+		"GET",
+		"https://www.tiktok.com/player/api/v1/items?item_ids="+videoId,
+		nil,
+	)
 	if err != nil {
 		return SingleItem{}, err
 	}
@@ -83,7 +87,7 @@ func fetchSingle(videoId string) (SingleItem, error) {
 	return data.Items[0], nil
 }
 
-func fetchList(videoId string) (GenericItem, error) {
+func FetchListAPI(videoId string) (GenericItem, error) {
 	req, err := http.NewRequest("GET", "https://www.tiktok.com/api/related/item_list/?aid=1284&count=14&itemID="+videoId, nil)
 	if err != nil {
 		return GenericItem{}, err

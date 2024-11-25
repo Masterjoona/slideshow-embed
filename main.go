@@ -29,6 +29,7 @@ func main() {
 	println("Fancy Slideshow: " + strconv.FormatBool(config.FancySlideshow))
 	println("Subtitler: " + strconv.FormatBool(config.Subtitler))
 	println("Downloader: " + strconv.FormatBool(config.Downloader))
+	println("Test Providers: " + strconv.FormatBool(config.TestProviders))
 
 	r := gin.Default()
 	r.GET("/", handler.HandleIndex)
@@ -54,6 +55,10 @@ func main() {
 	if config.Subtitler {
 		r.GET(vars.PathSubs, handler.HandleSubtitleVideo)
 		r.GET("/subs-:id", handler.HandleDirectFile("subs"))
+	}
+
+	if config.TestProviders {
+		r.GET(vars.PathTest, handler.HandleTestProviders)
 	}
 
 	go func() {

@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func fetchTikwm(videoId string) (TikWmResp, error) {
+func FetchTikwm(videoId string) (TikWmResp, error) {
 	var data = strings.NewReader("url=https://www.tiktok.com/@placeholder/video/" + videoId)
 	req, err := http.NewRequest("POST", "https://tikwm.com/api/", data)
 	if err != nil {
@@ -41,7 +41,7 @@ func fetchTikwm(videoId string) (TikWmResp, error) {
 }
 
 func FetchTiktok(videoId string) (types.TiktokInfo, error) {
-	tikWmApiResp, err := fetchTikwm(videoId)
+	tikWmApiResp, err := FetchTikwm(videoId)
 	data := tikWmApiResp.Data
 
 	if err != nil {

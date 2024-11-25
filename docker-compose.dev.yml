@@ -15,6 +15,7 @@ services:
             - DOWNLOADER=false
             - SUBTITLER=false
             - GIN_MODE=release
+            - TEST_PROVIDERS=false
             #- TIKTOK_PROVIDER=tikwm # | ttsave | playerapi | tiktok
             #- FALLBACK_PROVIDER=false # if a provider fails, try the next one
         ports:
@@ -22,7 +23,7 @@ services:
         networks:
             - tiktok_network
         volumes:
-            - your path:/app/collages
+            - ./data/collages:/app/collages
             - /tmp/collages:/tmp/collages
 
     photo_collager:
@@ -32,7 +33,7 @@ services:
         networks:
             - tiktok_network
         volumes:
-            - your path:/app/collages
+            - ./data/collages:/app/collages
             - /tmp/collages:/tmp/collages
 
 networks:

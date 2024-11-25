@@ -6,6 +6,9 @@ import (
 	"meow/pkg/files"
 	"meow/pkg/net"
 	"meow/pkg/providers"
+	player_api "meow/pkg/providers/player_api"
+	tiktok_api "meow/pkg/providers/tiktok_api"
+	tikwm "meow/pkg/providers/tikwm"
 	"meow/pkg/types"
 	"meow/pkg/util"
 	"meow/pkg/vars"
@@ -46,6 +49,7 @@ func handleDiscordEmbed(c *gin.Context, t types.TiktokInfo, imageUrl string) {
 		"caption":    t.Caption,
 		"details":    t.Details.ToString(),
 		"imageUrl":   imageUrl,
+		"tiktokUrl":  "https://www.tiktok.com/@placeholder/video/" + t.VideoID,
 	})
 }
 
@@ -61,6 +65,7 @@ func handleDiscordVideoEmbed(
 		"videoUrl":   videoUrl,
 		"width":      t.Video.Width,
 		"height":     t.Video.Height,
+		"tiktokUrl":  "https://www.tiktok.com/@placeholder/video/" + t.VideoID,
 	})
 }
 
@@ -119,13 +124,14 @@ func HandleDownloader(c *gin.Context) {
 		"imageLinks": t.ImageLinks,
 		"imageUrl":   t.ImageLinks[0],
 		"soundUrl":   t.SoundLink,
+		"tiktokUrl":  "https://www.tiktok.com/@placeholder/video/" + t.VideoID,
 	})
 }
 
 func getTiktokData(c *gin.Context, filePrefix string, isVideo bool) (types.TiktokInfo, bool) {
 	tiktokURL := c.Query("v")
 
-	uniqueUserId, videoId, err := net.GetLongVideoId(tiktokURL)
+	videoId, err := net.GetLongVideoId(tiktokURL)
 	if err != nil {
 		if err.Error() == "invalid URL" {
 			HandleError(c, "link: "+tiktokURL+" is invalid", nil)
@@ -140,10 +146,6 @@ func getTiktokData(c *gin.Context, filePrefix string, isVideo bool) (types.Tikto
 	if err != nil {
 		HandleError(c, "Couldn't get the tiktok", err)
 		return types.TiktokInfo{}, true
-	}
-
-	if !strings.Contains(t.Author, uniqueUserId) {
-		t.Caption += "\n\ntiktok returned a different user, is the post available?"
 	}
 
 	hasFile := filePrefix != ""
@@ -205,6 +207,34 @@ func getTiktokData(c *gin.Context, filePrefix string, isVideo bool) (types.Tikto
 	}
 
 	return t, false
+}
+
+func HandleTestProviders(c *gin.Context) {
+	tiktokURL := c.Query("v")
+
+	videoId, err := net.GetLongVideoId(tiktokURL)
+	if err != nil {
+		if err.Error() == "invalid URL" {
+			HandleError(c, "link: "+tiktokURL+" is invalid", nil)
+		} else {
+			HandleError(c, "Couldn't get tiktok", err)
+		}
+		c.JSON(400, gin.H{"error": "invalid URL"})
+	}
+
+	tiktokAPI, tiktokAPIErr := tiktok_api.FetchTiktokAPI(videoId)
+	playerListAPI, playerAPIListErr := player_api.FetchListAPI(videoId)
+	playerSingleAPI, playerAPISingleErr := player_api.FetchSingleAPI(videoId)
+	tikwmAPI, tikwmAPIErr := tikwm.FetchTikwm(videoId)
+
+	c.JSON(200, gin.H{
+		"tiktokAPI": gin.H{"response": tiktokAPI, "error": tiktokAPIErr},
+		"playerAPI": gin.H{
+			"list":   gin.H{"response": playerListAPI, "error": playerAPIListErr},
+			"single": gin.H{"response": playerSingleAPI, "error": playerAPISingleErr},
+		},
+		"tikwmAPI": gin.H{"response": tikwmAPI, "error": tikwmAPIErr},
+	})
 }
 
 func HandleJsonRequest(c *gin.Context) {
@@ -331,11 +361,9 @@ func HandleSubtitleVideo(c *gin.Context) {
 		return
 	}
 
-	err := net.DownloadVideoAndSubtitles(t.VideoID, t.FileName, subLang)
+	err := DownloadVideoAndSubtitles(t.VideoID, t.Video.Url, t.FileName, subLang)
 	if err != nil {
-		// This is due to tiktok goofery
-		errorMsg := "Couldn't download video with subtitles. Only translations are available. e.g if the non-translated subtitles are in English, you can only get translations in other languages."
-		HandleError(c, errorMsg, err)
+		HandleError(c, "Couldn't download the subtitles", err)
 		return
 	}
 
