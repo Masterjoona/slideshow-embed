@@ -49,7 +49,7 @@ func DownloadVideoAndSubtitles(videoId, videoUrl, fileName, lang string) error {
 }
 
 func fetchSubtitles(videoId, lang string) (string, error) {
-	url := vars.SubtitlesHost + "subtitle_id=02981317794434464&target_language=" + lang + "&item_id=" + videoId
+	url := vars.SubtitlesHostBackup + "&target_language=" + lang + "&item_id=" + videoId
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", err
