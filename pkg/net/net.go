@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-var ShortURLCache = NewCache[ShortLinkInfo](20)
+var ShortURLCache = NewCache[string, ShortLinkInfo]()
 var longLinkRe = regexp.MustCompile(`https:\/\/(?:www.)?(?:vxtiktok|tiktok|tiktxk|)\.com\/(@.{2,32})\/(?:photo|video)\/(\d+)`)
 var shortLinkRe = regexp.MustCompile(`https:\/\/.{1,3}\.(?:(?:vx|)tikt(?:x|o)k)\.com/(?:.{1,2}/|)(.{5,12})\/`)
 
@@ -44,7 +44,7 @@ func GetLongVideoId(videoUrl string) (string, error) {
 		finalUrl := resp.Request.URL.String()
 		matches = longLinkRe.FindStringSubmatch(finalUrl)
 		if len(matches) > 2 {
-			ShortURLCache.Put(matches[2], ShortLinkInfo{VideoId: matches[2], UniqueUserId: matches[1]})
+			ShortURLCache.Set(matches[2], ShortLinkInfo{VideoId: matches[2], UniqueUserId: matches[1]})
 			return matches[2], nil
 		}
 	}

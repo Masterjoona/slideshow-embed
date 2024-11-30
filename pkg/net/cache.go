@@ -1,47 +1,30 @@
 package net
 
 import (
-	"container/list"
+	"sync"
 )
 
-func NewCache[T any](capacity int) *Cache[T] {
-	return &Cache[T]{
-		capacity: capacity,
-		items:    make(map[string]*list.Element),
-		order:    list.New(),
-	}
+type Cache[K comparable, V any] struct {
+	data sync.Map
 }
 
-func (c *Cache[T]) Get(key string) (T, bool) {
-	if elem, found := c.items[key]; found {
-		c.order.MoveToFront(elem)
-		return elem.Value.(*Item[T]).value, true
-	}
-	var zero T
-	return zero, false
+func NewCache[K comparable, V any]() *Cache[K, V] {
+	return &Cache[K, V]{}
 }
 
-func (c *Cache[T]) Put(key string, value T) {
-	if elem, found := c.items[key]; found {
-		c.order.MoveToFront(elem)
-		elem.Value.(*Item[T]).value = value
-		return
+func (c *Cache[K, V]) Get(key K) (value V, ok bool) {
+	rawValue, ok := c.data.Load(key)
+	if !ok {
+		var zeroValue V
+		return zeroValue, false
 	}
-
-	if c.order.Len() >= c.capacity {
-		oldest := c.order.Back()
-		if oldest != nil {
-			c.order.Remove(oldest)
-			delete(c.items, oldest.Value.(*Item[T]).key)
-		}
-	}
-
-	item := &Item[T]{key: key, value: value}
-	elem := c.order.PushFront(item)
-	c.items[key] = elem
+	return rawValue.(V), true
 }
 
-func (c *Cache[T]) Flush() {
-	c.items = make(map[string]*list.Element)
-	c.order = list.New()
+func (c *Cache[K, V]) Set(key K, value V) {
+	c.data.Store(key, value)
+}
+
+func (c *Cache[K, V]) Flush() {
+	c.data = sync.Map{}
 }

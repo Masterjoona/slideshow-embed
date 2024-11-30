@@ -11,7 +11,7 @@ import (
 	"meow/pkg/types"
 )
 
-var RecentTiktokReqs = net.NewCache[types.TiktokInfo](20)
+var RecentTiktokReqs = net.NewCache[string, types.TiktokInfo]()
 
 var fetchers = map[string]func(string) (types.TiktokInfo, error){
 	"tikwm":     tikwm.FetchTiktok,
@@ -59,7 +59,7 @@ func fetchAndCache(videoId string, fetcher func(string) (types.TiktokInfo, error
 		}
 	}
 
-	RecentTiktokReqs.Put(videoId, data)
+	RecentTiktokReqs.Set(videoId, data)
 	return data, nil
 }
 
