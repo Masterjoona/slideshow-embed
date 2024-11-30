@@ -215,11 +215,11 @@ func HandleTestProviders(c *gin.Context) {
 	videoId, err := net.GetLongVideoId(tiktokURL)
 	if err != nil {
 		if err.Error() == "invalid URL" {
-			HandleError(c, "link: "+tiktokURL+" is invalid", nil)
+			c.JSON(400, gin.H{"error": "invalid URL"})
 		} else {
-			HandleError(c, "Couldn't get tiktok", err)
+			c.JSON(500, gin.H{"error": "Couldn't get tiktok", "details": err.Error()})
 		}
-		c.JSON(400, gin.H{"error": "invalid URL"})
+		return
 	}
 
 	tiktokAPI, tiktokAPIErr := tiktok_api.FetchTiktokAPI(videoId)
